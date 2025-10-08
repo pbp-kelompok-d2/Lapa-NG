@@ -121,7 +121,7 @@ Fitur yang dapat digunakan oleh user biasa antara lain:
 ---
 
 ## 🌐 Link PWS LapaNG  
-👉 [Kunjungi lapa-NG](https://abdurrahman-ammar-lapang.pbp.cs.ui.ac.id)  
+👉 [Kunjungi LapaNG](https://abdurrahman-ammar-lapang.pbp.cs.ui.ac.id)  
 
 ## 🎨 Link Design  
 🔗 [Figma Design LapaNG](https://www.figma.com/design/W7PJXTejra9TNwidwSYNdd/PBP-TK-PTS?node-id=0-1&t=5S1UY1CwdeJr32kR-1)
