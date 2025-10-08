@@ -1,5 +1,5 @@
 ## LapaNG 🏟️
-#Temukan lapangan, temukan teman✨
+Temukan lapangan, temukan teman✨
 
 details>
 <summary>⚽️ Anggota Kelompok - D02 </summary>
