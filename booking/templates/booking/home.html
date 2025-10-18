@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto pt-24 pb-12 px-4">
+  <h1 class="text-3xl font-bold mb-6">Booking</h1>
+
+  <!-- Search bar + filter (stub; terhubung ke /booking/api/search/) -->
+  <div class="mb-6 grid gap-3 md:grid-cols-3">
+    <input id="q" class="border p-2 rounded" placeholder="Search venue..." />
+    <input id="sport" class="border p-2 rounded" placeholder="Sport type (e.g. Basketball)" />
+    <input id="loc" class="border p-2 rounded" placeholder="City / area" />
+    <button id="btn-search" class="bg-teal-600 text-white px-4 py-2 rounded md:col-span-3">Search Venues</button>
+  </div>
+
+  <div>
+    <h2 class="text-xl font-semibold mb-2">Your Bookings</h2>
+    <div id="booking-list" class="space-y-2 mb-10"></div>
+  </div>
+
+  <div>
+    <h2 class="text-xl font-semibold mb-2">Search Results</h2>
+    <div id="search-results" class="space-y-2"></div>
+  </div>
+</div>
+
+<script src="{% static 'booking/js/booking.js' %}"></script>
+{% endblock %}
