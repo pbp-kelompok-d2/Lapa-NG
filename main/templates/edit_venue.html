@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block meta %}
+<title>Edit {{ venue.name }} - LapaNG</title>
+{% endblock meta %}
+
+{% block content %}
+{% include 'navbar.html' %}
+
+<div class="max-w-2xl mx-auto px-6 lg:px-8 py-24">
+    <h1 class="text-3xl font-bold font-heading mb-6">Edit "{{ venue.name }}"</h1>
+
+    <form method="POST" action="" class="space-y-6 bg-white p-8 border border-gray-200 rounded-lg shadow-sm">
+        {% csrf_token %}
+        
+        {{ form.as_p }}
+
+        <button 
+          type="submit" 
+          class="w-full bg-green-600 text-white font-medium py-3 px-4 rounded-md hover:bg-green-700 transition-colors">
+          Save Changes
+        </button>
+    </form>
+</div>
+
+{% endblock content %}

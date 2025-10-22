@@ -7,5 +7,27 @@
 
 {% block content %}
 {% include 'navbar.html' %}
-<h1>Test</h1>
+
+<div class="max-w-7xl mx-auto px-6 lg:px-8 py-24"> <h1 class="text-3xl font-bold mb-6">Daftar Venue</h1>
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold font-heading">Daftar Venue</h1>
+        {% if user.is_authenticated %}
+            <a href="{% url 'main:create_venue' %}" class="bg-teal-500 hover:bg-teal-600 text-white px-5 py-2 rounded-md font-medium transition">
+                + Add Venue
+            </a>
+        {% endif %}
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {% for venue in venues %}
+            <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+                <a href="{% url 'main:venue_detail' slug=venue.slug %}" class="block bg-white border border-gray-200 rounded-lg shadow-sm p-4 hover:shadow-md transition">
+                    <h2 class="text-xl font-heading font-semibold">{{ venue.name }}</h2>
+                    <p class="text-gray-600">{{ venue.category }}</p>
+                    <p class="text-gray-800 font-medium mt-2">Rp {{ venue.price|floatformat:0 }}/jam</p>
+                    <p class="text-sm text-gray-500">{{ venue.address }}</p>
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+</div>
 {% endblock content %}
