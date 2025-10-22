@@ -1,8 +1,16 @@
 from django.db import models
 from django.utils.text import slugify
+from django.conf import settings
 
 class Venue(models.Model):
-    id = models.AutoField(primary_key=True)  # opsional, Django sebenernya udah bikin default
+    id = models.AutoField(primary_key=True) 
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name="venues",
+        null=True, # Allow existing venues (from CSV) to have no owner
+        blank=True 
+    )
     name = models.CharField(max_length=200)
     slug = models.SlugField(max_length=220, unique=True, blank=True)
 
