@@ -1,100 +1,173 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block meta %}
+<title>Reviews - LapaNG</title>
+<meta name="description" content="Lihat dan berikan ulasan untuk lapangan olahraga di LapaNG.">
+{% endblock meta %}
+
+{% block styles %}
+<link rel="stylesheet" href="{% static 'css/reviews.css' %}">
+{% endblock styles %}
+
 {% block content %}
-<div class="bg-gray-50 min-h-screen">
-    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
+{% include 'navbar.html' %}
 
-        <div class="text-center mb-12">
-            <h1 class="text-4xl font-bold text-gray-800">Ulasan Lapangan</h1>
-            <p class="text-lg text-gray-600 mt-2">Lihat apa kata para pengguna lain tentang berbagai fasilitas olahraga!</p>
+<!-- Background Gradient -->
+<div class="reviews-page-wrapper">
+    <div class="absolute top-0 left-0 w-full h-[600px] bg-gradient-to-br from-[#A1E4C2] to-[#4B8FFF] opacity-80 -z-10"></div>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
+
+        <!-- Header dan Tombol Add Review -->
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-8 pt-8">
+            <h1 class="text-4xl font-bold font-heading text-white shadow-sm mb-4 sm:mb-0">Review LapaNG</h1>
+            <button id="open-add-review-modal" class="w-full sm:w-auto bg-[#F97316] text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-orange-600 transition-all duration-300 transform hover:scale-105">
+                + Add Review
+            </button>
         </div>
 
-        <div class="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-lg mb-12">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-6">Bagikan Pengalamanmu</h2>
-            <form id="review-form" class="space-y-6">
-                {% csrf_token %}
-                <div>
-                    <label for="venue_name" class="block text-sm font-medium text-gray-700 mb-1">Nama Lapangan</label>
-                    <input type="text" id="venue_name" name="venue_name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 transition" placeholder="Contoh: Cilandak Sport Center" required>
-                </div>
-                <div>
-                    <label for="rating" class="block text-sm font-medium text-gray-700 mb-1">Rating (1-5)</label>
-                    <input type="number" id="rating" name="rating" min="1" max="5" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 transition" placeholder="Beri bintang dari 1 sampai 5" required>
-                </div>
-                <div>
-                    <label for="comment" class="block text-sm font-medium text-gray-700 mb-1">Komentar</label>
-                    <textarea id="comment" name="comment" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 transition" placeholder="Ceritakan pengalamanmu di sini..." required></textarea>
-                </div>
-                <div class="text-right">
-                    <button type="submit" class="bg-[#52a447] text-white font-bold py-2 px-6 rounded-lg hover:bg-[#3b8132] transition-colors duration-300">
-                        Kirim Ulasan
-                    </button>
-                </div>
-            </form>
+        <!-- Kontainer Kartu Review -->
+        <div id="review-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Kartu review akan dimuat oleh JavaScript di sini -->
         </div>
 
-        <div class="max-w-4xl mx-auto">
-             <h2 class="text-2xl font-semibold text-gray-800 mb-6 text-center">Semua Ulasan</h2>
-             <div id="review-cards" class="space-y-6">
-                <div class="text-center text-gray-500 py-8">Memuat ulasan...</div>
+        <!-- Loading Spinner -->
+        <div id="loading-spinner" class="text-center py-20 hidden">
+            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-white mx-auto"></div>
+            <p class="text-white text-lg mt-4 font-medium">Reviews loading...</p>
+        </div>
+
+        <!-- Empty State (dari Figma) -->
+        <div id="empty-state" class="text-center py-20 hidden">
+            <div class="bg-white/30 backdrop-blur-sm rounded-full w-48 h-48 flex items-center justify-center mx-auto mb-8 shadow-lg">
+                <svg class="w-32 h-32 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path><path d="M15.91 15.09C15.04 16.3 13.6 17 12 17s-3.04-.7-3.91-1.91"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.8 19.4a9 9 0 10-11.6 0"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 14a5 5 0 00-10 0"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 17a3 3 0 003-3H9a3 3 0 003 3z"></path></svg>
+                <!-- Menggunakan ikon basket sederhana sebagai placeholder -->
+                <svg class="w-32 h-32 text-white opacity-80" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-dribbble">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.96-8.33-2.29-17.62-2.3m16.82 5.82c-3.67-1.47-9.03-3.07-17.7-3.2m1.1 5.06c5.03.62 10.38-1.5 15.1-6.7"></path>
+                </svg>
             </div>
+            <h2 class="text-3xl font-bold font-heading text-white mb-4">Belum Ada Ulasan</h2>
+            <p class="text-lg text-white/90 max-w-md mx-auto">Jadilah yang pertama memberikan ulasan untuk lapangan di LapaNG!</p>
         </div>
+
+    </main>
+</div>
+
+
+<!-- ======================== -->
+<!-- MODAL: Tambah Ulasan     -->
+<!-- ======================== -->
+<div id="add-review-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden transition-opacity duration-300">
+    <div id="add-review-modal-content" class="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 sm:p-8 transform transition-all duration-300 scale-95 opacity-0">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold font-heading text-gray-800">Buat Ulasan Baru</h2>
+            <button id="close-add-review-modal" class="text-gray-400 hover:text-gray-600 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        
+        <form id="add-review-form" class="space-y-5">
+            {% csrf_token %}
+            
+            <!-- Nama Lapangan -->
+            <div>
+                <label for="venue_name_input" class="block text-sm font-medium text-gray-700 mb-1">Nama Lapangan</label>
+                {{ form.venue_name }}
+            </div>
+
+            <!-- Rating Bintang -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+                {{ form.rating }} <!-- Ini adalah input hidden -->
+                <div id="star-rating-input" class="flex items-center space-x-1 text-3xl cursor-pointer text-gray-300">
+                    <span class="star" data-value="1">★</span>
+                    <span class="star" data-value="2">★</span>
+                    <span class="star" data-value="3">★</span>
+                    <span class="star" data-value="4">★</span>
+                    <span class="star" data-value="5">★</span>
+                </div>
+                <p id="rating-text" class="text-sm text-gray-500 mt-1 h-5"></p>
+            </div>
+
+            <!-- Komentar -->
+            <div>
+                <label for="comment_input" class="block text-sm font-medium text-gray-700 mb-1">Komentar</Labe>
+                {{ form.comment }}
+            </div>
+
+            <!-- Link Foto -->
+            <div>
+                <label for="image_url_input" class="block text-sm font-medium text-gray-700 mb-1">Link Foto (Opsional)</label>
+                {{ form.image_url }}
+            </div>
+
+            <!-- Tombol Submit -->
+            <div class="pt-4 text-right">
+                <button type="submit" id="add-review-submit-btn" class="bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700 transition-colors duration-300 min-w-[120px]">
+                    Kirim
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
-<script>
-    // Fungsi untuk mengambil dan menampilkan semua review
-    async function getReviews() {
-        const reviewCardsContainer = document.getElementById("review-cards");
-        try {
-            const response = await fetch("{% url 'reviews:get_reviews_json' %}");
-            const reviews = await response.json();
-            let reviewCardsHTML = "";
 
-            if (reviews.length === 0) {
-                reviewCardsHTML = `<div class="text-center text-gray-500 py-8">Belum ada ulasan. Jadilah yang pertama!</div>`;
-            } else {
-                reviews.forEach((review) => {
-                    // Perbaikan ada di baris ini, tidak ada lagi backslash sebelum `
-                    reviewCardsHTML += `
-                        <div class="bg-white rounded-xl shadow-md p-6 transform hover:-translate-y-1 transition-transform duration-300">
-                            <div class="flex items-start justify-between">
-                                <h3 class="font-bold text-xl text-gray-800 mb-2">${review.venue_name}</h3>
-                                <div class="text-yellow-500 text-lg font-bold flex-shrink-0 ml-4">${'★'.repeat(review.rating)}<span class="text-gray-300">${'★'.repeat(5 - review.rating)}</span></div>
-                            </div>
-                            <p class="text-gray-700 mb-4 italic">"${review.comment}"</p>
-                            <div class="text-xs text-gray-400 text-right border-t pt-2">
-                                Oleh: <strong>${review.user}</strong> pada ${review.created_at}
-                            </div>
-                        </div>
-                    `;
-                });
-            }
+<!-- ======================== -->
+<!-- MODAL: Detail Ulasan     -->
+<!-- ======================== -->
+<div id="review-detail-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden transition-opacity duration-300">
+    <div id="review-detail-modal-content" class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 sm:p-8 transform transition-all duration-300 scale-95 opacity-0">
+        
+        <!-- Loading State Modal -->
+        <div id="detail-modal-loading" class="text-center py-10 hidden">
+            <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-green-500 mx-auto"></div>
+            <p class="text-gray-600 mt-4">Memuat detail...</p>
+        </div>
 
-            reviewCardsContainer.innerHTML = reviewCardsHTML;
-        } catch (error) {
-            reviewCardsContainer.innerHTML = `<div class="text-center text-red-500 py-8">Gagal memuat ulasan. Coba lagi nanti.</div>`;
-        }
-    }
+        <!-- Konten Detail Modal -->
+        <div id="detail-modal-body" class="hidden">
+            <!-- Thumbnail/Foto -->
+            <img id="detail-image" src="https://placehold.co/600x400/e2e8f0/94a3b8?text=Review" alt="Foto Ulasan" class="w-full h-48 object-cover rounded-lg mb-4 bg-gray-100">
 
-    // Fungsi untuk menambah review baru
-    document.getElementById("review-form").addEventListener("submit", async function(e) {
-        e.preventDefault(); // Mencegah form reload halaman
+            <!-- Nama Lapangan -->
+            <h3 id="detail-venue-name" class="text-2xl font-bold font-heading text-gray-800 mb-2">Nama Lapangan</h3>
+            
+            <!-- Rating Bintang -->
+            <div id="detail-rating" class="flex items-center text-2xl text-yellow-400 mb-4">
+                <!-- Bintang dimuat oleh JS -->
+            </div>
 
-        const formData = new FormData(this);
-        await fetch("{% url 'reviews:add_review_ajax' %}", {
-            method: "POST",
-            body: formData
-        });
+            <!-- Komentar -->
+            <p id="detail-comment" class="text-gray-700 font-body leading-relaxed mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                Lorem ipsum dolor sit amet...
+            </p>
 
-        // Reset form dan refresh daftar review
-        this.reset();
-        getReviews();
-    });
+            <!-- Meta Info -->
+            <div class="text-sm text-gray-500 border-t border-gray-200 pt-3 flex justify-between">
+                <span>Diulas oleh: <strong id="detail-user" class="text-gray-700">user</strong></span>
+                <span id="detail-date">dd/mm/yyyy</span>
+            </div>
 
-    // Panggil fungsi untuk pertama kali memuat halaman
-    getReviews();
-</script>
+            <!-- Tombol Back/Close -->
+            <div class="mt-8 text-right">
+                <button id="close-detail-modal" class="bg-gray-700 text-white font-bold py-2 px-6 rounded-lg hover:bg-gray-800 transition-colors duration-300">
+                    Tutup
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Toast Notification Container -->
+<div id="toast-container" class="fixed top-24 right-6 z-[100] space-y-3">
+    <!-- Toast akan ditambahkan di sini oleh JS -->
+</div>
 
 {% endblock content %}
+
+{% block scripts %}
+<script src="{% static 'js/reviews.js' %}"></script>
+{% endblock scripts %}

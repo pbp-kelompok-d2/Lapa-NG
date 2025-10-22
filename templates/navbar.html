@@ -15,7 +15,7 @@
       <div class="hidden md:flex items-center space-x-8">
         <a class="text-gray-700 font-medium hover:text-[#10b981] transform transition-transform duration-200 ease-in-out hover:scale-105">Home</a>
         <a class="text-gray-700 font-medium hover:text-[#10b981] transform transition-transform duration-200 ease-in-out hover:scale-105">Booking</a>
-        <a class="text-gray-700 font-medium hover:text-[#10b981] transform transition-transform duration-200 ease-in-out hover:scale-105">Reviews</a>
+        <a href="{% url 'reviews:show_reviews' %}" class="text-gray-700 font-medium hover:text-[#10b981] transform transition-transform duration-200 ease-in-out hover:scale-105">Reviews</a>
         <a class="text-gray-700 font-medium hover:text-[#10b981] transform transition-transform duration-200 ease-in-out hover:scale-105">Equipment</a>
         <a class="text-gray-700 font-medium hover:text-[#10b981] transform transition-transform duration-200 ease-in-out hover:scale-105">Favorites</a>
         <a class="text-gray-700 font-medium hover:text-[#10b981] transform transition-transform duration-200 ease-in-out hover:scale-105">Feeds</a>
@@ -60,7 +60,7 @@
       <div class="space-y-1">
         <a class="block text-gray-700 hover:text-gray-900 font-medium py-2 transition">Home</a>
         <a class="block text-gray-700 hover:text-gray-900 font-medium py-2 transition">Booking</a>
-        <a class="block text-gray-700 hover:text-gray-900 font-medium py-2 transition">Reviews</a>
+        <a href="{% url 'reviews:show_reviews' %}" class="block text-gray-700 hover:text-gray-900 font-medium py-2 transition">Reviews</a>
         <a class="block text-gray-700 hover:text-gray-900 font-medium py-2 transition">Equipment</a>
         <a class="block text-gray-700 hover:text-gray-900 font-medium py-2 transition">Favorites</a>
         <a class="block text-gray-700 hover:text-gray-900 font-medium py-2 transition">Feeds</a>

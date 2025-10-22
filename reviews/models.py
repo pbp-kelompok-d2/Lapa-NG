@@ -9,6 +9,7 @@ class Reviews(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(5)]
     )
     comment = models.TextField()
+    image_url = models.URLField(max_length=2000, null=True, blank=True, help_text="(opsional)")
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
