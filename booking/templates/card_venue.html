@@ -1,0 +1,115 @@
+{% load static %}
+
+<div class="card-wrapper inline-block">
+  <div class="card">
+    {% if venue.image %}
+      <img src="{{ venue.image.url }}" alt="{{ venue.name }}" class="image">
+    {% else %}
+      <div class="image"></div>
+    {% endif %}
+
+    <h2 class="name">{{ venue.name }}</h2>
+    <p class="address">{{ venue.address }}</p>
+    <p class="price">Rp {{ venue.price|floatformat:0 }}</p>
+
+    {% if user.is_authenticated and venue.user == user %}
+      <div class="flex justify-between gap-2">
+        <a href="{% url 'booking:show_venue' venue.id %}" class="btn w-1/2">Detail</a>
+        <a href="{% url 'booking:edit_venue' venue.id %}" class="btn btn-secondary w-1/2">Edit</a>
+        <button type="button" data-action="delete" data-venue-id="{{ venue.id }}" class="text-red-600 hover:text-red-800">Delete</button>
+      </div>
+    {% else %}
+      <a href="{% url 'booking:show_venue' venue.id %}" class="btn">Book Now</a>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+  .card-wrapper {
+    background: linear-gradient(135deg, #3B82F6, #10B981);
+    padding: 2px;
+    border-radius: 16px;
+  }
+
+  .card {
+    background-color: #fff;
+    width: 260px;
+    padding: 20px;
+    border-radius: 14px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    text-align: left;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+
+  .image {
+    width: 100%;
+    height: 120px;
+    background-color: #d1d5db;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    object-fit: cover;
+  }
+
+  .name {
+    font-weight: 600;
+    color: #374151;
+    margin: 0 0 5px;
+    font-size: 1.1rem;
+  }
+
+  .address {
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin: 0 0 5px;
+  }
+
+  .price {
+    color: #10B981;
+    font-weight: 600;
+    margin: 0 0 15px;
+  }
+
+  .btn {
+    background-color: #F97316;
+    color: white;
+    border: none;
+    padding: 10px 0;
+    width: 100%;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn:hover {
+    background-color: #ea580c;
+    transform: scale(1.02);
+  }
+
+  .btn-secondary {
+    background-color: #6b7280;
+  }
+
+  .btn-secondary:hover {
+    background-color: #4b5563;
+  }
+
+  @media (max-width: 480px) {
+    .card {
+      width: 100%;
+      padding: 16px;
+    }
+    .image {
+      height: 110px;
+    }
+  }
+</style>
