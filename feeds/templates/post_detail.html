@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-2xl mx-auto p-6">
+  <p class="mb-4">
+    <a href="{% url 'feeds:show_feed_main' %}">
+      <button class="px-3 py-1.5 rounded-lg border hover:bg-slate-50">← Back to Feed</button>
+    </a>
+  </p>
+
+  <h1 class="text-xl font-heading font-semibold">{{ post.author_name }}</h1>
+  <p class="text-sm text-slate-600 mt-1">
+    <b>{{ post.get_category_display }}</b>
+    {% if post.is_featured %} | <b>Featured</b>{% endif %}
+    {% if post.is_post_hot %} | <b>Hot</b>{% endif %}
+    | <i>{{ post.created_at|date:"d M Y, H:i" }}</i>
+    | Views: {{ post.post_views }}
+  </p>
+
+  {% if post.thumbnail %}
+    <img class="mt-4 rounded-lg max-h-72" src="{{ post.thumbnail }}" alt="Post thumbnail">
+  {% endif %}
+
+  {% if post.venue_name %}
+    <p class="mt-4"><span class="font-medium">Venue:</span> {{ post.venue_name }}</p>
+  {% endif %}
+
+  <p class="mt-4 whitespace-pre-line text-slate-800">{{ post.content }}</p>
+</div>
+{% endblock content %}

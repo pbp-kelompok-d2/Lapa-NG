@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-3xl mx-auto p-6">
+  <h1 class="text-2xl font-heading font-semibold mb-4">Sports Field Feeds</h1>
+
+  <div class="grid sm:grid-cols-3 gap-4 text-sm mb-6">
+    <div><span class="font-medium">NPM:</span> {{ npm }}</div>
+    <div><span class="font-medium">Name:</span> {{ name }}</div>
+    <div><span class="font-medium">Class:</span> {{ class }}</div>
+  </div>
+
+  <a href="{% url 'feeds:create_post' %}">
+    <button class="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">+ Add Post</button>
+  </a>
+
+  <hr class="my-6">
+
+  {% if not post_list %}
+    <p class="text-slate-600">Belum ada feed.</p>
+  {% else %}
+    <div class="space-y-6">
+      {% for p in post_list %}
+        <a href="{% url 'feeds:show_post' p.id %}" class="block group">
+          <article class="rounded-xl border border-slate-200 p-4 hover:bg-slate-50 cursor-pointer transition">
+            <div class="text-base font-semibold">
+              {% if p.user %}@{{ p.user.username }}{% else %}{{ p.author_name|default:'Anon' }}{% endif %}
+              &mdash; {{ p.venue_name|default:'-' }}
+            </div>
+
+            <p class="text-sm text-slate-600 mt-1">
+              <b>{{ p.get_category_display }}</b>
+              {% if p.is_featured %} | <b>Featured</b>{% endif %}
+              {% if p.is_post_hot %} | <b>Hot</b>{% endif %}
+              | <i>{{ p.created_at|date:"d M Y H:i" }}</i>
+              | Views: {{ p.post_views }}
+            </p>
+
+            {% if p.thumbnail %}
+              <img class="mt-3 rounded-lg max-h-40" src="{{ p.thumbnail }}" alt="thumbnail">
+            {% endif %}
+
+            <p class="mt-3 text-slate-800 line-clamp-4">{{ p.content }}</p>
+
+            <div class="mt-3 text-sm text-emerald-700 hidden group-hover:inline">Buka detail →</div>
+          </article>
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+{% endblock content %}
