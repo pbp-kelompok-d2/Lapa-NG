@@ -33,8 +33,12 @@
           </div>
         {% else %}
           <div class="flex items-center space-x-4">
-            <button class="text-gray-700 font-medium hover:text-[#10b981] transform transition-transform duration-200 ease-in-out hover:scale-105">Login</button>
-            <button class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md font-medium transition">Register</button>
+            <a href="{% url 'authentication:login' %}" class="text-gray-700 font-medium hover:text-[#10b981] transform transition-transform duration-200 ease-in-out hover:scale-105">
+              Login
+            </a>
+            <form action="{% url 'authentication:register' %}" method="get" style="display: inline;">
+              <button type="submit" class="btn btn-primary bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md font-medium transition">Register</button>
+            </form>
           </div>
         {% endif %}
       </div>
