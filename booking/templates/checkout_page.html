@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="container mx-auto p-6">
+  <h1 class="text-3xl font-bold mb-6 text-center">Checkout</h1>
+
+  {% if venues %}
+    <div class="space-y-4">
+      {% for venue in venues %}
+        <div class="flex items-center justify-between bg-white shadow-md p-4 rounded-lg">
+          <div class="flex items-center space-x-4">
+            <img src="{{ venue.image }}" alt="{{ venue.name }}" class="w-20 h-20 object-cover rounded-md">
+            <div>
+              <h2 class="font-semibold text-lg">{{ venue.name }}</h2>
+              <p class="text-gray-500 truncate">{{ venue.address }}</p>
+            </div>
+          </div>
+          <span class="text-green-600 font-medium">Rp {{ venue.price_per_hour|floatformat:0 }}</span>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="mt-6 text-right">
+      <h3 class="text-xl font-semibold">Total: <span class="text-green-600">Rp {{ total|floatformat:0 }}</span></h3>
+      <button class="mt-4 bg-gradient-to-r from-[#4b8fff] to-[#10b981] text-white px-6 py-3 rounded-xl hover:opacity-90 transition">Bayar Sekarang</button>
+    </div>
+  {% else %}
+    <p class="text-center text-gray-600">Keranjang Anda kosong.</p>
+  {% endif %}
+</div>
+{% endblock %}
