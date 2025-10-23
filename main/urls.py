@@ -1,8 +1,8 @@
 from django.urls import path
 from main.views import (
-    show_main, venue_detail,  edit_venue, delete_venue, filter_venues,
+    show_main, venue_detail, filter_venues,
     get_venue_details, get_create_form_html, create_venue_ajax,
-    import_venues_from_csv, add_to_booking_draft_stub
+    import_venues_from_csv, add_to_booking_draft_stub, get_edit_form_html, edit_venue_ajax, delete_venue_ajax
 ) 
 
 app_name = 'main'
@@ -11,14 +11,17 @@ urlpatterns = [
     path('', show_main, name='show_main'),
     # path('venue/add/', create_venue, name='create_venue'), 
     path('venue/<slug:slug>/', venue_detail, name='venue_detail'), 
-    path('venue/<slug:slug>/edit/', edit_venue, name='edit_venue'),  
-    path('venue/<slug:slug>/delete/', delete_venue, name='delete_venue'),
+    # path('venue/<slug:slug>/edit/', edit_venue, name='edit_venue'),  
+    # path('venue/<slug:slug>/delete/', delete_venue, name='delete_venue'),
 
     # ajax stuff
     path('ajax/filter-venues/', filter_venues, name='filter_venues'),
     path('ajax/venue-details/<slug:slug>/', get_venue_details, name='get_venue_details'),
     path('ajax/get-create-form/', get_create_form_html, name='get_create_form'),
     path('ajax/create-venue/', create_venue_ajax, name='create_venue_ajax'),
+    path('ajax/get-edit-form/<slug:slug>/', get_edit_form_html, name='get_edit_form'),
+    path('ajax/edit-venue/<slug:slug>/', edit_venue_ajax, name='edit_venue_ajax'),
+    path('ajax/delete-venue/<slug:slug>/', delete_venue_ajax, name='delete_venue_ajax'),
 
     # misc
     path("import-venues-from-csv/", import_venues_from_csv, name="import_venues_csv"),

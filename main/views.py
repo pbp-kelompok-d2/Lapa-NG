@@ -135,42 +135,42 @@ def venue_detail(request, slug):
 #     context = {'form': form}
 #     return render(request, 'create_venue.html', context)
 
-@login_required(login_url='authentication:login')
-def edit_venue(request, slug):
-    venue = get_object_or_404(Venue, slug=slug) # Get the venue to edit
+# @login_required(login_url='authentication:login')
+# def edit_venue(request, slug):
+#     venue = get_object_or_404(Venue, slug=slug) # Get the venue to edit
 
-    # Security Check: Only the owner can edit
-    if venue.owner != request.user:
-        return HttpResponseForbidden("You are not allowed to edit this venue.")
+#     # Security Check: Only the owner can edit
+#     if venue.owner != request.user:
+#         return HttpResponseForbidden("You are not allowed to edit this venue.")
 
-    # Pre-populate the form with the venue's existing data
-    form = VenueForm(request.POST or None, instance=venue)
+#     # Pre-populate the form with the venue's existing data
+#     form = VenueForm(request.POST or None, instance=venue)
 
-    if request.method == 'POST':
-        if form.is_valid():
-            form.save() # Save the changes to the existing venue
-            return redirect('main:venue_detail', slug=venue.slug) # Redirect to detail page
+#     if request.method == 'POST':
+#         if form.is_valid():
+#             form.save() # Save the changes to the existing venue
+#             return redirect('main:venue_detail', slug=venue.slug) # Redirect to detail page
 
-    context = {'form': form, 'venue': venue}
-    return render(request, 'edit_venue.html', context)
+#     context = {'form': form, 'venue': venue}
+#     return render(request, 'edit_venue.html', context)
 
-@login_required(login_url='authentication:login')
-def delete_venue(request, slug):
-    venue = get_object_or_404(Venue, slug=slug)
+# @login_required(login_url='authentication:login')
+# def delete_venue(request, slug):
+#     venue = get_object_or_404(Venue, slug=slug)
 
-    # Security Check: Only the owner can delete
-    if venue.owner != request.user:
-        return HttpResponseForbidden("You are not allowed to delete this venue.")
+#     # Security Check: Only the owner can delete
+#     if venue.owner != request.user:
+#         return HttpResponseForbidden("You are not allowed to delete this venue.")
 
-    if request.method == 'POST':
-        venue.delete() 
-        return redirect('main:show_main') # Redirect to the homepage
+#     if request.method == 'POST':
+#         venue.delete() 
+#         return redirect('main:show_main') # Redirect to the homepage
 
-    # If GET request, just redirect (or show a confirmation page)
-    return redirect('main:venue_detail', slug=venue.slug)
+#     # If GET request, just redirect (or show a confirmation page)
+#     return redirect('main:venue_detail', slug=venue.slug)
 
 
-#ajax tuff
+#=============AJAX STUFF ===============
 def get_venue_details(request, slug):
     venue = get_object_or_404(Venue, slug=slug) 
     context = {
@@ -220,6 +220,85 @@ def get_create_form_html(request):
     }
     html = render_to_string('_venue_form.html', context, request=request)
     return JsonResponse({'html': html})
+
+# --- EDIT FORM HTML FOR AJAX ---
+@login_required(login_url='authentication:login')
+def get_edit_form_html(request, slug):
+    venue = get_object_or_404(Venue, slug=slug)
+
+    if venue.owner != request.user:
+        return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
+
+    form = VenueForm(instance=venue) # Pre-fill the form
+    context = {
+        'form': form,
+        'venue': venue, 
+        'modal_title': f'Edit "{venue.name}"',
+        'button_text': 'Save Changes',
+        'form_url': reverse('main:edit_venue_ajax', kwargs={'slug': venue.slug}) 
+    }
+    html = render_to_string('_venue_form.html', context, request=request)
+    return JsonResponse({'html': html})
+
+# --- EDIT VENUE HANDLER FOR AJAX ---
+@login_required(login_url='authentication:login')
+def edit_venue_ajax(request, slug):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
+
+    venue = get_object_or_404(Venue, slug=slug)
+
+    if venue.owner != request.user:
+        return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
+
+    form = VenueForm(request.POST, instance=venue) 
+    
+    if form.is_valid():
+        updated_venue = form.save() 
+        
+        updated_card_html = render_to_string('_venue_card.html', {'venue': updated_venue})
+        
+        return JsonResponse({
+            'status': 'ok',
+            'message': 'Venue updated successfully!',
+            'updated_card_html': updated_card_html,
+            'new_slug': updated_venue.slug 
+        })
+    else:
+        context = {
+            'form': form,
+            'venue': venue,
+            'modal_title': f'Edit "{venue.name}"',
+            'button_text': 'Save Changes',
+            'form_url': reverse('main:edit_venue_ajax', kwargs={'slug': venue.slug})
+        }
+        form_html = render_to_string('_venue_form.html', context, request=request)
+        return JsonResponse({'status': 'error', 'form_html': form_html}, status=400)
+
+
+# --- DELETE VENUE FOR AJAX ---
+@login_required(login_url='authentication:login')
+def delete_venue_ajax(request, slug):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
+
+    venue = get_object_or_404(Venue, slug=slug)
+
+    # Security Check: Only the owner can delete
+    if venue.owner != request.user:
+        return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
+
+    try:
+        venue_name = venue.name # Get name before deleting
+        venue.delete()
+        return JsonResponse({
+            'status': 'ok',
+            'message': f'Venue "{venue_name}" deleted successfully!',
+            'deleted_slug': slug # Send back slug so JS can remove the card
+        })
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': 'Could not delete venue.'}, status=500)
+
 
 # LOAD CSV IMPORT FUNCTIONALITY
 CSV_RELATIVE_PATH = Path("data") / "venues - courts_enriched_data.csv"  
