@@ -40,7 +40,7 @@ class ReviewTestCase(TestCase):
     def test_show_reviews_page_unauthenticated(self):
         """Test redirect when accessing reviews page unauthenticated"""
         response = self.client.get(reverse('review:show_reviews'))
-        self.assertEqual(response.status_code, 302)  # Redirect to login
+        self.assertEqual(response.status_code, 302)  
 
     def test_get_reviews_json(self):
         """Test JSON endpoint returns reviews"""
