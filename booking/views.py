@@ -1,65 +1,212 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from datetime import datetime
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from main.models import Venue
+from booking.models import Booking
+from booking.forms import BookingForm
+from django.contrib import messages
 
-# Dummy data venue
-VENUES = [
-    {"id": 1, "name": "Lapangan A", "address": "Jl. Merdeka No. 10, Jakarta", "price_per_hour": 100000,
-     "image": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c"},
-    {"id": 2, "name": "Lapangan B", "address": "Jl. Sudirman No. 45, Bandung", "price_per_hour": 150000,
-     "image": "https://images.unsplash.com/photo-1600585154362-01d4e6b1e3e4"},
-    {"id": 3, "name": "Lapangan C", "address": "Jl. Diponegoro No. 5, Surabaya", "price_per_hour": 125000,
-     "image": "https://images.unsplash.com/photo-1600585154378-894b3b9f4427"},
-]
+@login_required(login_url='authentication:login')
+def view_booking_cart(request):
+    cart = request.session.get('cart', [])
+    venue_ids = [item['id'] for item in cart]
+    venues = Venue.objects.filter(id__in=venue_ids)
+    context = {'cart': cart, 'venues': venues}
+    return render(request, 'booking_cart.html', context)
 
+
+@login_required(login_url='authentication:login')
+def add_to_cart(request, venue_id):
+    venue = get_object_or_404(Venue, id=venue_id)
+
+    cart = request.session.get('cart', [])
+    item = {
+        'id': venue.id,
+        'name': venue.name,
+        'price': float(venue.price),
+        'category': venue.category
+    }
+
+    if not any(x['id'] == venue.id for x in cart):
+        cart.append(item)
+        request.session['cart'] = cart
+        request.session.modified = True
+        message = f"Venue '{venue.name}' berhasil ditambahkan ke booking."
+    else:
+        message = f"Venue '{venue.name}' sudah ada di booking."
+
+    return JsonResponse({'status': 'ok', 'message': message})
+
+
+@login_required(login_url='authentication:login')
+def view_cart(request):
+    cart = request.session.get('cart', [])
+    if not cart:
+        # kalau kosong langsung tunjukkan halaman empty cart
+        return render(request, 'empty_cart.html')
+
+    total = sum(float(item.get('total_price', item['price'])) for item in cart)
+
+    venues = []
+    for item in cart:
+        try:
+            venue = Venue.objects.get(pk=item['id'])
+            venues.append(venue)
+        except Venue.DoesNotExist:
+            continue
+        
+    context = {'venues': venues, 'total': total, 'cart': cart}
+    return render(request, 'booking_cart.html', context)
 
 def booking_page(request):
-    return render(request, "booking_page.html", {"venues": VENUES})
+    cart = request.session.get('cart', [])
+    if cart:
+        return redirect('booking:checkout_page')
+    return render(request, 'empty_cart.html')
 
-
-def add_to_cart(request, venue_id):
-    cart = request.session.get("cart", [])
-    if venue_id not in cart:
-        cart.append(venue_id)
-        request.session["cart"] = cart
-    return JsonResponse({"message": f"Venue {venue_id} ditambahkan"})
-
-
+@login_required(login_url='authentication:login')
 def checkout_page(request):
-    cart = request.session.get("cart", [])
-    selected_venues = [v for v in VENUES if v["id"] in cart]
-    total = sum(v["price_per_hour"] for v in selected_venues)
-    return render(request, "checkout_page.html", {"venues": selected_venues, "total": total})
+    cart = request.session.get('cart', [])
+    if not cart:
+        # kalau cart kosong, render template empty_cart (bukan checkout kosong)
+        return render(request, 'empty_cart.html')
 
-def venue_detail(request, venue_id):
-    venue = get_object_or_404(Venue, id=venue_id)
-    return render(request, 'booking/venue_detail.html', {'venue': venue})
+    venues = []
+    total_price = 0
 
-def add_to_cart(request, venue_id):
-    # Ambil keranjang dari session
-    cart = request.session.get('cart', {})
+    for item in cart:
+        try:
+            venue = Venue.objects.get(pk=item['id'])
+        except Venue.DoesNotExist:
+            continue
 
-    # Ambil venue
-    venue = Venue.objects.get(id=venue_id)
-    
-    # Tambahkan ke cart (pakai id sebagai key)
-    if str(venue_id) in cart:
-        cart[str(venue_id)]['quantity'] += 1
-    else:
-        cart[str(venue_id)] = {
+        booking_date = item.get('booking_date')
+        start_time = item.get('start_time')
+        end_time = item.get('end_time')
+        borrower_name = item.get('borrower_name')
+        item_total = float(item.get('total_price', venue.price))
+        total_price += item_total
+
+        venues.append({
+            'id': venue.id,
             'name': venue.name,
-            'price': venue.price_per_hour,
-            'quantity': 1
-        }
+            'address': venue.address,
+            'price': venue.price,
+            'booking_date': booking_date,
+            'start_time': start_time,
+            'end_time': end_time,
+            'borrower_name': borrower_name,
+            'total_price': item_total,
+        })
 
-    # Simpan kembali ke session
+    context = {'venues': venues, 'total_price': total_price}
+    return render(request, 'checkout_page.html', context)
+
+@login_required(login_url='authentication:login')
+def edit_booking(request, venue_id):
+    venue = get_object_or_404(Venue, id=venue_id)
+    cart = request.session.get('cart', [])
+    item = next((x for x in cart if x['id'] == venue.id), None)
+
+    if request.method == 'POST':
+        form = BookingForm(request.POST)
+        if form.is_valid():
+            booking_date = form.cleaned_data['booking_date']
+            start_time = form.cleaned_data['start_time']
+            end_time = form.cleaned_data['end_time']
+
+            start_dt = datetime.combine(booking_date, start_time)
+            end_dt = datetime.combine(booking_date, end_time)
+            duration = (end_dt - start_dt).seconds / 3600
+            duration = max(duration, 1)  # minimal 1 jam
+
+            if item:
+                item['borrower_name'] = form.cleaned_data['borrower_name']
+                item['booking_date'] = str(booking_date)
+                item['start_time'] = str(start_time)
+                item['end_time'] = str(end_time)
+                item['total_price'] = float(venue.price) * duration
+
+                request.session['cart'] = cart
+                request.session.modified = True
+
+            return JsonResponse({'success': True, 'total_price': item['total_price']})
+        return JsonResponse({'success': False, 'errors': form.errors})
+
+    # GET
+    form = BookingForm(initial=item or None)
+    html_form = render(request, 'edit_booking_form.html', {'form': form, 'venue': venue}).content.decode()
+    return JsonResponse({'html_form': html_form})
+
+@login_required(login_url='authentication:login')
+def remove_from_cart(request, venue_id):
+    cart = request.session.get('cart', [])
+    cart = [item for item in cart if item['id'] != venue_id]
     request.session['cart'] = cart
+    request.session.modified = True
 
-    # Kirim respons JSON untuk AJAX
-    return JsonResponse({'message': f'{venue.name} ditambahkan ke keranjang!', 'cart': cart})
+    # Untuk request via fetch (AJAX) kita kirim redirect ke booking_page agar frontend mengikuti
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        if not cart:
+            return redirect('booking:booking_page')  # fetch akan melihat redirect dan frontend akan pindah
+        return JsonResponse({'success': True, 'empty': False})
 
+    # request biasa (link)
+    if not cart:
+        return redirect('booking:booking_page')
+    return redirect('booking:checkout_page')
 
-def view_cart(request):
-    cart = request.session.get('cart', {})
-    total = sum(item['price'] * item['quantity'] for item in cart.values())
-    return JsonResponse({'cart': cart, 'total': total})
+@login_required(login_url='authentication:login')
+def checkout_confirm(request):
+    cart = request.session.get('cart', [])
+    if not cart:
+        return redirect('booking:checkout_page')
+
+    for item in cart:
+        venue = Venue.objects.get(id=item['id'])
+
+        # ✅ Format parsing diperbaiki (support string dengan detik)
+        booking_date = (
+            datetime.strptime(item['booking_date'], "%Y-%m-%d").date()
+            if item.get('booking_date') else None
+        )
+        start_time = (
+            datetime.strptime(item['start_time'], "%H:%M:%S").time()
+            if item.get('start_time') else None
+        )
+        end_time = (
+            datetime.strptime(item['end_time'], "%H:%M:%S").time()
+            if item.get('end_time') else None
+        )
+
+        Booking.objects.create(
+            user=request.user,
+            venue=venue,
+            borrower_name=item.get('borrower_name', ''),
+            booking_date=booking_date,
+            start_time=start_time,
+            end_time=end_time,
+            total_price=item.get('total_price', 0),
+            status='Confirmed'
+        )
+
+    # Kosongkan keranjang
+    request.session['cart'] = []
+    request.session.modified = True
+
+    return render(request, 'checkout_success.html')
+
+@login_required(login_url='authentication:login')
+def booking_list(request):
+    bookings = Booking.objects.filter(user=request.user).order_by('-booking_date')
+    return render(request, 'booking_list.html', {'bookings': bookings})
+
+@login_required(login_url='authentication:login')
+def clear_booking(request, booking_id):
+    if request.method == "POST":
+        booking = get_object_or_404(Booking, id=booking_id, user=request.user)
+        booking.delete()
+        messages.success(request, "Booking berhasil dihapus. Terima kasih telah meminjam!")
+        return redirect('booking:booking_list')
+    return redirect('booking:booking_list')
