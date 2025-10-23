@@ -12,18 +12,6 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from .models import Venue
 from .forms import VenueForm
-<<<<<<< HEAD
-
-=======
-from django.db.models import Q # Import Q for complex lookups
-from django.template.loader import render_to_string
-
-PRICE_RANGES = {
-    '0-50000': 'Under Rp 50.000',
-    '50001-100000': 'Rp 50.001 - Rp 100.000',
-    '100001+': 'Over Rp 100.000',
-}
->>>>>>> dev
 
 def show_main(request):
     venues = Venue.objects.all() # Get all venues from the DB
