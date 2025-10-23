@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+{% include "navbar.html" %}
+<div class="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+    <div class="bg-white shadow-lg rounded-2xl p-8 text-center max-w-md">
+        <svg class="w-20 h-20 mx-auto text-green-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+        </svg>
+
+        <h2 class="text-2xl font-bold text-gray-800 mt-4">Pembayaran Berhasil!</h2>
+        <p class="text-gray-600 mt-2">Terima kasih, {{ user.username }}. Booking kamu telah dikonfirmasi 🎉</p>
+
+        <div class="mt-6 flex flex-col gap-3">
+            <a href="{% url 'booking:booking_list' %}" 
+               class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition">
+               Lihat Booking Kamu
+            </a>
+            <a href="{% url 'main:show_main' %}" 
+               class="border border-gray-400 text-gray-700 hover:bg-gray-100 font-semibold px-6 py-2 rounded-lg transition">
+               Kembali ke Beranda
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
