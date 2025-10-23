@@ -26,7 +26,6 @@ def show_main(request):
     # Get all distinct categories for the filter dropdown
     categories = Venue.objects.values_list('category', flat=True).order_by('category').distinct()
 
-    # Start with all venues
     venues = Venue.objects.all()
 
     # Get filter values from the request
@@ -34,7 +33,7 @@ def show_main(request):
     category_filter = request.GET.get('category', '')
     price_range_key = request.GET.get('price_range', '') # Get the selected price range key
 
-    # Apply filters if they exist
+    # Apply filters kalau  exist
     if search_query:
         # Filter by name or address containing the query (case-insensitive)
         venues = venues.filter(
@@ -45,7 +44,7 @@ def show_main(request):
     if category_filter:
         venues = venues.filter(category=category_filter)
 
-    # --- New Price Logic ---
+    # ---  Price Logic ---
     min_price = None
     max_price = None
 
@@ -62,7 +61,6 @@ def show_main(request):
         venues = venues.filter(price__gte=min_price)
     if max_price is not None:
         venues = venues.filter(price__lte=max_price)
-    # --- End New Price Logic ---
 
     context = {
         'venues': venues,
@@ -72,6 +70,49 @@ def show_main(request):
     }
 
     return render(request, "main.html", context)
+
+# View u/ handle AJAX filter 
+def filter_venues(request):
+    # same logic dengan show_main
+    venues = Venue.objects.all()
+
+    # Get filter values from the request
+    search_query = request.GET.get('q', '')
+    category_filter = request.GET.get('category', '')
+    price_range_key = request.GET.get('price_range', '') # Get the selected price range key
+
+    # Apply filters kalau exist
+    if search_query:
+        venues = venues.filter(
+            Q(name__icontains=search_query) | 
+            Q(address__icontains=search_query)
+        )
+
+    if category_filter:
+        venues = venues.filter(category=category_filter)
+
+    min_price = None
+    max_price = None
+    if price_range_key in PRICE_RANGES:
+        if price_range_key == '0-50000':
+            max_price = 50000
+        elif price_range_key == '50001-100000':
+            min_price = 50001
+            max_price = 100000
+        elif price_range_key == '100001+':
+            min_price = 100001
+
+    if min_price is not None:
+        venues = venues.filter(price__gte=min_price)
+    if max_price is not None:
+        venues = venues.filter(price__lte=max_price)
+
+    context = {
+        'venues': venues,
+    }
+    
+    # dia nge render PARTIAL LIST, not the full page
+    return render(request, "_venue_list.html", context)
 
 def venue_detail(request, slug):
     venue = get_object_or_404(Venue, slug=slug) # Find venue by slug or return 404

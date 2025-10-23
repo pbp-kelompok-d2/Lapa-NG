@@ -1,6 +1,6 @@
 from django.urls import path
 from main.views import (
-    show_main, venue_detail, create_venue, edit_venue, delete_venue,
+    show_main, venue_detail, create_venue, edit_venue, delete_venue, filter_venues,
     import_venues_from_csv, 
 ) 
 
@@ -13,4 +13,7 @@ urlpatterns = [
     path('venue/<slug:slug>/edit/', edit_venue, name='edit_venue'),  
     path('venue/<slug:slug>/delete/', delete_venue, name='delete_venue'),
     path("import-venues-from-csv/", import_venues_from_csv, name="import_venues_csv"),
+
+    # ajax stuff
+    path('ajax/filter-venues/', filter_venues, name='filter_venues'),
 ]

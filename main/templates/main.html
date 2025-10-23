@@ -11,7 +11,7 @@
 <div class="max-w-7xl mx-auto px-6 lg:px-8 py-24"> 
     
     <div class="mb-8 p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
-        <form method="GET" action="{% url 'main:show_main' %}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <form id="filter-form" method="GET" action="{% url 'main:show_main' %}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
             
             <div>
                 <label for="q" class="block text-sm font-medium text-gray-700 mb-2">Location (Name/Address)</label>
@@ -80,25 +80,51 @@
         {% endif %}
     </div>
 
-       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {% for venue in venues %}
-            <a href="{% url 'main:venue_detail' slug=venue.slug %}" class="block bg-white border border-gray-200 rounded-lg shadow-sm p-4 hover:shadow-md transition">
-                <h2 class="text-xl font-heading font-semibold text-gray-900">{{ venue.name }}</h2>
-                <p class="text-sm font-medium text-teal-600">{{ venue.category|capfirst }}</p>
-                <p class="text-gray-800 font-semibold mt-2">
-                    Rp {{ venue.price|floatformat:0 }}/jam
-              </p>
-                <p class="text-sm text-gray-500 mt-1 truncate">
-                    {{ venue.address }}
-                </p>
-            </a>
-        {% empty %}
-            <div class="md:col-span-3">
-                <p class="text-center text-gray-600 py-12">
-                    No venues found matching your criteria.
-                </WELCOME>
-            </div>
-        {% endfor %}
+       <div id="venue-list-container">
+              {% include '_venue_list.html' with venues=venues %}
     </div>
 </div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('filter-form');
+        const venueContainer = document.getElementById('venue-list-container');
+
+        if (form) {
+            form.addEventListener('submit', function(event) {
+                // 1. Stop the default form submission (page reload)
+                event.preventDefault(); 
+
+                // 2. Get the form data
+                const formData = new FormData(form);
+                const params = new URLSearchParams(formData);
+
+                // 3. Make the AJAX (fetch) request to our new endpoint
+                fetch(`{% url 'main:filter_venues' %}?${params.toString()}`)
+                    .then(response => response.text())
+                    .then(html => {
+                        // 4. Replace the content of the venue list
+                        venueContainer.innerHTML = html;
+
+                        // 5. (Optional) Update the URL in the browser
+                        history.pushState(null, '', `?${params.toString()}`);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching venues:', error);
+                        venueContainer.innerHTML = '<p class="text-center text-red-600">Error loading venues. Please try again.</p>';
+                    });
+            });
+        }
+        const clearButton = document.querySelector(`a[href="{% url 'main:show_main' %}"]`);
+
+        if (clearButton) {
+            clearButton.addEventListener('click', function(event) {
+                event.preventDefault();
+                // Just redirect to the base URL
+                window.location.href = `{% url 'main:show_main' %}`; 
+            });
+        }
+    });
+</script>
 {% endblock content %}
