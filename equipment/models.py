@@ -27,17 +27,18 @@ class Equipment(models.Model):
     name = models.CharField(max_length=120)                 
     price_per_hour = models.DecimalField(max_digits=10, decimal_places=2)
     sport_category = models.CharField(max_length=20, choices=SPORT_CHOICES)
-    region = models.CharField(max_length=30, choices=JAKARTA_REGION_CHOICES) 
+    region = models.CharField(max_length=30, choices=JAKARTA_REGION_CHOICES, default='jakarta_selatan') 
 
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='equipments'
+        related_name='equipments',
+        default=1,
     )
 
     quantity = models.PositiveIntegerField(default=1)       
     available = models.BooleanField(default=True)           
-    thumbnail = models.URLField()
+    thumbnail = models.URLField(default='https://via.placeholder.com/190')
     
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
@@ -46,4 +47,5 @@ class Equipment(models.Model):
         ordering = ['price_per_hour']
 
     def __str__(self):
-        return f"{self.name} ({self.sport_category}) - {self.owner_name}"
+        return f"{self.name} ({self.sport_category}) - {self.owner.name}"
+
