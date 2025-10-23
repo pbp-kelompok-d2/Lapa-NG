@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'main',
     'reviews',
     'authentication',
+    'django.contrib.humanize',
 ]
 
 MIDDLEWARE = [
