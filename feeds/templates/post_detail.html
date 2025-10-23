@@ -1,42 +1,51 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="bg-gray-50 min-h-screen">
-  <div class="max-w-2xl mx-auto p-6">
-    <p class="mb-4">
-      <a href="{% url 'feeds:show_feed_main' %}" class="px-3 py-1.5 rounded-lg border hover:bg-slate-50">← Back to Feed</a>
-    </p>
+{% include 'navbar.html' %}
 
-    <h1 class="text-xl font-heading font-semibold">
-      {% if post.user %}@{{ post.user.username }}{% else %}Anon{% endif %}
-    </h1>
+<div class="pt-20 min-h-screen bg-gradient-to-b from-emerald-400 via-teal-400 to-blue-600 pb-24">
+  <div class="max-w-2xl mx-auto px-6">
+    <a href="{% url 'feeds:show_feed_main' %}" class="text-white hover:underline mb-4 block">
+      ← Back to Feeds
+    </a>
 
-    <p class="text-sm text-slate-600 mt-1">
-      <b>{{ post.get_category_display }}</b>
-      {% if post.is_featured %} | <b>Featured</b>{% endif %}
-      {% if post.is_post_hot %} | <b>Hot</b>{% endif %}
-      | <i>{{ post.created_at|date:"d M Y, H:i" }}</i>
-      | Views: {{ post.post_views }}
-    </p>
-
-    {% if post.thumbnail %}
-      <img class="mt-4 rounded-lg max-h-72 w-full object-cover" src="{{ post.thumbnail }}" alt="Post thumbnail">
-    {% endif %}
-
-    <p class="mt-4 whitespace-pre-line text-slate-800">{{ post.content }}</p>
-
-    {% if user.is_authenticated and post.user == user %}
-      <div class="mt-6 flex gap-2">
-        <a href="{% url 'feeds:edit_post' post.id %}"
-           class="px-3 py-1.5 rounded-lg border hover:bg-slate-50">Edit</a>
-
-        <form method="POST" action="{% url 'feeds:delete_post' post.id %}" onsubmit="return confirm('Delete this post?');">
-          {% csrf_token %}
-          <button type="submit" class="px-3 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700">
-            Delete
-          </button>
-        </form>
+    <!-- Card detail -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div class="mb-3">
+        <h2 class="text-lg font-bold text-gray-900">
+          {% if post.user %}@{{ post.user.username }}{% else %}Anon{% endif %}
+        </h2>
+        <p class="text-sm text-gray-600 mt-1">
+          <b>{{ post.get_category_display }}</b>
+          {% if post.is_featured %} | <b>Featured</b>{% endif %}
+          {% if post.is_post_hot %} | <b>Hot</b>{% endif %}
+          | <i>{{ post.created_at|date:"d M Y, H:i" }}</i>
+          | Views: {{ post.post_views }}
+        </p>
       </div>
-    {% endif %}
+
+      {% if post.thumbnail %}
+        <img src="{{ post.thumbnail }}" alt="thumbnail" class="rounded-lg max-h-72 w-full object-cover mb-4">
+      {% endif %}
+
+      <p class="text-gray-800 text-base">{{ post.content }}</p>
+
+      {% if user.is_authenticated and post.user == user %}
+        <div class="pt-4 flex gap-3">
+          <a href="{% url 'feeds:edit_post' post.id %}" class="px-4 py-2 border rounded-lg hover:bg-gray-50">
+            Edit
+          </a>
+          <form method="POST" action="{% url 'feeds:delete_post' post.id %}" onsubmit="return confirm('Delete this post?');">
+            {% csrf_token %}
+            <button type="submit" class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">
+              Delete
+            </button>
+          </form>
+        </div>
+      {% endif %}
+    </div>
   </div>
+
+  <!-- Floating + button -->
+  <a href="{% url 'feeds:create_post' %}" class="fixed right-6 bottom-6 w-14 h-14 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center text-3xl shadow-xl">+</a>
 </div>
-{% endblock content %}
+{% endblock %}

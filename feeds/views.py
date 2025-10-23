@@ -26,6 +26,7 @@ def show_feed_main(request):
         "post_list": post_list,
         "active_filter": filter_type,
         "active_category": category,
+        "active_page": "feeds",
     }
     return render(request, "feed_main.html", context)
 
@@ -85,7 +86,7 @@ def edit_post(request, id):
     form = PostForm(request.POST or None, instance=post)
     if form.is_valid() and request.method == 'POST':
         form.save()
-        return redirect('feeds:show_post', id=post.id)
+        return redirect('feeds:show_feed_main')
 
     context = {
         'form': form,

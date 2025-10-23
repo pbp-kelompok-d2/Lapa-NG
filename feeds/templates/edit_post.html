@@ -1,26 +1,56 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="bg-gray-50 min-h-screen">
-  <div class="max-w-2xl mx-auto p-6">
-    <div class="mb-4">
-      <a href="{% url 'feeds:show_post' post.id %}" class="text-gray-600 hover:underline">← Back to Post</a>
+{% include 'navbar.html' %}
+
+<div class="pt-20 min-h-screen bg-gradient-to-b from-emerald-400 via-teal-400 to-blue-600">
+  <div class="max-w-2xl mx-auto px-6 pb-24">
+    
+    <!-- Back link -->
+    <div class="mb-6">
+        <a href="{% url 'feeds:show_feed_main' %}" class="text-white hover:underline mb-4 block">
+            ← Back to Feeds
+        </a>
     </div>
 
-    <h1 class="text-2xl font-heading font-semibold mb-4">Edit Post</h1>
+    <!-- Card -->
+    <div class="bg-white rounded-xl border border-white/60 shadow-lg p-6">
+      <h1 class="text-2xl font-semibold text-gray-900 mb-6">Edit Post</h1>
 
-    <form method="POST" class="space-y-4">
-      {% csrf_token %}
-      <table class="w-full text-sm">
-        {{ form.as_table }}
-        <tr>
-          <td></td>
-          <td class="pt-2">
-            <input type="submit" value="Save Changes"
-                   class="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"/>
-          </td>
-        </tr>
-      </table>
-    </form>
+      <form method="POST" class="space-y-5">
+        {% csrf_token %}
+
+        <!-- Content -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Content:</label>
+          {{ form.content }}
+        </div>
+
+        <!-- Category -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Category:</label>
+          {{ form.category }}
+        </div>
+
+        <!-- Thumbnail -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Thumbnail:</label>
+          {{ form.thumbnail }}
+        </div>
+
+        <!-- Featured -->
+        <div class="flex items-center gap-2">
+          {{ form.is_featured }}
+          <span class="text-sm font-medium text-gray-700">Is featured:</span>
+        </div>
+
+        <div class="pt-2">
+          <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition">
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+
   </div>
 </div>
 {% endblock %}
