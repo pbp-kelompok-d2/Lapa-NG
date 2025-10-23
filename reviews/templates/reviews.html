@@ -22,9 +22,7 @@
             <h1 class="text-4xl font-bold font-heading text-white shadow-sm mb-4 sm:mb-0">Review LapaNG</h1>
             
             {% if user.is_authenticated and user.customuser.role == 'customer' %}
-            <button id="open-add-review-modal" 
-                    data-is-authenticated="true"
-                    class="w-full sm:w-auto bg-[#F97316] text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-orange-600 transition-all duration-300 transform hover:scale-105">
+            <button id="open-add-review-modal" class="w-full sm:w-auto bg-[#F97316] text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-orange-600 transition-all duration-300 transform hover:scale-105">
                 + Add Review
             </button>
             {% endif %}
@@ -62,18 +60,18 @@
     </main>
 </div>
 
-<div id="add-review-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-    <div id="add-review-modal-content" class="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 sm:p-8 transform transition-all duration-300 scale-95 opacity-0">
+<div id="add-review-modal" class="modal fixed inset-0 bg-gray-900 bg-opacity-75 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden opacity-0">
+    <div id="add-review-modal-content" class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 sm:p-8 transform opacity-0 scale-95">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl font-bold font-heading text-gray-800">Buat Ulasan Baru</h2>
             <button id="close-add-review-modal" class="text-gray-400 hover:text-gray-600 transition">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
         </div>
         <form id="add-review-form" class="space-y-5">
             {% csrf_token %}
             <div>
-                <label for="id_venue_name" class="block text-sm font-medium text-gray-700 mb-1">Nama Lapangan</label>
+                <label for="venue_name_input" class="block text-sm font-medium text-gray-700 mb-1">Nama Lapangan</label>
                 {{ form.venue_name }}
             </div>
             <div>
@@ -85,11 +83,11 @@
                 <p id="rating-text" class="text-sm text-gray-500 mt-1 h-5"></p>
             </div>
             <div>
-                <label for="id_comment" class="block text-sm font-medium text-gray-700 mb-1">Komentar</label>
+                <label for="comment_input" class="block text-sm font-medium text-gray-700 mb-1">Komentar</label>
                 {{ form.comment }}
             </div>
             <div>
-                <label for="id_image_url" class="block text-sm font-medium text-gray-700 mb-1">Link Foto (Opsional)</label>
+                <label for="image_url_input" class="block text-sm font-medium text-gray-700 mb-1">Link Foto (Opsional)</label>
                 {{ form.image_url }}
             </div>
             <div class="pt-4 text-right">
@@ -101,8 +99,8 @@
     </div>
 </div>
 
-<div id="review-detail-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-    <div id="review-detail-modal-content" class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 sm:p-8 transform transition-all duration-300 scale-95 opacity-0">
+<div id="review-detail-modal" class="modal fixed inset-0 bg-gray-900 bg-opacity-75 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden opacity-0">
+    <div id="review-detail-modal-content" class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-md p-6 sm:p-8 transform opacity-0 scale-95">
         <div id="detail-modal-loading" class="text-center py-10">
             <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-green-500 mx-auto"></div>
             <p class="text-gray-600 mt-4">Memuat detail...</p>
@@ -125,12 +123,12 @@
     </div>
 </div>
 
-<div id="edit-review-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-    <div id="edit-review-modal-content" class="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 sm:p-8 transform transition-all duration-300 scale-95 opacity-0">
+<div id="edit-review-modal" class="modal fixed inset-0 bg-gray-900 bg-opacity-75 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden opacity-0">
+    <div id="edit-review-modal-content" class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 sm:p-8 transform opacity-0 scale-95">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl font-bold font-heading text-gray-800">Edit Ulasan</h2>
             <button id="close-edit-review-modal" class="text-gray-400 hover:text-gray-600 transition">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
         </div>
         <form id="edit-review-form" class="space-y-5">
@@ -161,6 +159,21 @@
                 </button>
             </div>
         </form>
+    </div>
+</div>
+
+<div id="confirm-delete-modal" class="modal fixed inset-0 bg-gray-900 bg-opacity-75 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden opacity-0">
+    <div id="confirm-delete-modal-content" class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 sm:p-8 transform opacity-0 scale-95 text-center">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">Konfirmasi Penghapusan</h3>
+        <p id="confirm-message" class="text-gray-600 mb-8">Apakah Anda yakin ingin menghapus ulasan ini?</p>
+        <div class="flex justify-center space-x-4">
+            <button id="cancel-delete-btn" class="bg-gray-200 text-gray-800 font-bold py-2 px-6 rounded-lg hover:bg-gray-300 transition-colors">
+                Batal
+            </button>
+            <button id="confirm-delete-btn" class="bg-red-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-red-700 transition-colors">
+                Hapus
+            </button>
+        </div>
     </div>
 </div>
 {% endblock content %}
