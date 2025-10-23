@@ -22,5 +22,6 @@ urlpatterns = [
     path('', include('main.urls')),
     path('feeds/', include('feeds.urls')),
     path('auth/', include('authentication.urls', namespace='authentication')),
+    path('reviews/', include('reviews.urls', namespace='reviews')),
 ]
 

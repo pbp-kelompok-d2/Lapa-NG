@@ -5,144 +5,272 @@
 <div class="pt-20 min-h-screen bg-gradient-to-b from-emerald-400 via-teal-400 to-blue-600">
   <div class="max-w-2xl mx-auto px-4 pb-24">
 
-    <!-- Filter wrapper in a single box/card -->
-    <div class="mb-6">
-      <div class="rounded-xl border border-gray-200 bg-white/90 shadow-sm">
-        <div class="px-3 py-2">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <!-- Bar filter -->
+    <div class="bg-white/40 backdrop-blur rounded-2xl px-4 py-3 border border-white/60 shadow-sm mb-6">
+      <div class="flex items-center justify-between">
+        <!-- Tabs (All/My) -->
+        <div class="inline-flex rounded-full bg-white/30 backdrop-blur px-1 py-1 text-emerald-900 font-semibold">
+          <button id="btn-all" class="px-4 py-2 rounded-full transition bg-white text-emerald-700 shadow">
+            All Feeds
+          </button>
+          <button id="btn-my" class="px-4 py-2 rounded-full transition text-emerald-900/80 hover:bg-white/40">
+            My Feeds
+          </button>
+        </div>
 
-            <!-- Tabs (All / My) -->
-            <div class="inline-flex rounded-full bg-gray-100 px-1 py-1 font-semibold">
-              <a href="?filter=all{% if active_category and active_category != 'all' %}&category={{ active_category }}{% endif %}"
-                class="px-4 py-2 rounded-full transition {% if active_filter == 'all' %}bg-white text-emerald-700 shadow{% else %}text-gray-700 hover:bg-white/80{% endif %}">
-                All Feeds
-              </a>
-              <a href="?filter=my{% if active_category and active_category != 'all' %}&category={{ active_category }}{% endif %}"
-                class="px-4 py-2 rounded-full transition {% if active_filter == 'my' %}bg-white text-emerald-700 shadow{% else %}text-gray-700 hover:bg-white/80{% endif %}">
-                My Feeds
-              </a>
-            </div>
-
-            <!-- Sport Type filter -->
-            <form method="get" class="flex items-center gap-2 text-sm">
-              <input type="hidden" name="filter" value="{{ active_filter|default:'all' }}">
-              <label for="category" class="text-gray-700 font-medium">Sport Type</label>
-
-              <select id="category" name="category" class="border border-gray-300 rounded-md px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" onchange="this.form.submit()">
-                <option value="all" {% if active_category == 'all' %}selected{% endif %}>All</option>
-                <option value="soccer" {% if active_category == 'soccer' %}selected{% endif %}>Soccer</option>
-                <option value="futsal" {% if active_category == 'futsal' %}selected{% endif %}>Futsal</option>
-                <option value="basket" {% if active_category == 'basket' %}selected{% endif %}>Basket</option>
-                <option value="badminton" {% if active_category == 'badminton' %}selected{% endif %}>Badminton</option>
-                <option value="other" {% if active_category == 'other' %}selected{% endif %}>Other</option>
-              </select>
-            </form>
-          </div>
+        <!-- Sport Type filter -->
+        <div class="flex items-center bg-white/90 backdrop-blur px-3 py-2 rounded-md text-sm shadow border">
+          <label class="mr-2 text-gray-700">Sport Type</label>
+          <select id="select-category" class="border rounded-md px-2 py-1">
+            <option value="all">All</option>
+            <option value="soccer">Soccer</option>
+            <option value="futsal">Futsal</option>
+            <option value="basket">Basket</option>
+            <option value="badminton">Badminton</option>
+            <option value="other">Other</option>
+          </select>
         </div>
       </div>
     </div>
+
+    <!-- Loading -->
+    <div id="feeds-loading" class="bg-white/95 rounded-xl border border-white/60 shadow p-12 text-center hidden">
+      <div class="animate-spin inline-block rounded-full h-8 w-8 border-2 border-emerald-600 border-t-transparent"></div>
+      <p class="text-gray-600 mt-3">Loading feeds...</p>
+    </div>
+
+    <!-- Error -->
+    <div id="feeds-error" class="bg-white/95 rounded-xl border border-red-300 shadow p-6 text-center hidden">
+      <p class="text-red-600 font-medium">Failed to load feeds. Try again.</p>
+    </div>
+
     <!-- Empty -->
-    {% if not post_list %}
-      <div class="bg-white/95 rounded-xl border border-white/50 shadow p-12 text-center">
-        <p class="text-gray-600">Belum ada feed.</p>
-      </div>
-    {% else %}
-      <div class="space-y-4">
-        {% for p in post_list %}
-          <article class="relative bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition">
-            <!-- seluruh isi post -->
-            <a href="{% url 'feeds:show_post' p.id %}" class="block p-4 z-0">
-              <div class="text-base font-semibold text-gray-900">
-                {% if p.user %}@{{ p.user.username }}{% else %}Anon{% endif %}
-              </div>
-              <p class="text-sm text-gray-600 mt-1">
-                <b>{{ p.get_category_display }}</b>
-                {% if p.is_featured %} | <b>Featured</b>{% endif %}
-                {% if p.is_post_hot %} | <b>Hot</b>{% endif %}
-                | <i>{{ p.created_at|date:"d M Y H:i" }}</i>
-                | Views: {{ p.post_views }}
-              </p>
-              {% if p.thumbnail %}
-                <img class="mt-3 rounded-lg max-h-52 w-full object-cover" src="{{ p.thumbnail }}" alt="thumbnail">
-              {% endif %}
-              <p class="mt-3 text-gray-800 line-clamp-4">{{ p.content }}</p>
-            </a>
+    <div id="feeds-empty" class="bg-white/95 rounded-xl border border-white/60 shadow p-12 text-center hidden">
+      <p class="text-gray-600">Belum ada feed.</p>
+    </div>
 
-            {% if user.is_authenticated and p.user == user %}
-              <!-- tombol titik 3 -->
-              <button
-                type="button"
-                class="absolute top-3 right-3 p-2 rounded-full hover:bg-gray-100 focus:outline-none z-10 pointer-events-auto"
-                aria-haspopup="true"
-                aria-expanded="false"
-                aria-controls="menu-{{ p.id }}"
-                onclick="event.stopPropagation(); toggleMenu('{{ p.id }}')"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zm6 0a2 2 0 11-4 0 2 2 0 014 0zm6 0a2 2 0 11-4 0 2 2 0 014 0z"/>
-                </svg>
-              </button>
-
-              <!-- dropdown -->
-              <div
-                id="menu-{{ p.id }}"
-                class="hidden absolute right-3 top-10 z-20 w-36 rounded-lg border border-gray-200 bg-white shadow-lg overflow-hidden"
-                role="menu"
-                onclick="event.stopPropagation()"
-              >
-                <a href="{% url 'feeds:edit_post' p.id %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" role="menuitem">
-                  Edit
-                </a>
-                <button
-                  type="button"
-                  onclick="openModal('{{ p.id }}'); event.stopPropagation();"
-                  class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                  role="menuitem">
-                  Delete
-                </button>
-              </div>
-
-              <!-- modal konfirmasi delete -->
-              <div id="modal-{{ p.id }}" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-                <div class="bg-white p-6 rounded-lg shadow-lg w-80" onclick="event.stopPropagation()">
-                  <h2 class="text-lg font-semibold mb-4 text-gray-800">Delete Post</h2>
-                  <p class="text-gray-700 mb-6">Are you sure you want to delete this post?</p>
-                  <div class="flex justify-end gap-2">
-                    <button onclick="closeModal('{{ p.id }}')" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">Cancel</button>
-                    <form method="POST" action="{% url 'feeds:delete_post' p.id %}">
-                      {% csrf_token %}
-                      <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Delete</button>
-                    </form>
-                  </div>
-                </div>
-              </div>
-            {% endif %}
-          </article>
-        {% endfor %}
-      </div>
-    {% endif %}
+    <!-- List -->
+    <div id="feeds-list" class="space-y-4 hidden"></div>
   </div>
 
   <!-- Floating + button -->
-  <a href="{% url 'feeds:create_post' %}" class="fixed right-6 bottom-6 w-14 h-14 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center text-3xl shadow-xl z-50">+</a>
+  <a href="{% url 'feeds:create_post' %}"
+     class="fixed right-6 bottom-6 w-14 h-14 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center text-3xl shadow-xl z-50">+</a>
 </div>
 
 <script>
-  function toggleMenu(id) {
-    const el = document.getElementById(`menu-${id}`);
-    el.classList.toggle('hidden');
+  // ======== CONFIG & STATE ========
+  const POSTS_API = "{% url 'feeds:show_json' %}";
+  const CURRENT_USER_ID = "{{ user.id|default_if_none:'' }}";
+
+  let activeFilter = 'all';          // 'all' | 'my'
+  let activeCategory = 'all';        // 'all' | soccer | futsal | basket | badminton | other
+  let allPosts = [];
+
+  // ======== DOM ========
+  const btnAll = document.getElementById('btn-all');
+  const btnMy = document.getElementById('btn-my');
+  const selectCategory = document.getElementById('select-category');
+
+  const elLoading = document.getElementById('feeds-loading');
+  const elError   = document.getElementById('feeds-error');
+  const elEmpty   = document.getElementById('feeds-empty');
+  const elList    = document.getElementById('feeds-list');
+
+  // ======== HELPERS ========
+  function setBarState() {
+    if (activeFilter === 'all') {
+      btnAll.className = "px-4 py-2 rounded-full transition bg-white text-emerald-700 shadow";
+      btnMy.className  = "px-4 py-2 rounded-full transition text-emerald-900/80 hover:bg-white/40";
+    } else {
+      btnMy.className  = "px-4 py-2 rounded-full transition bg-white text-emerald-700 shadow";
+      btnAll.className = "px-4 py-2 rounded-full transition text-emerald-900/80 hover:bg-white/40";
+    }
+    selectCategory.value = activeCategory;
   }
-  function openModal(id) {
-    document.getElementById(`modal-${id}`).classList.remove('hidden');
-    document.getElementById(`menu-${id}`)?.classList.add('hidden');
+
+  function showSection({loading=false, error=false, empty=false, list=false}) {
+    elLoading.classList.toggle('hidden', !loading);
+    elError.classList.toggle('hidden', !error);
+    elEmpty.classList.toggle('hidden', !empty);
+    elList.classList.toggle('hidden', !list);
   }
-  function closeModal(id) {
-    document.getElementById(`modal-${id}`).classList.add('hidden');
+
+  function catLabel(code) {
+    const m = {soccer:'Soccer', futsal:'Futsal', basket:'Basket', badminton:'Badminton', other:'Other'};
+    return m[code] || code;
   }
-  // tutup menu/modal saat klik di luar
-  document.addEventListener('click', () => {
-    document.querySelectorAll('[id^="menu-"]').forEach(m => m.classList.add('hidden'));
-    document.querySelectorAll('[id^="modal-"]').forEach(m => m.classList.add('hidden'));
+
+  function fmtDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-US', {year:'numeric', month:'short', day:'numeric'}) + ' ' +
+           d.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+  }
+
+  function buildCard(p) {
+    const detailUrl = "{% url 'feeds:show_post' '00000000-0000-0000-0000-000000000000' %}"
+                        .replace('00000000-0000-0000-0000-000000000000', p.id);
+    const editUrl   = "{% url 'feeds:edit_post' '00000000-0000-0000-0000-000000000000' %}"
+                        .replace('00000000-0000-0000-0000-000000000000', p.id);
+    const deleteUrl = "{% url 'feeds:delete_post' '00000000-0000-0000-0000-000000000000' %}"
+                        .replace('00000000-0000-0000-0000-000000000000', p.id);
+
+    const ownerMenu = (CURRENT_USER_ID && String(CURRENT_USER_ID) === String(p.user_id)) ? `
+      <div class="relative">
+        <button type="button" class="menu-btn p-2 rounded-full hover:bg-gray-100" data-id="${p.id}" aria-haspopup="true">
+          <!-- ikon tiga titik -->
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zm6 0a2 2 0 11-4 0 2 2 0 014 0zm6 0a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+        </button>
+        <div class="menu-dd hidden absolute right-0 top-10 w-36 rounded-xl border border-gray-200 bg-white shadow-lg z-10" data-id="${p.id}">
+          <a href="${editUrl}" class="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-50">Edit</a>
+          <form method="POST" action="${deleteUrl}" class="delete-form">
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+            <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Delete</button>
+          </form>
+        </div>
+      </div>` : '';
+
+    const thumb = p.thumbnail
+      ? `<img class="mt-3 rounded-lg max-h-52 w-full object-cover" src="${p.thumbnail}" alt="thumbnail">`
+      : '';
+
+    const featured = p.is_featured ? ' | <b>Featured</b>' : '';
+    const hot = p.is_hot ? ' | <b>Hot</b>' : '';
+
+    return `
+      <article class="relative bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition">
+        <div class="p-4">
+          <div class="flex items-start justify-between">
+            <div class="text-base font-semibold text-gray-900">
+              ${p.user_username ? '@'+p.user_username : 'Anon'}
+            </div>
+            ${ownerMenu}
+          </div>
+
+          <!-- Bagian yang dapat diklik ke detail -->
+          <a href="${detailUrl}" class="block mt-1">
+            ${thumb}
+            <p class="text-sm text-gray-600 mt-2">
+              <b>${catLabel(p.category)}</b>${featured}${hot}
+              | <i>${fmtDate(p.created_at)}</i>
+              | Views: ${p.post_views}
+            </p>
+            <p class="mt-3 text-gray-800">${p.content}</p>
+          </a>
+        </div>
+      </article>
+    `;
+  }
+
+  // Buka/tutup dropdown per-post
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.menu-btn');
+    const anyMenu = document.querySelectorAll('.menu-dd');
+
+    if (btn) {
+      const id = btn.dataset.id;
+      // tutup semua dulu
+      anyMenu.forEach(dd => dd.classList.add('hidden'));
+      // toggle menu milik card ini
+      const dd = document.querySelector(`.menu-dd[data-id="${id}"]`);
+      dd?.classList.toggle('hidden');
+      return;
+    }
+
+    // klik di luar -> tutup semua menu
+    if (!e.target.closest('.menu-dd')) {
+      anyMenu.forEach(dd => dd.classList.add('hidden'));
+    }
   });
+
+  function applyFilters() {
+    let rows = [...allPosts];
+
+    // filter my
+    if (activeFilter === 'my' && CURRENT_USER_ID) {
+      rows = rows.filter(x => String(x.user_id) === String(CURRENT_USER_ID));
+    }
+
+    // filter category
+    if (activeCategory !== 'all') {
+      rows = rows.filter(x => x.category === activeCategory);
+    }
+
+    if (rows.length === 0) {
+      showSection({empty:true});
+      elList.innerHTML = '';
+      return;
+    }
+
+    elList.innerHTML = rows.map(buildCard).join('');
+    showSection({list:true});
+  }
+
+  function normalizeURL() {
+    const clean = window.location.pathname; // contoh: /feeds/
+    if (window.location.search || window.location.hash) {
+      history.replaceState(null, '', clean);
+    }
+  }
+
+  async function loadPosts() {
+    try {
+      showSection({loading:true});
+      const bust = (POSTS_API.includes('?') ? '&' : '?') + 't=' + Date.now();
+      const res = await fetch(POSTS_API + bust, {
+        headers: {'Accept':'application/json', 'Cache-Control': 'no-cache'},
+        cache: 'no-store',
+      });
+
+      if (!res.ok) throw new Error('Bad status');
+      const data = await res.json();
+      allPosts = Array.isArray(data) ? data : [];
+      applyFilters();
+    } catch (e) {
+      console.error(e);
+      showSection({error:true});
+    }
+  }
+
+  // ======== INIT ========
+  function restoreState() {
+    const saved = sessionStorage.getItem('feeds_state');
+    if (saved) {
+      try {
+        const s = JSON.parse(saved);
+        if (s.activeFilter)   activeFilter = s.activeFilter;     // 'all' | 'my'
+        if (s.activeCategory) activeCategory = s.activeCategory; // 'all'|'soccer'...
+      } catch(_) {}
+    }
+  }
+
+  function persistState() {
+    sessionStorage.setItem('feeds_state', JSON.stringify({
+      activeFilter, activeCategory
+    }));
+  }
+
+  // event handlers: simpan state tiap berubah
+  btnAll.addEventListener('click', () => {
+    activeFilter = 'all'; setBarState(); applyFilters(); persistState();
+  });
+  btnMy.addEventListener('click', () => {
+    activeFilter = 'my';  setBarState(); applyFilters(); persistState();
+  });
+  selectCategory.addEventListener('change', (e) => {
+    activeCategory = e.target.value; applyFilters(); persistState();
+  });
+
+  // urutan init
+  normalizeURL();
+  restoreState();
+  setBarState();
+  loadPosts();
+
+  document.addEventListener('postAdded', () => loadPosts());
 </script>
+
 {% endblock content %}

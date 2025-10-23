@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'main',
     'feeds',
     'authentication',
+    'reviews',
 ]
 
 MIDDLEWARE = [
