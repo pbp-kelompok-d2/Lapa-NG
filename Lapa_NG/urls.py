@@ -23,3 +23,4 @@ urlpatterns = [
     path('feeds/', include('feeds.urls')),
     path('auth/', include('authentication.urls', namespace='authentication')),
 ]
+
