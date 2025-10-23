@@ -3,10 +3,10 @@
 <div class="bg-gray-50 min-h-screen">
   <div class="max-w-2xl mx-auto p-6">
     <div class="mb-4">
-      <a href="{% url 'feeds:show_feed_main' %}" class="text-gray-600 hover:underline">← Back to Feed</a>
+      <a href="{% url 'feeds:show_post' post.id %}" class="text-gray-600 hover:underline">← Back to Post</a>
     </div>
 
-    <h1 class="text-2xl font-heading font-semibold mb-4">Create Post</h1>
+    <h1 class="text-2xl font-heading font-semibold mb-4">Edit Post</h1>
 
     <form method="POST" class="space-y-4">
       {% csrf_token %}
@@ -15,7 +15,7 @@
         <tr>
           <td></td>
           <td class="pt-2">
-            <input type="submit" value="Publish"
+            <input type="submit" value="Save Changes"
                    class="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"/>
           </td>
         </tr>

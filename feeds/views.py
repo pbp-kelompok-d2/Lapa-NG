@@ -1,27 +1,35 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
+from django.urls import reverse
 from django.core import serializers
 from .models import Post
 from .forms import PostForm
 
-@login_required(login_url='/login/')
+@login_required(login_url='/auth/login/')
 def show_feed_main(request):
     filter_type = request.GET.get("filter", "all")
+    category = request.GET.get("category", "all")
+    
     if filter_type == "my":
         post_list = Post.objects.filter(user=request.user)
     else:
         post_list = Post.objects.all()
+        
+    if category != "all":
+        post_list = post_list.filter(category=category)
     
     context = {
         "npm": "2406437451",
         "name": request.user.username,
         "class": "PBP D",
-        "post_list": post_list
+        "post_list": post_list,
+        "active_filter": filter_type,
+        "active_category": category,
     }
     return render(request, "feed_main.html", context)
 
-@login_required(login_url='/login/')
+@login_required(login_url='/auth/login/')
 def create_post(request):
     form = PostForm(request.POST or None)
     if form.is_valid() and request.method == "POST":
@@ -35,7 +43,7 @@ def create_post(request):
     }
     return render(request, "create_post.html", context)
 
-@login_required(login_url='/login/')
+@login_required(login_url='/auth/login/')
 def show_post(request, id):
     post = get_object_or_404(Post, pk=id)
     post.increment_views()
@@ -70,3 +78,24 @@ def show_json_by_id(request, id):
        return HttpResponse(json_data, content_type="application/json")
     except Post.DoesNotExist:
        return HttpResponse(status=404)
+   
+@login_required(login_url='/auth/login/')
+def edit_post(request, id):
+    post = get_object_or_404(Post, pk=id)
+    form = PostForm(request.POST or None, instance=post)
+    if form.is_valid() and request.method == 'POST':
+        form.save()
+        return redirect('feeds:show_post', id=post.id)
+
+    context = {
+        'form': form,
+        'post': post
+    }
+
+    return render(request, "edit_post.html", context)
+
+@login_required(login_url='/auth/login/')
+def delete_post(request, id):
+    post = get_object_or_404(Post, pk=id)
+    post.delete()
+    return HttpResponseRedirect(reverse('feeds:show_feed_main'))

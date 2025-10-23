@@ -21,12 +21,13 @@ class Post(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user.username} - {self.category}"
+        uname = self.user.username if self.user else "Anonymous"
+        return f"{uname} - {self.get_category_display()}"
+
+    def increment_views(self):
+        self.post_views += 1
+        self.save(update_fields=['post_views'])
     
     @property
     def is_post_hot(self):
         return self.post_views > 10
-    
-    def increment_views(self):
-        self.post_views += 1
-        self.save()
