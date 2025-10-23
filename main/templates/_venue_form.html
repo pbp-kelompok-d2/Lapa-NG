@@ -1,9 +1,9 @@
 {% load static %}
 <form id="venue-form" 
-      hx-post="{{ form_url }}" 
-      hx-encoding="multipart/form-data"
+      action="{{ form_url }}" 
+      method="POST" 
       class="space-y-6">
-    
+      
     {% csrf_token %}
     
     <div class="flex items-center justify-between p-4 border-b">
