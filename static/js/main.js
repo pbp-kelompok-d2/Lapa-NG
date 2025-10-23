@@ -306,12 +306,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- Clear Filter Button Logic ---
-    const clearButton = document.querySelector(`a[href="${URLS.showMain}"]`);
+// --- Clear Filter Button Logic ---
+    const clearButton = document.getElementById('clear-filter-btn'); // <-- USE THE ID
     if (clearButton) {
         clearButton.addEventListener('click', function(event) {
-            event.preventDefault();
-            fetch(URLS.filter) // Ambil daftar tanpa filter
+            event.preventDefault(); 
+            
+            fetch(URLS.filter) 
                 .then(response => response.text())
                 .then(html => {
                     if (venueContainer) venueContainer.innerHTML = html;
@@ -324,7 +325,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
         });
     }
-
     // --- "VIEW VENUE" MODAL (Card Click) ---
     if (venueContainer) {
         venueContainer.addEventListener('click', function(event) {
