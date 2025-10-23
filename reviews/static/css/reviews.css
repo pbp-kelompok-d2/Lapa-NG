@@ -43,3 +43,29 @@
     from { opacity: 1; transform: scale(1) translateY(0); }
     to { opacity: 0; transform: scale(0.95) translateY(20px); }
 }
+
+/* Styling untuk Tombol Filter */
+.filter-btn {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    backdrop-filter: blur(5px);
+}
+
+.filter-btn.active-filter {
+    background-color: #F97316; /* Warna oranye */
+    color: white;
+    box-shadow: 0 4px 15px -5px rgba(249, 115, 22, 0.6);
+}
+
+.filter-btn:hover:not(.active-filter) {
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Perbaikan Transisi Modal */
+.modal {
+    transition: opacity 0.3s ease-in-out;
+}
+
+.modal-content {
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
