@@ -75,9 +75,9 @@
         {% if user.is_authenticated %}
           <div class="flex items-center justify-between mb-4">
             <div class="font-semibold text-gray-800">{{ name|default:user.username }}</div>
-            <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md font-medium transition">
+            <a href="{% url 'authentication:logout' %}" class="bg-red-500 text-white hover:bg-red-600 px-4 py-2 rounded-md font-medium transition">
               Logout
-            </button>
+            </a>
           </div>
         {% else %}
           <div class="space-y-3">
