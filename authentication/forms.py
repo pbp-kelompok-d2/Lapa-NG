@@ -3,7 +3,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.validators import RegexValidator
-from .models import CustomUser
+from .models import CustomUser, normalize_indonesia_number
 
 digit_validator = RegexValidator(regex=r'^\d+$', message='Phone number must contain only digits.')
 
@@ -38,14 +38,19 @@ class CustomUserCreationForm(UserCreationForm):
         return number
 
     def save(self, commit=True):
-        # Save the built-in user first
         user = super().save(commit=commit)
-        # Then create the CustomUser object attached to it
-        # If commit=False you might handle differently, but typical flow uses commit=True
-        custom = CustomUser.objects.create(
-            user=user,
-            name=self.cleaned_data['name'],
-            role=self.cleaned_data['role'],
-            number=self.cleaned_data['number']
-        )
+
+        if commit:
+            # normalize the number before saving profile
+            raw_number = self.cleaned_data.get('number', '')
+            normalized = normalize_indonesia_number(raw_number)
+
+            CustomUser.objects.create(
+                user=user,
+                name=self.cleaned_data.get('name', ''),
+                role=self.cleaned_data.get('role', CustomUser.ROLES[0][0]),
+                number=normalized
+            )
+
         return user
+
