@@ -1,391 +1,348 @@
 document.addEventListener("DOMContentLoaded", () => {
-    
-    // URLs (diasumsikan dari template, tapi kita hardcode path-nya)
-    const GET_REVIEWS_URL = '/reviews/get-reviews/';
-    const ADD_REVIEW_URL = '/reviews/add-review/';
-    const GET_REVIEW_DETAIL_URL = '/reviews/get-review-detail/'; // prefix
-    const CSRF_TOKEN = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    // Cek jika user-data ada sebelum parsing
+    let userData = null;
+    const userDataElement = document.getElementById('user-data');
+    if (userDataElement) {
+        try { userData = JSON.parse(userDataElement.textContent); } 
+        catch (e) { console.error("Gagal parse user-data JSON:", e); }
+    }
 
-    // Elemen Utama
+    // Elemen & URL
     const reviewCardsContainer = document.getElementById('review-cards-container');
     const loadingSpinner = document.getElementById('loading-spinner');
     const emptyState = document.getElementById('empty-state');
-
-    // Elemen Modal "Add Review"
-    const addReviewModal = document.getElementById('add-review-modal');
-    const addReviewModalContent = document.getElementById('add-review-modal-content');
-    const openAddReviewModalBtn = document.getElementById('open-add-review-modal');
-    const closeAddReviewModalBtn = document.getElementById('close-add-review-modal');
-    const addReviewForm = document.getElementById('add-review-form');
-    const addReviewSubmitBtn = document.getElementById('add-review-submit-btn');
-
-    // Elemen Modal "Detail Review"
-    const detailModal = document.getElementById('review-detail-modal');
-    const detailModalContent = document.getElementById('review-detail-modal-content');
-    const closeDetailModalBtn = document.getElementById('close-detail-modal');
-    const detailModalLoading = document.getElementById('detail-modal-loading');
-    const detailModalBody = document.getElementById('detail-modal-body');
-
-    // Elemen Bintang Rating
-    const starRatingInput = document.getElementById('star-rating-input');
-    const stars = starRatingInput.querySelectorAll('.star');
-    const ratingHiddenInput = document.getElementById('rating_input');
-    const ratingText = document.getElementById('rating-text');
-    
-    const ratingDescriptions = {
-        1: 'Sangat Buruk',
-        2: 'Buruk',
-        3: 'Cukup',
-        4: 'Bagus',
-        5: 'Sangat Bagus'
-    };
+    const GET_REVIEWS_URL = '/reviews/get-reviews/';
+    const ADD_REVIEW_URL = '/reviews/add-review/';
+    const EDIT_REVIEW_URL_PREFIX = '/reviews/edit-review/';
+    const DELETE_REVIEW_URL_PREFIX = '/reviews/delete-review/';
+    const GET_REVIEW_DETAIL_URL_PREFIX = '/reviews/get-review-detail/';
 
     // ===================================
-    // FUNGSI UTAMA (Memuat Review)
+    // FUNGSI UTAMA (Memuat Semua Review)
     // ===================================
     async function loadReviews() {
-        showLoading();
+        showLoading(true);
         try {
-            const response = await fetch(GET_REVIEWS_URL);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            const response = await fetch(GET_REVIEWS_URL, { cache: 'no-store' }); // Mencegah caching
+            if (!response.ok) throw new Error('Gagal mengambil data dari server.');
             const reviews = await response.json();
-
-            reviewCardsContainer.innerHTML = ''; // Kosongkan kontainer
+            reviewCardsContainer.innerHTML = '';
 
             if (reviews.length === 0) {
                 showEmptyState();
             } else {
                 reviews.forEach(review => {
-                    const reviewCard = createReviewCard(review);
-                    reviewCardsContainer.appendChild(reviewCard);
+                    reviewCardsContainer.appendChild(createReviewCard(review));
                 });
-                hideLoading();
             }
         } catch (error) {
-            console.error('Error loading reviews:', error);
-            reviewCardsContainer.innerHTML = `<p class="text-center text-red-400 col-span-full">Gagal memuat ulasan. Silakan coba lagi nanti.</p>`;
-            hideLoading();
+            showErrorAlert('Gagal memuat ulasan.', error.toString());
+        } finally {
+            showLoading(false);
         }
     }
 
     function createReviewCard(review) {
+        // ... (Kode ini tidak perlu diubah, biarkan seperti sebelumnya)
         const card = document.createElement('div');
-        card.className = 'bg-white rounded-xl shadow-lg overflow-hidden transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1';
-        
-        // Tentukan URL gambar. Jika kosong, gunakan placeholder
-        const imageUrl = review.image_url ? review.image_url : `https://placehold.co/400x300/e2e8f0/94a3b8?text=${review.venue_name.charAt(0)}`;
-        
-        // Buat bintang
-        let starsHTML = '';
-        for (let i = 1; i <= 5; i++) {
-            starsHTML += `<span class="text-lg ${i <= review.rating ? 'text-yellow-400' : 'text-gray-300'}">★</span>`;
-        }
-
-        card.innerHTML = `
-            <div class="h-48 bg-gray-100">
-                <img src="${imageUrl}" alt="Foto ${review.venue_name}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/400x300/e2e8f0/94a3b8?text=Error'; this.onerror=null;">
-            </div>
-            <div class="p-5">
-                <h3 class="font-bold font-heading text-xl text-gray-800 truncate mb-2" title="${review.venue_name}">${review.venue_name}</h3>
-                <p class="text-sm text-gray-500 mb-3">
-                    Diulas oleh: <strong class="text-gray-700">${review.user_username}</strong>
-                </p>
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center space-x-1">
-                        ${starsHTML}
-                    </div>
-                    <span class="font-bold text-gray-700">${review.rating}/5</span>
+        card.className = 'review-card bg-white rounded-xl shadow-lg overflow-hidden flex flex-col transition-all duration-300 hover:shadow-2xl hover:-translate-y-1';
+        card.dataset.reviewId = review.pk;
+        const imageUrl = review.image_url || `https://placehold.co/400x300/e2e8f0/94a3b8?text=${review.venue_name.charAt(0)}`;
+        let starsHTML = Array(5).fill(0).map((_, i) => `<span class="text-xl ${i < review.rating ? 'text-yellow-400' : 'text-gray-300'}">★</span>`).join('');
+        let buttonsHTML = '';
+        if (review.can_modify) {
+            buttonsHTML = `
+                <div class="flex items-center space-x-2">
+                    <button class="edit-btn p-2 rounded-full bg-gray-100 hover:bg-blue-100 text-blue-600 transition-colors" title="Edit Ulasan"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z"></path></svg></button>
+                    <button class="delete-btn p-2 rounded-full bg-gray-100 hover:bg-red-100 text-red-600 transition-colors" title="Hapus Ulasan"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
                 </div>
-                <button class="view-detail-btn w-full bg-orange-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors duration-300" data-review-id="${review.pk}">
-                    Lihat Komentar
-                </button>
+            `;
+        }
+        card.innerHTML = `
+            <div class="h-48 bg-gray-100"><img src="${imageUrl}" alt="Foto ${review.venue_name}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/400x300/e2e8f0/94a3b8?text=Error';"></div>
+            <div class="p-4 flex flex-col flex-grow">
+                <h3 class="font-bold font-heading text-lg text-gray-800 truncate mb-1" title="${review.venue_name}">${review.venue_name}</h3>
+                <p class="text-xs text-gray-500 mb-2">Oleh: <strong class="text-gray-700">${review.user_username}</strong></p>
+                <div class="flex items-center justify-between mb-3"><div class="flex items-center space-x-1">${starsHTML}</div><span class="font-semibold text-gray-700 text-sm">${review.rating}/5</span></div>
+                <div class="mt-auto flex justify-between items-center pt-2">
+                    <button class="view-detail-btn w-auto bg-orange-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors text-sm">Lihat Komentar</button>
+                    ${buttonsHTML}
+                </div>
             </div>
         `;
-
-        // Tambahkan event listener ke tombol "Lihat Komentar"
-        card.querySelector('.view-detail-btn').addEventListener('click', () => {
-            openDetailModal(review.pk);
-        });
-
         return card;
     }
 
     // ===================================
-    // FUNGSI BANTUAN (Loading & Empty State)
+    // CRUD: CREATE (TAMBAH REVIEW)
     // ===================================
-    function showLoading() {
-        loadingSpinner.classList.remove('hidden');
-        emptyState.classList.add('hidden');
-        reviewCardsContainer.innerHTML = '';
-    }
-
-    function hideLoading() {
-        loadingSpinner.classList.add('hidden');
-    }
-
-    function showEmptyState() {
-        loadingSpinner.classList.add('hidden');
-        emptyState.classList.remove('hidden');
-        reviewCardsContainer.innerHTML = '';
-    }
-
-    // ===================================
-    // LOGIKA MODAL "ADD REVIEW"
-    // ===================================
-
-    // Buka Modal
-    openAddReviewModalBtn.addEventListener('click', () => {
-        addReviewForm.reset(); // Reset form setiap dibuka
-        resetStars(); // Reset bintang
-        addReviewModal.classList.remove('hidden');
-        addReviewModal.classList.add('flex');
-        setTimeout(() => {
-            addReviewModalContent.classList.remove('opacity-0', 'scale-95');
-        }, 10);
-    });
-
-    // Tutup Modal
-    function closeAddReviewModal() {
-        addReviewModalContent.classList.add('opacity-0', 'scale-95');
-        setTimeout(() => {
-            addReviewModal.classList.add('hidden');
-            addReviewModal.classList.remove('flex');
-        }, 300); // Sesuaikan dengan durasi transisi
-    }
-    closeAddReviewModalBtn.addEventListener('click', closeAddReviewModal);
-    
-    // Logika Bintang Rating
-    function resetStars() {
-        stars.forEach(s => s.classList.remove('selected', 'text-yellow-400'));
-        stars.forEach(s => s.classList.add('text-gray-300'));
-        ratingHiddenInput.value = '';
-        ratingText.textContent = 'Pilih rating...';
-    }
-
-    stars.forEach(star => {
-        star.addEventListener('click', () => {
-            const value = star.dataset.value;
-            ratingHiddenInput.value = value;
-            ratingText.textContent = `${ratingDescriptions[value]} (${value} bintang)`;
+    const addReviewForm = document.getElementById('add-review-form');
+    if (addReviewForm) {
+        addReviewForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Ini adalah baris terpenting untuk mencegah reload
+            const submitBtn = document.getElementById('add-review-submit-btn');
             
-            stars.forEach(s => {
-                s.classList.remove('selected', 'text-yellow-400');
-                s.classList.add('text-gray-300');
-                if (s.dataset.value <= value) {
-                    s.classList.add('selected', 'text-yellow-400');
-                    s.classList.remove('text-gray-300');
-                }
-            });
-        });
+            const formData = {
+                venue_name: document.getElementById('venue_name_input').value,
+                rating: parseInt(document.getElementById('rating_input').value),
+                comment: document.getElementById('comment_input').value,
+                image_url: document.getElementById('image_url_input').value || "",
+            };
 
-        // Efek hover
-        star.addEventListener('mouseover', () => {
-            stars.forEach(s => {
-                s.classList.remove('text-yellow-400');
-                s.classList.add('text-gray-300');
-                if (s.dataset.value <= star.dataset.value) {
-                    s.classList.add('text-yellow-400');
-                    s.classList.remove('text-gray-300');
-                }
-            });
-        });
-    });
+            setButtonLoading(submitBtn, true);
 
-    starRatingInput.addEventListener('mouseout', () => {
-        const selectedValue = ratingHiddenInput.value;
-        stars.forEach(s => {
-            s.classList.remove('text-yellow-400');
-            s.classList.add('text-gray-300');
-            if (selectedValue && s.dataset.value <= selectedValue) {
-                s.classList.add('text-yellow-400');
-                s.classList.remove('text-gray-300');
+            try {
+                const response = await fetch(ADD_REVIEW_URL, {
+                    method: 'POST', // Mengirim sebagai POST
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+                    body: JSON.stringify(formData),
+                });
+                const result = await response.json();
+
+                if (!response.ok) {
+                    const errorText = result.errors ? JSON.stringify(result.errors) : result.message;
+                    throw new Error(errorText || 'Terjadi kesalahan dari server.');
+                }
+                
+                showSuccessAlert('Ulasan berhasil ditambahkan!');
+                closeModal(document.getElementById('add-review-modal'));
+                loadReviews(); // Memuat ulang kartu setelah sukses
+
+            } catch (error) {
+                showErrorAlert('Gagal Menambahkan Ulasan', error.message);
+            } finally {
+                setButtonLoading(submitBtn, false, 'Kirim');
             }
         });
+    }
+
+    // ===================================
+    // EVENT DELEGATION DAN FUNGSI LAINNYA
+    // ===================================
+    reviewCardsContainer.addEventListener('click', (e) => {
+        const reviewCard = e.target.closest('.review-card');
+        if (!reviewCard) return;
+        const reviewId = reviewCard.dataset.reviewId;
+
+        if (e.target.closest('.view-detail-btn')) openDetailModal(reviewId);
+        else if (e.target.closest('.edit-btn')) openEditModal(reviewId);
+        else if (e.target.closest('.delete-btn')) deleteReview(reviewId);
     });
 
-    resetStars(); // Inisialisasi bintang saat load
+    // ===================================
+    // CRUD: READ (DETAIL)
+    // ===================================
+    async function openDetailModal(reviewId) {
+        const modal = document.getElementById('review-detail-modal');
+        const content = document.getElementById('review-detail-modal-content');
+        const loading = document.getElementById('detail-modal-loading');
+        const body = document.getElementById('detail-modal-body');
 
-    // Submit Form "Add Review"
-    addReviewForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        const formData = {
-            venue_name: document.getElementById('venue_name_input').value,
-            rating: parseInt(ratingHiddenInput.value),
-            comment: document.getElementById('comment_input').value,
-            image_url: document.getElementById('image_url_input').value || null, // Kirim null jika kosong
-        };
-
-        // Validasi sederhana
-        if (!formData.venue_name || !formData.rating || !formData.comment) {
-            showToast('Error', 'Nama lapangan, rating, dan komentar wajib diisi.', 'error');
-            return;
-        }
-
-        // Tampilkan loading di tombol
-        addReviewSubmitBtn.disabled = true;
-        addReviewSubmitBtn.innerHTML = '<div class="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mx-auto"></div>';
+        showModal(modal, content);
+        loading.classList.remove('hidden');
+        body.classList.add('hidden');
 
         try {
-            const response = await fetch(ADD_REVIEW_URL, {
+            const response = await fetch(`${GET_REVIEW_DETAIL_URL_PREFIX}${reviewId}/`);
+            const result = await response.json();
+            if (!result.status === 'success') throw new Error(result.message);
+
+            const review = result.data;
+            document.getElementById('detail-venue-name').textContent = review.venue_name;
+            document.getElementById('detail-comment').textContent = review.comment;
+            document.getElementById('detail-user').textContent = review.user_username;
+            document.getElementById('detail-date').textContent = review.created_at.split(',')[0];
+            document.getElementById('detail-image').src = review.image_url || `https://placehold.co/600x400/e2e8f0/94a3b8?text=Tidak+Ada+Foto`;
+
+            const ratingContainer = document.getElementById('detail-rating');
+            ratingContainer.innerHTML = Array(5).fill(0).map((_, i) =>
+                `<span class="text-2xl ${i < review.rating ? 'text-yellow-400' : 'text-gray-300'}">★</span>`
+            ).join('');
+
+            loading.classList.add('hidden');
+            body.classList.remove('hidden');
+        } catch (error) {
+            loading.innerHTML = `<p class="text-red-500">Gagal memuat detail ulasan.</p>`;
+        }
+    }
+
+    // ===================================
+    // CRUD: UPDATE (EDIT)
+    // ===================================
+    async function openEditModal(reviewId) {
+        const modal = document.getElementById('edit-review-modal');
+        const content = document.getElementById('edit-review-modal-content');
+        showModal(modal, content);
+
+        try {
+            // Ambil data terbaru untuk di-edit
+            const response = await fetch(`${GET_REVIEW_DETAIL_URL_PREFIX}${reviewId}/`);
+            const result = await response.json();
+            if (result.status !== 'success') throw new Error(result.message);
+            
+            const review = result.data;
+            document.getElementById('edit_review_id_input').value = review.pk;
+            document.getElementById('edit_venue_name_input').value = review.venue_name;
+            document.getElementById('edit_comment_input').value = review.comment;
+            document.getElementById('edit_image_url_input').value = review.image_url || '';
+            
+            // Set rating di modal edit
+            const ratingInput = document.getElementById('edit_rating_input');
+            const starsContainer = document.getElementById('edit-star-rating-input');
+            setStars(starsContainer, ratingInput, review.rating);
+
+        } catch (error) {
+            alert('Gagal mengambil data untuk diedit.');
+            closeModal(modal, content);
+        }
+    }
+    
+    document.getElementById('edit-review-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const reviewId = document.getElementById('edit_review_id_input').value;
+        const submitBtn = document.getElementById('edit-review-submit-btn');
+
+        const formData = {
+            venue_name: document.getElementById('edit_venue_name_input').value,
+            rating: parseInt(document.getElementById('edit_rating_input').value),
+            comment: document.getElementById('edit_comment_input').value,
+            image_url: document.getElementById('edit_image_url_input').value || "",
+        };
+
+        setButtonLoading(submitBtn, true);
+
+        try {
+            const response = await fetch(`${EDIT_REVIEW_URL_PREFIX}${reviewId}/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': CSRF_TOKEN,
+                    'X-CSRFToken': getCsrfToken(),
                 },
                 body: JSON.stringify(formData),
             });
-
             const result = await response.json();
 
             if (response.ok && result.status === 'success') {
-                showToast('Sukses!', 'Ulasan berhasil ditambahkan.', 'success');
-                closeAddReviewModal();
-                loadReviews(); // Muat ulang semua review
+                alert('Ulasan berhasil diperbarui!');
+                const modal = document.getElementById('edit-review-modal');
+                const content = document.getElementById('edit-review-modal-content');
+                closeModal(modal, content);
+                loadReviews();
             } else {
-                // Tangani error dari server (misal validasi)
-                let errorMessage = result.message || 'Gagal menambahkan ulasan.';
-                if (result.errors) {
-                    errorMessage = Object.values(result.errors).flat().join(' ');
-                }
-                showToast('Error', errorMessage, 'error');
+                alert(`Error: ${result.message || JSON.stringify(result.errors)}`);
             }
         } catch (error) {
-            console.error('Error submitting review:', error);
-            showToast('Error', 'Terjadi kesalahan. Coba lagi nanti.', 'error');
+            alert('Terjadi kesalahan saat menyimpan perubahan.');
         } finally {
-            // Kembalikan tombol ke state normal
-            addReviewSubmitBtn.disabled = false;
-            addReviewSubmitBtn.innerHTML = 'Kirim';
+            setButtonLoading(submitBtn, false, 'Simpan Perubahan');
         }
     });
 
-
     // ===================================
-    // LOGIKA MODAL "DETAIL REVIEW"
+    // CRUD: DELETE
     // ===================================
-    async function openDetailModal(reviewId) {
-        // Tampilkan modal dan loading state
-        detailModal.classList.remove('hidden');
-        detailModal.classList.add('flex');
-        detailModalLoading.classList.remove('hidden');
-        detailModalBody.classList.add('hidden');
-        
-        setTimeout(() => {
-            detailModalContent.classList.remove('opacity-0', 'scale-95');
-        }, 10);
+    async function deleteReview(reviewId) {
+        if (!confirm('Apakah Anda yakin ingin menghapus ulasan ini?')) {
+            return;
+        }
 
         try {
-            const response = await fetch(`${GET_REVIEW_DETAIL_URL}${reviewId}/`);
+            const response = await fetch(`${DELETE_REVIEW_URL_PREFIX}${reviewId}/`, {
+                method: 'POST', // Menggunakan POST sesuai setup di view
+                headers: { 'X-CSRFToken': getCsrfToken() },
+            });
             const result = await response.json();
 
             if (response.ok && result.status === 'success') {
-                const review = result.data;
-                
-                // Isi data ke modal
-                document.getElementById('detail-venue-name').textContent = review.venue_name;
-                document.getElementById('detail-comment').textContent = review.comment;
-                document.getElementById('detail-user').textContent = review.user_username;
-                document.getElementById('detail-date').textContent = review.created_at.split(',')[0]; // Ambil tanggal saja
-
-                // Set gambar
-                const img = document.getElementById('detail-image');
-                if (review.image_url) {
-                    img.src = review.image_url;
-                    img.alt = `Foto ulasan ${review.venue_name}`;
-                } else {
-                    // Placeholder jika tidak ada gambar
-                    img.src = `https://placehold.co/600x400/e2e8f0/94a3b8?text=Tidak+Ada+Foto`;
-                    img.alt = `Tidak ada foto ulasan`;
-                }
-                
-                // Buat bintang
-                const detailRatingContainer = document.getElementById('detail-rating');
-                detailRatingContainer.innerHTML = '';
-                for (let i = 1; i <= 5; i++) {
-                    const starSpan = document.createElement('span');
-                    starSpan.textContent = '★';
-                    starSpan.className = i <= review.rating ? 'text-yellow-400' : 'text-gray-300';
-                    detailRatingContainer.appendChild(starSpan);
-                }
-
-                // Tampilkan konten, sembunyikan loading
-                detailModalLoading.classList.add('hidden');
-                detailModalBody.classList.remove('hidden');
-
+                alert('Ulasan berhasil dihapus.');
+                loadReviews();
             } else {
-                throw new Error(result.message || 'Gagal mengambil data');
+                alert(`Gagal menghapus ulasan: ${result.message}`);
             }
         } catch (error) {
-            console.error('Error fetching review detail:', error);
-            detailModalLoading.innerHTML = `<p class="text-red-500">Gagal memuat detail ulasan.</p>`;
+            alert('Terjadi kesalahan jaringan.');
+        }
+    }
+    
+    // ===================================
+    // FUNGSI BANTUAN (Helpers)
+    // ===================================
+    function getCsrfToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]').value;
+    }
+
+    function showLoading(isLoading) {
+        loadingSpinner.classList.toggle('hidden', !isLoading);
+        if (isLoading) {
+            reviewCardsContainer.innerHTML = '';
+            emptyState.classList.add('hidden');
         }
     }
 
-    // Tutup Modal Detail
-    function closeDetailModal() {
-        detailModalContent.classList.add('opacity-0', 'scale-95');
-        setTimeout(() => {
-            detailModal.classList.add('hidden');
-            detailModal.classList.remove('flex');
-            
-            // Reset state modal detail untuk pemanggilan berikutnya
-            detailModalLoading.classList.remove('hidden');
-            detailModalBody.classList.add('hidden');
-            detailModalLoading.innerHTML = '<div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-green-500 mx-auto"></div><p class="text-gray-600 mt-4">Memuat detail...</p>';
-        }, 300);
+    function showEmptyState() {
+        emptyState.classList.remove('hidden');
     }
-    closeDetailModalBtn.addEventListener('click', closeDetailModal);
 
-    // ===================================
-    // FUNGSI TOAST NOTIFICATION
-    // ===================================
-    function showToast(title, message, type = 'success') {
-        const toastContainer = document.getElementById('toast-container');
-        const toast = document.createElement('div');
-        toast.className = `toast w-80 max-w-sm bg-white rounded-lg shadow-lg p-4 border-l-4 ${type === 'success' ? 'border-green-500' : 'border-red-500'}`;
-        
-        toast.innerHTML = `
-            <div class="flex">
-                <div class="flex-shrink-0">
-                    <svg class="w-6 h-6 ${type === 'success' ? 'text-green-500' : 'text-red-500'}" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        ${type === 'success' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>' : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>'}
-                    </svg>
-                </div>
-                <div class="ml-3 w-0 flex-1">
-                    <p class="text-sm font-bold text-gray-900">${title}</p>
-                    <p class="mt-1 text-sm text-gray-600">${message}</p>
-                </div>
-                <div class="ml-4 flex-shrink-0 flex">
-                    <button class="toast-close-btn inline-flex text-gray-400 hover:text-gray-500">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                    </button>
-                </div>
-            </div>
-        `;
+    function showModal(modal, content) {
+        modal.classList.remove('hidden', 'flex');
+        modal.classList.add('flex');
+        setTimeout(() => content.classList.remove('opacity-0', 'scale-95'), 10);
+    }
+    
+    function closeModal(modal, content) {
+        content.classList.add('opacity-0', 'scale-95');
+        setTimeout(() => modal.classList.add('hidden'), 300);
+    }
 
-        toast.querySelector('.toast-close-btn').addEventListener('click', () => {
-            toast.classList.add('toast-exit');
-            setTimeout(() => toast.remove(), 500);
+    function setButtonLoading(btn, isLoading, defaultText = 'Kirim') {
+        btn.disabled = isLoading;
+        if (isLoading) {
+            btn.innerHTML = '<div class="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mx-auto"></div>';
+        } else {
+            btn.innerHTML = defaultText;
+        }
+    }
+
+    // Fungsi untuk setup bintang rating
+    function setupStarRating(container, input) {
+        const ratingDescriptions = { 1: 'Sangat Buruk', 2: 'Buruk', 3: 'Cukup', 4: 'Bagus', 5: 'Sangat Bagus' };
+        const ratingText = container.nextElementSibling;
+
+        container.querySelectorAll('.star').forEach(star => {
+            star.addEventListener('click', () => {
+                const value = star.dataset.value;
+                setStars(container, input, value, ratingDescriptions);
+            });
         });
-
-        toastContainer.appendChild(toast);
-
-        // Hapus toast setelah 5 detik
-        setTimeout(() => {
-            toast.classList.add('toast-exit');
-            setTimeout(() => {
-                if (toast.parentElement) {
-                    toast.remove();
-                }
-            }, 500);
-        }, 5000);
+    }
+    
+    function setStars(container, input, value) {
+        const ratingDescriptions = { 1: 'Sangat Buruk', 2: 'Buruk', 3: 'Cukup', 4: 'Bagus', 5: 'Sangat Bagus' };
+        const ratingText = container.nextElementSibling;
+        
+        input.value = value;
+        if(ratingText) ratingText.textContent = `${ratingDescriptions[value]} (${value} bintang)`;
+        
+        container.querySelectorAll('.star').forEach(s => {
+            s.classList.toggle('text-yellow-400', s.dataset.value <= value);
+            s.classList.toggle('text-gray-300', s.dataset.value > value);
+        });
     }
 
-    // ===================================
-    // INISIALISASI
-    // ===================================
+    // Inisialisasi modal tambah & edit
+    const addReviewModal = document.getElementById('add-review-modal');
+    document.getElementById('open-add-review-modal').addEventListener('click', () => showModal(addReviewModal, document.getElementById('add-review-modal-content')));
+    document.getElementById('close-add-review-modal').addEventListener('click', () => closeModal(addReviewModal, document.getElementById('add-review-modal-content')));
+    setupStarRating(document.getElementById('star-rating-input'), document.getElementById('rating_input'));
+    
+    const editReviewModal = document.getElementById('edit-review-modal');
+    document.getElementById('close-edit-review-modal').addEventListener('click', () => closeModal(editReviewModal, document.getElementById('edit-review-modal-content')));
+    setupStarRating(document.getElementById('edit-star-rating-input'), document.getElementById('edit_rating_input'));
+    
+    const detailModal = document.getElementById('review-detail-modal');
+    document.getElementById('close-detail-modal').addEventListener('click', () => closeModal(detailModal, document.getElementById('review-detail-modal-content')));
+
+
+    // Mulai aplikasi
     loadReviews();
 });

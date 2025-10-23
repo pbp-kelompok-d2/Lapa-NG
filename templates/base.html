@@ -20,9 +20,13 @@
         }
     </script>
     <link rel="stylesheet" href="{% static 'css/global.css' %}"/>
+    {% block styles %} {% endblock styles %}
 </head>
 
 <body>
     {% block content %} {% endblock content %}
-</body>
+
+    {% block scripts %}
+    {% endblock scripts %}
+    </body>
 </html>
