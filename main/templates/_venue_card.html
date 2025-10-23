@@ -1,7 +1,7 @@
 {% load static %}
 {% load humanize %} 
 <div 
-  class="venue-card bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden group cursor-pointer flex flex-col"
+  class="venue-card relative bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden group cursor-pointer flex flex-col"
   data-slug="{{ venue.slug }}">
     
     <div class="h-48 bg-gray-200 flex items-center justify-center text-gray-400 group-hover:opacity-90 transition-opacity">
@@ -33,7 +33,7 @@
 
     {% if venue.is_featured %}
         <span class="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded">
-            Featured
+                Featured
         </span>
     {% endif %}
 </div>
