@@ -44,11 +44,15 @@ const heroImages = [
     '/static/images/封面-3.jpg',       // Stadium (FIRST) - Make sure filename is correct
     '/static/images/basketball.jpeg', // Basketball
     '/static/images/convert.webp',    // Soccer Action
-    '/static/images/skate.jpg',       // Skateboarding
+    '/static/images/skate.png',       // Skateboarding
     '/static/images/GettyImages-1272468011.jpg' // Tennis Serve
 ];
 let currentImageIndex = 0;
 
+heroImages.forEach(src => {
+    const img = new Image();
+    img.src = src;
+});
 
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -75,12 +79,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Hero Elements
     const heroSection = document.getElementById('hero-section');
-    const heroBg = document.getElementById('hero-bg'); // Inner div for background
+    const heroSliderTrack = document.getElementById('hero-slider-track'); // New
+    const heroSlides = document.querySelectorAll('.hero-slide'); // New
+    const heroDotsContainer = document.getElementById('hero-dots'); // New
     const heroWelcome = document.getElementById('hero-welcome');
     const heroSlogan = document.getElementById('hero-slogan');
     const heroRevealBtn = document.getElementById('hero-reveal-btn');
-    const contentWrapper = document.getElementById('content-wrapper');
-    const mainNavbar = document.getElementById('main-navbar');
+    const contentWrapper = document.getElementById('content-wrapper'); 
+    const mainNavbar = document.getElementById('main-navbar');   
+    const heroBg = document.getElementById('hero-bg'); // For parallax
+    let heroDots = []; // To store dot elements
+    let heroInterval; // To store the interval ID
 
     // --- Modal Functions ---
     function openModal() {
@@ -94,27 +103,67 @@ document.addEventListener('DOMContentLoaded', function() {
     // ===================================
     // ===== HERO SECTION LOGIC ========
     // ===================================
-    let isHeroFull = true; // Track state: 'full' or 'revealed'
+    let isHeroFull = true; 
+    let isScrollingProgrammatically = false;
 
-    if (heroSection && contentWrapper && mainNavbar && heroBg) {
-        // --- Image Cycling ---
-        function changeHeroImage() {
-            currentImageIndex = (currentImageIndex + 1) % heroImages.length;
-            // Add fade effect for background image transition on the inner div
-            heroBg.style.opacity = '0';
-            setTimeout(() => {
-                heroBg.style.backgroundImage = `url('${heroImages[currentImageIndex]}')`;
-                heroBg.style.opacity = '1';
-            }, 500); // Half of hero-bg transition duration (adjust if needed)
+    if (heroSection && contentWrapper && mainNavbar && heroSliderTrack && heroSlides.length > 0) {
+        
+        // --- Set Initial Slide Backgrounds ---
+        heroSlides.forEach((slide, index) => {
+             if (heroImages[index]) {
+                 slide.style.backgroundImage = `url('${heroImages[index]}')`;
+             }
+        });
+
+        // --- Generate Dots ---
+        heroImages.forEach((_, index) => {
+            const dot = document.createElement('button');
+            dot.classList.add('hero-dot', 'w-1', 'h-1', 'rounded-full', 'bg-white', 'bg-opacity-50', 'transition-all');
+            dot.dataset.index = index;
+            if (index === 0) dot.classList.add('bg-opacity-50', 'scale-125'); // Active state
+            heroDotsContainer.appendChild(dot);
+            heroDots.push(dot); // Store dot element
+        });
+
+        // --- Function to Go To a Specific Slide ---
+        function goToSlide(index) {
+            if (index < 0 || index >= heroImages.length) return; // Boundary check
+            
+            heroSliderTrack.style.transform = `translateX(-${index * 100}%)`;
+            currentImageIndex = index;
+
+            // Update active dot
+            heroDots.forEach((dot, i) => {
+                if (i === index) {
+                    dot.classList.add('bg-opacity-100', 'scale-125');
+                } else {
+                    dot.classList.remove('bg-opacity-100', 'scale-125');
+                }
+            });
         }
-        // Preload first image on the inner div
-        heroBg.style.backgroundImage = `url('${heroImages[0]}')`;
-        heroBg.style.opacity = '1';
-        setInterval(changeHeroImage, 15000); // Change every 15 seconds
+        
+        // --- Auto-Slide Function ---
+        function autoSlide() {
+             let nextIndex = (currentImageIndex + 1) % heroImages.length;
+             goToSlide(nextIndex);
+        }
+
+        // --- Start Auto-Sliding ---
+        heroInterval = setInterval(autoSlide, 5000); // Change every 5 seconds
+
+        // --- Add Click Listeners to Dots ---
+         heroDotsContainer.addEventListener('click', (e) => {
+             if (e.target.classList.contains('hero-dot')) {
+                 const index = parseInt(e.target.dataset.index, 10);
+                 goToSlide(index);
+                 // Reset interval after manual click
+                 clearInterval(heroInterval);
+                 heroInterval = setInterval(autoSlide, 10000);
+             }
+         });
 
         // --- Initial Navbar State (Hidden) ---
-        mainNavbar.classList.add('opacity-0', '-translate-y-full', 'pointer-events-none'); // Hide and make non-interactive
-
+        mainNavbar.classList.add('opacity-0', '-translate-y-full', 'pointer-events-none');
         // --- Initial Text/Button Fade-In Animations ---
         requestAnimationFrame(() => {
             if (heroWelcome) heroWelcome.classList.remove('opacity-0');
@@ -175,36 +224,69 @@ document.addEventListener('DOMContentLoaded', function() {
          }
 
         // --- Button Click ---
-        if (heroRevealBtn) {
-            heroRevealBtn.addEventListener('click', () => {
+      if (heroRevealBtn) {
+            // Unified single handler: reveal and small nudge only.
+            heroRevealBtn.addEventListener('click', function onHeroRevealClick() {
+                // Only act when hero is still full
+                if (!isHeroFull) return;
+
+                // Prevent double clicks while animating
+                heroRevealBtn.disabled = true;
+
+                console.log('Revealing content (unified handler)');
                 revealContent();
-                setTimeout(() => {
-                    contentWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 50);
+
+                // Prevent scroll listener from reacting to our programmatic move
+                isScrollingProgrammatically = true;
+
+                // Small nudge after paint so CSS transitions start
+                requestAnimationFrame(() => {
+                    setTimeout(() => {
+                        const NUDGE_PX = 120;
+                        window.scrollBy({ top: NUDGE_PX, behavior: 'smooth' });
+
+                        // Re-enable listeners and button after the smooth scroll finishes
+                        setTimeout(() => {
+                            isScrollingProgrammatically = false;
+                            heroRevealBtn.disabled = false;
+                        }, 700);
+                    }, 120);
+                });
             });
         }
 
-        // --- Scroll Listener ---
-        let scrollTimeout; // To debounce scroll checks slightly
+        // --- Scroll Listener (Simplified Flag Check) ---
+        let scrollTimeout;
         window.addEventListener('scroll', () => {
+            // --- Check flag immediately ---
+            if (isScrollingProgrammatically) {
+                console.log("Scroll event ignored (programmatic)");
+                return; // Ignore scroll events triggered by our button click
+            }
+            // --- End Check ---
+
             clearTimeout(scrollTimeout);
             scrollTimeout = setTimeout(() => {
+                // Re-check flag just in case state changed during timeout
+                if (isScrollingProgrammatically) return;
+
                 const scrollPosition = window.scrollY;
+                console.log("Manual Scroll Detected:", scrollPosition); // Debugging
 
                 if (isHeroFull && scrollPosition > 50) {
                     revealContent();
                 } else if (!isHeroFull && scrollPosition === 0) {
+                    // Only reset if truly at the top after manual scroll
                     resetToFullHero();
                 }
 
-                // Fade button out when revealed and scrolled down
+                // Fade button out logic remains
                 if (heroRevealBtn && !isHeroFull) {
                      if (scrollPosition > 100) {
                           heroRevealBtn.classList.add('opacity-0');
                      }
-                     // No need to fade in here, handled by resetToFullHero
                 }
-            }, 10); // Debounce scroll checks
+            }, 50); // Shorter debounce for responsiveness
         });
 
         // --- Mouse Parallax Listener ---

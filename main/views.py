@@ -307,12 +307,11 @@ def _parse_hhmm(s: str):
     if not s:
         return None
     s = s.strip()
-    # CSV kamu konsisten "H:MM" atau "HH:MM"
     return datetime.strptime(s, "%H:%M").time()
 
 @staff_member_required 
 def import_venues_from_csv(request):
-    if request.method != "POST":
+    if request.method != "GET":
         return HttpResponseNotAllowed(["POST"])
 
     csv_path = Path(settings.BASE_DIR) / CSV_RELATIVE_PATH
@@ -326,7 +325,6 @@ def import_venues_from_csv(request):
             with open(csv_path, newline="", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
                 expected = ["name","category","address","price","capacity","opening_time","closing_time","time","thumbnail"]
-                # cek header minimal
                 missing = [h for h in expected if h not in reader.fieldnames]
                 if missing:
                     return JsonResponse({"ok": False, "error": f"Missing columns: {missing}"}, status=400)
