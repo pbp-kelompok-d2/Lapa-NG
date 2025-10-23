@@ -1,19 +1,27 @@
 from django.urls import path
 from main.views import (
-    show_main, venue_detail, create_venue, edit_venue, delete_venue, filter_venues,
-    import_venues_from_csv, 
+    show_main, venue_detail,  edit_venue, delete_venue, filter_venues,
+    get_venue_details, get_create_form_html, create_venue_ajax,
+    import_venues_from_csv, add_to_booking_draft_stub
 ) 
 
 app_name = 'main'
 
 urlpatterns = [
     path('', show_main, name='show_main'),
-    path('venue/add/', create_venue, name='create_venue'), 
+    # path('venue/add/', create_venue, name='create_venue'), 
     path('venue/<slug:slug>/', venue_detail, name='venue_detail'), 
     path('venue/<slug:slug>/edit/', edit_venue, name='edit_venue'),  
     path('venue/<slug:slug>/delete/', delete_venue, name='delete_venue'),
-    path("import-venues-from-csv/", import_venues_from_csv, name="import_venues_csv"),
 
     # ajax stuff
     path('ajax/filter-venues/', filter_venues, name='filter_venues'),
+    path('ajax/venue-details/<slug:slug>/', get_venue_details, name='get_venue_details'),
+    path('ajax/get-create-form/', get_create_form_html, name='get_create_form'),
+    path('ajax/create-venue/', create_venue_ajax, name='create_venue_ajax'),
+
+    # misc
+    path("import-venues-from-csv/", import_venues_from_csv, name="import_venues_csv"),
+    path('ajax/stub-add-to-booking/<int:venue_id>/', add_to_booking_draft_stub, name='stub_add_to_booking'),
+
 ]

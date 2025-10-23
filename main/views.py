@@ -13,7 +13,7 @@ from django.contrib.auth.decorators import login_required
 from .models import Venue
 from .forms import VenueForm
 from django.db.models import Q # Import Q for complex lookups
-
+from django.template.loader import render_to_string
 
 PRICE_RANGES = {
     '0-50000': 'Under Rp 50.000',
@@ -21,7 +21,6 @@ PRICE_RANGES = {
     '100001+': 'Over Rp 100.000',
 }
 
-# Create your views here.
 def show_main(request):
     # Get all distinct categories for the filter dropdown
     categories = Venue.objects.values_list('category', flat=True).order_by('category').distinct()
@@ -121,20 +120,20 @@ def venue_detail(request, slug):
     }
     return render(request, "venue_detail.html", context)
 
-@login_required(login_url='authentication:login') # Redirect to login if not authenticated
-def create_venue(request):
-    form = VenueForm() # Initialize an empty form
+# @login_required(login_url='authentication:login') # Redirect to login if not authenticated
+# def create_venue(request):
+#     form = VenueForm() # Initialize an empty form
 
-    if request.method == 'POST':
-        form = VenueForm(request.POST)
-        if form.is_valid():
-            venue = form.save(commit=False)  # Don't save to DB yet
-            venue.owner = request.user       
-            venue.save()                     
-            return redirect('main:venue_detail', slug=venue.slug) # Redirect to the new venue's detail page
+#     if request.method == 'POST':
+#         form = VenueForm(request.POST)
+#         if form.is_valid():
+#             venue = form.save(commit=False)  # Don't save to DB yet
+#             venue.owner = request.user       
+#             venue.save()                     
+#             return redirect('main:venue_detail', slug=venue.slug) # Redirect to the new venue's detail page
 
-    context = {'form': form}
-    return render(request, 'create_venue.html', context)
+#     context = {'form': form}
+#     return render(request, 'create_venue.html', context)
 
 @login_required(login_url='authentication:login')
 def edit_venue(request, slug):
@@ -171,6 +170,58 @@ def delete_venue(request, slug):
     return redirect('main:venue_detail', slug=venue.slug)
 
 
+#ajax tuff
+def get_venue_details(request, slug):
+    venue = get_object_or_404(Venue, slug=slug) 
+    context = {
+        'venue': venue,
+    }
+    return render(request, '_venue_modal_content.html', context)
+
+@login_required(login_url='authentication:login')
+def create_venue_ajax(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
+
+    form = VenueForm(request.POST)
+    
+    if form.is_valid():
+        venue = form.save(commit=False)
+        venue.owner = request.user
+        venue.save()
+        
+        # Render the new card to send back to the JS
+        new_card_html = render_to_string('_venue_card.html', {'venue': venue})
+        
+        return JsonResponse({
+            'status': 'ok',
+            'message': 'Venue created successfully!',
+            'new_card_html': new_card_html
+        })
+    else:
+        # Form is invalid, re-render the form HTML with errors
+        context = {
+            'form': form,
+            'modal_title': 'Add Your Venue',
+            'button_text': 'Save Venue',
+            'form_url': reverse('main:create_venue_ajax')
+        }
+        form_html = render_to_string('_venue_form.html', context, request=request)
+        return JsonResponse({'status': 'error', 'form_html': form_html}, status=400)
+
+@login_required(login_url='authentication:login')
+def get_create_form_html(request):
+    form = VenueForm()
+    context = {
+        'form': form,
+        'modal_title': 'Add Your Venue',
+        'button_text': 'Save Venue',
+        'form_url': reverse('main:create_venue_ajax') # Points to the new POST handler
+    }
+    html = render_to_string('_venue_form.html', context, request=request)
+    return JsonResponse({'html': html})
+
+# LOAD CSV IMPORT FUNCTIONALITY
 CSV_RELATIVE_PATH = Path("data") / "venues - courts_enriched_data.csv"  
 
 def _parse_hhmm(s: str):
@@ -242,3 +293,22 @@ def import_venues_from_csv(request):
             return JsonResponse({"ok": False, "error": str(e)}, status=500)
 
     return JsonResponse({"ok": True, "stats": {"created": created, "updated": updated, "skipped": skipped, "errors": errors}}, status=200)
+
+
+# --- STUB ENDPOINT FOR BOOKING APP ---
+@login_required(login_url='authentication:login')
+def add_to_booking_draft_stub(request, venue_id):
+    # This view is a placeholder for the real Booking app.
+    # simulasikan proses penambahan venue ke draft booking
+
+    venue = get_object_or_404(Venue, id=venue_id)
+    
+    # In a booking app, bakal ada BookingDraft object here, e.g.:
+    # BookingDraft.objects.create(user=request.user, venue=venue)
+    
+    print(f"STUB: User {request.user.username} added venue {venue.name} (ID: {venue_id}) to booking draft.")
+
+    return JsonResponse({
+        "status": "ok",
+        "message": f"Venue '{venue.name}' added to your booking draft!"
+    })
