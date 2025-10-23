@@ -360,18 +360,150 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- COMBINED MODAL BUTTON CLICK HANDLER ---
     if (modalPanel) {
+        // Helper to read CSRF from cookie (Django)
+        function getCSRFToken() {
+            const name = 'csrftoken=';
+            const parts = document.cookie.split(';').map(s => s.trim());
+            for (const p of parts) {
+                if (p.startsWith(name)) return p.substring(name.length);
+            }
+            return null;
+        }
+
         modalPanel.addEventListener('click', function(event) {
             // Close Button
             if (event.target.closest('#modal-close-btn')) { closeModal(); return; }
-            // Add to Booking Button
+
+            // --- Add to Booking ---
             const bookingBtn = event.target.closest('#add-to-booking-btn');
-            if (bookingBtn) { /* ... booking logic ... */ return; }
-            // Edit Button
+            if (bookingBtn) {
+                const slug = bookingBtn.dataset.slug || bookingBtn.getAttribute('data-slug');
+                const url = bookingBtn.dataset.url || (slug ? URLS.bookingAdd.replace('SLUG_PLACEHOLDER', slug) : null);
+                if (!url) { showToast('Booking URL not available.', 'error'); return; }
+
+                // POST to add to booking, then redirect or show message
+                const csrftoken = getCSRFToken();
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken || '',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => {
+                    if (res.headers.get('Content-Type')?.includes('application/json')) return res.json();
+                    return res.text().then(t => Promise.reject(t));
+                })
+                .then(data => {
+                    if (data.redirect) {
+                        window.location.href = data.redirect;
+                    } else if (URLS.bookingRedirect) {
+                        window.location.href = URLS.bookingRedirect;
+                    } else {
+                        showToast(data.message || 'Added to booking.', 'success');
+                        closeModal();
+                    }
+                })
+                .catch(err => {
+                    console.error('Booking add error:', err);
+                    showToast('Could not add to booking.', 'error');
+                });
+                return;
+            }
+
+            // --- Edit Venue (load edit form into modal) ---
             const editBtn = event.target.closest('#edit-venue-btn');
-            if (editBtn) { /* ... edit logic ... */ return; }
-            // Delete Button
+            if (editBtn) {
+                const slug = editBtn.dataset.slug || editBtn.getAttribute('data-slug');
+                if (!slug) { showToast('Edit target not found.', 'error'); return; }
+                const fetchUrl = URLS.getEditForm.replace('SLUG_PLACEHOLDER', slug);
+                fetch(fetchUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(res => {
+                        if (!res.ok) throw new Error('Could not load edit form');
+                        return res.json();
+                    })
+                    .then(data => {
+                        if (data.html) {
+                            modalPanel.innerHTML = data.html;
+                            openModal();
+                        } else {
+                            showToast('Edit form unavailable.', 'error');
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Load edit form error:', err);
+                        showToast('Failed to load edit form.', 'error');
+                    });
+                return;
+            }
+
+            // --- Delete Venue ---
             const deleteBtn = event.target.closest('#delete-venue-btn');
-            if (deleteBtn) { /* ... delete logic ... */ return; }
+            if (deleteBtn) {
+                const slug = deleteBtn.dataset.slug || deleteBtn.getAttribute('data-slug');
+                const url = deleteBtn.dataset.url || (slug ? deleteBtn.dataset.urlTemplate ? deleteBtn.dataset.urlTemplate.replace('SLUG_PLACEHOLDER', slug) : null : null);
+                // If a delete confirmation form exists inside modalPanel, submit that instead
+                const deleteForm = modalPanel.querySelector('#delete-venue-form');
+                if (deleteForm) {
+                    deleteForm.requestSubmit();
+                    return;
+                }
+
+                if (!url) {
+                    // fallback: try to find a form action inside modal
+                    const actionForm = modalPanel.querySelector('form[data-delete-action]');
+                    if (actionForm && actionForm.dataset.deleteAction) {
+                        fetch(actionForm.dataset.deleteAction, { method: 'POST', headers: { 'X-CSRFToken': getCSRFToken() || '' } })
+                            .then(res => {
+                                if (!res.ok) throw new Error('Delete failed');
+                                return res.json();
+                            })
+                            .then(data => {
+                                showToast(data.message || 'Deleted.', 'success');
+                                closeModal();
+                                // Remove card from list if slug available
+                                if (slug) {
+                                    const card = venueContainer.querySelector(`.venue-card[data-slug="${slug}"]`);
+                                    if (card) card.remove();
+                                }
+                            })
+                            .catch(err => {
+                                console.error('Delete error:', err);
+                                showToast('Could not delete.', 'error');
+                            });
+                        return;
+                    }
+
+                    // If no endpoint is known, ask user to confirm and fail gracefully
+                    if (!confirm('Are you sure you want to delete this venue?')) return;
+                    showToast('Delete endpoint not available.', 'error');
+                    return;
+                }
+
+                if (!confirm('Are you sure you want to delete this venue?')) return;
+                fetch(url, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': getCSRFToken() || '', 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(res => {
+                    if (!res.ok) throw new Error('Delete failed');
+                    return res.json();
+                })
+                .then(data => {
+                    showToast(data.message || 'Deleted successfully.', 'success');
+                    closeModal();
+                    if (slug) {
+                        const card = venueContainer.querySelector(`.venue-card[data-slug="${slug}"]`);
+                        if (card) card.remove();
+                    }
+                })
+                .catch(err => {
+                    console.error('Delete error:', err);
+                    showToast('Could not delete venue.', 'error');
+                });
+                return;
+            }
         });
     }
 
