@@ -5,22 +5,26 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib import messages
 from django.contrib.auth import login, logout
 
+from .forms import CustomUserCreationForm
+
 import datetime
 
 from django.urls import reverse
 
 def register(request):
-    form = UserCreationForm()
-
     if request.method == "POST":
-        form = UserCreationForm(request.POST)
+        form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Your account has been successfully created!')
-            return redirect('main:login')
-        
-    context = {'form':form}
-    return render(request, 'register.html', context)
+            messages.success(request, "Your account has been successfully created!")
+            return redirect('authentication:login')
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = CustomUserCreationForm()
+
+    return render(request, 'register.html', {'form': form})
+
 
 def login_user(request):
    if request.method == 'POST':
@@ -41,6 +45,6 @@ def login_user(request):
 
 def logout_user(request):
     logout(request)
-    response = HttpResponseRedirect(reverse('main:login'))
+    response = HttpResponseRedirect(reverse('authentication:login'))
     response.delete_cookie('last_login')
-    return redirect('main:login')
+    return redirect('authentication:login')
