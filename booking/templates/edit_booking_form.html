@@ -1,0 +1,20 @@
+<form id="editBookingForm" method="post" data-venue-id="{{ venue.id }}">
+  {% csrf_token %}
+  <div class="mb-3">
+    <label class="form-label">Nama Peminjam</label>
+    {{ form.borrower_name }}
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Tanggal Booking</label>
+    {{ form.booking_date }}
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Jam Mulai</label>
+    {{ form.start_time }}
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Jam Selesai</label>
+    {{ form.end_time }}
+  </div>
+  <button type="submit" class="btn btn-success">Simpan</button>
+</form>

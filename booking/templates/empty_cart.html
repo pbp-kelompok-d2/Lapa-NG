@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-6">
+    <!-- Judul utama -->
+    <h1 class="text-3xl font-bold text-gray-800 mb-10 text-center">Keranjang Kamu</h1>
+
+    <!-- Box konten -->
+    <div class="bg-white shadow-lg rounded-2xl p-10 max-w-md w-full text-center">
+        <!-- Icon -->
+        <div class="flex justify-center mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-20 h-20 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m12-9l2 9m-6-9v9m-4-9v9" />
+            </svg>
+        </div>
+
+        <h2 class="text-xl font-bold text-gray-800 mb-3">Keranjang Kosong</h2>
+        <p class="text-gray-500 mb-8">
+            Kamu belum menambahkan venue apa pun. Yuk pilih lapangan favoritmu dari halaman utama!
+        </p>
+
+        <!-- Tombol vertikal -->
+        <div class="flex flex-col gap-3">
+            <a href="/"
+               class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition">
+               Kembali ke Halaman Utama
+            </a>
+            <a href="{% url 'booking:booking_list' %}"
+               class="border border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold py-2.5 rounded-lg transition">
+               Lihat Booking Kamu
+            </a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
