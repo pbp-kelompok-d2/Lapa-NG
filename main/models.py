@@ -23,10 +23,11 @@ class Venue(models.Model):
     opening_time = models.TimeField(null=True, blank=True)
     closing_time = models.TimeField(null=True, blank=True)
 
-    # kolom 'time' di CSV itu teks rentang jam; simpan apa adanya supaya bisa ditampilkan cepat
+    # kolom 'time' di CSV itu teks rentang jam -> simpan apa adanya supaya bisa ditampilkan cepat
     time_display = models.CharField(max_length=50, blank=True)
     thumbnail = models.CharField(max_length=200, blank=True)
 
+    is_featured = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

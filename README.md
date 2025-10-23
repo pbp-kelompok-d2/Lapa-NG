@@ -1,3 +1,8 @@
+
+# Project Title
+
+A brief description of what this project does and who it's for
+
 ## 🏟️ LapaNG  
 Temukan lapangan, temukan teman ✨  
 
@@ -55,6 +60,7 @@ Fitur User–Owner menjadi pintu utama untuk mengakses seluruh layanan di lapa-N
 
 ### 🏟️ Venue (Lapangan)  
 Dikerjakan oleh  **Andrew Sanjay Hasian Panjaitan**
+
 Fitur Venue memungkinkan untuk menemukan berbagai lapangan di sekitar dengan mudah — mulai dari futsal, basket, hingga badminton. Setiap lapangan dilengkapi dengan informasi lokasi, fasilitas, harga, serta foto-foto yang membantu memilih tempat terbaik untuk bermain.  
 
 ---

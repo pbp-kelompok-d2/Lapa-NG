@@ -14,5 +14,6 @@ class VenueForm(forms.ModelForm):
             'opening_time', 
             'closing_time',
             'time_display',
-            'thumbnail'
+            'thumbnail',
+            'is_featured'
         ]

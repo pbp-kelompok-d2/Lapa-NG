@@ -12,13 +12,63 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from .models import Venue
 from .forms import VenueForm
+from django.db.models import Q # Import Q for complex lookups
 
+
+PRICE_RANGES = {
+    '0-50000': 'Under Rp 50.000',
+    '50001-100000': 'Rp 50.001 - Rp 100.000',
+    '100001+': 'Over Rp 100.000',
+}
 
 # Create your views here.
 def show_main(request):
-    venues = Venue.objects.all() # Get all venues from the DB
+    # Get all distinct categories for the filter dropdown
+    categories = Venue.objects.values_list('category', flat=True).order_by('category').distinct()
+
+    # Start with all venues
+    venues = Venue.objects.all()
+
+    # Get filter values from the request
+    search_query = request.GET.get('q', '')
+    category_filter = request.GET.get('category', '')
+    price_range_key = request.GET.get('price_range', '') # Get the selected price range key
+
+    # Apply filters if they exist
+    if search_query:
+        # Filter by name or address containing the query (case-insensitive)
+        venues = venues.filter(
+            Q(name__icontains=search_query) | 
+            Q(address__icontains=search_query)
+        )
+
+    if category_filter:
+        venues = venues.filter(category=category_filter)
+
+    # --- New Price Logic ---
+    min_price = None
+    max_price = None
+
+    if price_range_key in PRICE_RANGES:
+        if price_range_key == '0-50000':
+            max_price = 50000
+        elif price_range_key == '50001-100000':
+            min_price = 50001
+            max_price = 100000
+        elif price_range_key == '100001+':
+            min_price = 100001
+
+    if min_price is not None:
+        venues = venues.filter(price__gte=min_price)
+    if max_price is not None:
+        venues = venues.filter(price__lte=max_price)
+    # --- End New Price Logic ---
+
     context = {
-        'venues': venues, # Pass the venues to the template
+        'venues': venues,
+        'categories': categories,
+        'price_ranges': PRICE_RANGES, # Pass the ranges to the template
+        'current_filters': request.GET, 
     }
 
     return render(request, "main.html", context)
@@ -73,7 +123,7 @@ def delete_venue(request, slug):
         return HttpResponseForbidden("You are not allowed to delete this venue.")
 
     if request.method == 'POST':
-        venue.delete() # Delete the venue from the database
+        venue.delete() 
         return redirect('main:show_main') # Redirect to the homepage
 
     # If GET request, just redirect (or show a confirmation page)
