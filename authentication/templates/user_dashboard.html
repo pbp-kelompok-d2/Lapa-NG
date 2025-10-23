@@ -13,68 +13,76 @@
     <div class="flex flex-col lg:flex-row lg:items-start gap-6 h-full">
 
       <!-- LEFT CARD -->
-      <aside class="w-full lg:w-3/12 flex-none h-full">
-        <div class="lg:sticky lg:top-24 h-full">
-          <div class="w-full h-full flex items-stretch">
-            <!-- Card is full height and centered; position relative so edit button can be absolute -->
-            <div class="relative bg-gradient-to-br from-white to-green-50 rounded-2xl shadow-lg p-6 text-center w-full h-full flex flex-col items-center justify-center">
-              
-              {% if profile and profile.profile_picture %}
+      <aside class="w-full lg:w-3/12 flex-none">
+        <div class="lg:sticky lg:top-24">
+            <div class="w-full flex items-stretch">
+            <!-- Card: flex column so content stacks and can grow naturally -->
+            <div class="bg-gradient-to-br from-white to-green-50 rounded-2xl shadow-lg p-6 text-center w-full flex flex-col items-center justify-start">
+                
+                {% if profile and profile.profile_picture %}
                 <img src="{{ profile.profile_picture }}" alt="{{ user.username }}"
-                     class="w-36 h-36 rounded-full object-cover border-2 border-white shadow-sm mb-4 profile-avatar" />
-              {% else %}
+                    class="w-36 h-36 rounded-full object-cover border-2 border-white shadow-sm mb-4 profile-avatar" />
+                {% else %}
                 <img src="{% static 'images/user.png' %}" alt="avatar"
-                     class="w-36 h-36 rounded-full object-cover border-2 border-white shadow-sm mb-4 profile-avatar" />
-              {% endif %}
+                    class="w-36 h-36 rounded-full object-cover border-2 border-white shadow-sm mb-4 profile-avatar" />
+                {% endif %}
 
-              <h2 class="text-2xl font-extrabold text-gray-900 profile-fullname">
+                <h2 class="text-2xl font-extrabold text-gray-900 profile-fullname">
                 {{ user.customuser.name }}
-              </h2>
-              <p class="text-gray-500 text-sm w-full">{{ profile.formatted_number}}</p>
-              <p class="text-sm text-green-600 mt-1 profile-role">{{ profile.role|capfirst }}</p>
+                </h2>
 
-              <div class="mt-6 grid grid-cols-3 gap-3 text-center w-full max-w-xs">
+                {% if profile.number %}
+                <p class="text-gray-500 text-sm mt-1">{{ profile.formatted_number }}</p>
+                {% endif %}
+
+                <p class="text-sm text-green-600 mt-1 profile-role">{{ profile.role|capfirst }}</p>
+
+                <!-- Stats grid -->
+                <div class="mt-6 grid grid-cols-3 gap-3 text-center w-full max-w-xs">
                 <div>
-                  <div class="text-xs text-gray-500">Bookings</div>
-                  <div class="font-semibold text-gray-800">{{ counts.bookings|default:0 }}</div>
+                    <div class="text-xs text-gray-500">Bookings</div>
+                    <div class="font-semibold text-gray-800">{{ counts.bookings|default:0 }}</div>
                 </div>
                 <div>
-                  <div class="text-xs text-gray-500">Equipment</div>
-                  <div class="font-semibold text-gray-800">{{ counts.equipment|default:0 }}</div>
+                    <div class="text-xs text-gray-500">Equipment</div>
+                    <div class="font-semibold text-gray-800">{{ counts.equipment|default:0 }}</div>
                 </div>
                 <div>
-                  <div class="text-xs text-gray-500">Reviews</div>
-                  <div class="font-semibold text-gray-800">{{ counts.reviews|default:0 }}</div>
+                    <div class="text-xs text-gray-500">Reviews</div>
+                    <div class="font-semibold text-gray-800">{{ counts.reviews|default:0 }}</div>
                 </div>
+                </div>
+
+                <!-- Buttons row INSIDE the card. mt-auto pushes it to the bottom and the card grows -->
+                <div class="mt-auto w-full flex justify-center gap-3 pt-6 pb-2">
+                <button id="edit-profile-btn"
+                        data-username="{{ user.username|default:'' }}"
+                        data-name="{{ profile.name|default:user.get_full_name|default:'' }}"
+                        data-number="{{ profile.number|default:'' }}"
+                        data-profile_picture="{{ profile.profile_picture|default:'' }}"
+                        class="flex items-center gap-2 px-4 py-2 bg-white border rounded text-sm shadow-sm hover:bg-gray-50 hover:shadow-md transition">
+                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15.232 5.232l3.536 3.536M9 11l6-6 3 3-6 6H9v-3z" />
+                    </svg>
+                    <span class="text-gray-700">Edit</span>
+                </button>
+
+                <button id="delete-profile-btn"
+                        class="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded text-sm shadow-sm hover:bg-red-700 transition">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    <span>Delete</span>
+                </button>
+                </div>
+
             </div>
-
-              <button id="edit-profile-btn"
-                      data-username="{{ user.username|default:'' }}"
-                      data-name="{{ profile.name|default:user.get_full_name|default:'' }}"
-                      data-number="{{ profile.number|default:'' }}"
-                      data-profile_picture="{{ profile.profile_picture|default:'' }}"
-                      class="absolute left-4 bottom-4 flex items-center gap-2 px-3 py-1 bg-white/80 border rounded text-sm shadow-sm hover:shadow-md">
-                <!-- pencil icon -->
-                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M15.232 5.232l3.536 3.536M9 11l6-6 3 3-6 6H9v-3z" />
-                </svg>
-                <span class="text-gray-700">Edit</span>
-              </button>
-
-              <button id="delete-profile-btn" 
-                      class="absolute right-4 bottom-4 flex items-center gap-2 px-3 py-1 bg-red-600 text-white rounded text-sm shadow-sm hover:opacity-90">
-                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-                <span>Delete</span>
-              </button>
-
             </div>
-          </div>
         </div>
-      </aside>
+        </aside>
+
 
       <!-- RIGHT CARD -->
       <main class="w-full lg:flex-1 h-full">
