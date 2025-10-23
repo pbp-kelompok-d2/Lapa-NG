@@ -1,34 +1,33 @@
-import uuid
 from django.db import models
+from django.conf import settings
+from main.models import Venue
 
-class Venue(models.Model):
-    CATEGORY_CHOICES = [
-        ('soccer', 'Soccer'),
-        ('tennis', 'Tennis'),
-        ('futsal', 'Futsal'),
-        ('badminton', 'Badminton'),
-        ('basketball', 'Basketball'),
-    ]
-    
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=255)
-    price = models.IntegerField()
-    capacity = models.IntegerField()
-    description = models.TextField()
-    time = models.TextField(max_length=255, blank=True, null=True)
-    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='update')
-    thumbnail = models.URLField(blank=True, null=True)
-    venue_views = models.PositiveIntegerField(default=0)
+class Booking(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="bookings"
+    )
+    venue = models.ForeignKey(
+        Venue,
+        on_delete=models.CASCADE,
+        related_name="bookings"
+    )
+    booking_date = models.DateField()
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    total_price = models.PositiveIntegerField(null=True, blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("pending", "Pending"),
+            ("confirmed", "Confirmed"),
+            ("cancelled", "Cancelled")
+        ],
+        default="pending"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
-    is_featured = models.BooleanField(default=False)
-    
+
     def __str__(self):
-        return self.name
-    
-    @property
-    def is_venue_hot(self):
-        return self.venue_views > 20
-        
-    def increment_views(self):
-        self.venue_views += 1
-        self.save()
+        return f"{self.user} - {self.venue.name} ({self.booking_date})"

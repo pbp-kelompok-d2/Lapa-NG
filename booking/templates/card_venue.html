@@ -1,115 +1,146 @@
 {% load static %}
 
-<div class="card-wrapper inline-block">
-  <div class="card">
+<div class="venue-card-wrapper">
+  <div class="venue-card">
     {% if venue.image %}
-      <img src="{{ venue.image.url }}" alt="{{ venue.name }}" class="image">
+      <img src="{{ venue.image.url }}" alt="{{ venue.name }}" class="venue-image">
     {% else %}
-      <div class="image"></div>
+      <div class="venue-image placeholder"></div>
     {% endif %}
 
-    <h2 class="name">{{ venue.name }}</h2>
-    <p class="address">{{ venue.address }}</p>
-    <p class="price">Rp {{ venue.price|floatformat:0 }}</p>
+    <div class="venue-info">
+      <h2 class="venue-name">{{ venue.name }}</h2>
+      <p class="venue-address" title="{{ venue.address }}">{{ venue.address|truncatechars:40 }}</p>
+      <p class="venue-price">Rp {{ venue.price|floatformat:0 }}</p>
+    </div>
 
-    {% if user.is_authenticated and venue.user == user %}
-      <div class="flex justify-between gap-2">
-        <a href="{% url 'booking:show_venue' venue.id %}" class="btn w-1/2">Detail</a>
-        <a href="{% url 'booking:edit_venue' venue.id %}" class="btn btn-secondary w-1/2">Edit</a>
-        <button type="button" data-action="delete" data-venue-id="{{ venue.id }}" class="text-red-600 hover:text-red-800">Delete</button>
-      </div>
-    {% else %}
-      <a href="{% url 'booking:show_venue' venue.id %}" class="btn">Book Now</a>
-    {% endif %}
+    <div class="venue-actions">
+      <a href="{% url 'booking:booking_by_venue' venue.id %}" class="venue-btn-book">Book Now</a>
+      <a href="{% url 'booking:show_venue' venue.id %}" class="venue-btn-detail">Detail</a>
+    </div>
   </div>
 </div>
 
 <style>
-  .card-wrapper {
-    background: linear-gradient(135deg, #3B82F6, #10B981);
-    padding: 2px;
-    border-radius: 16px;
+  .venue-card-wrapper {
+    display: flex;
+    justify-content: center;
   }
 
-  .card {
-    background-color: #fff;
-    width: 260px;
-    padding: 20px;
+  .venue-card {
+    position: relative;
+    background: #fff;
     border-radius: 14px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-    text-align: left;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    width: 260px;
+    overflow: hidden;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+    transition: all 0.2s ease;
   }
 
-  .card:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  /* --- Gradient border seperti contoh --- */
+  .venue-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 2px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #2563eb, #10b981);
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
   }
 
-  .image {
+  .venue-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+  }
+
+  .venue-image {
     width: 100%;
-    height: 120px;
-    background-color: #d1d5db;
-    border-radius: 10px;
-    margin-bottom: 15px;
+    height: 140px;
     object-fit: cover;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
   }
 
-  .name {
-    font-weight: 600;
-    color: #374151;
-    margin: 0 0 5px;
+  .venue-image.placeholder {
+    background-color: #d1d5db;
+  }
+
+  .venue-info {
+    padding: 16px;
+    text-align: left;
+  }
+
+  .venue-name {
     font-size: 1.1rem;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 4px;
   }
 
-  .address {
-    color: #6b7280;
+  .venue-address {
     font-size: 0.9rem;
-    margin: 0 0 5px;
+    color: #6b7280;
+    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .price {
-    color: #10B981;
-    font-weight: 600;
-    margin: 0 0 15px;
-  }
-
-  .btn {
-    background-color: #F97316;
-    color: white;
-    border: none;
-    padding: 10px 0;
-    width: 100%;
-    border-radius: 8px;
-    font-weight: 500;
+  .venue-price {
+    font-weight: 700;
+    color: #10b981;
     font-size: 1rem;
-    cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.1s ease;
+  }
+
+  .venue-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 16px 16px 16px;
+  }
+
+  .venue-btn-book {
+    display: block;
+    background-color: #f97316;
+    color: white;
     text-align: center;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 10px 0;
     text-decoration: none;
-    display: inline-block;
+    transition: all 0.2s ease;
   }
 
-  .btn:hover {
+  .venue-btn-book:hover {
     background-color: #ea580c;
-    transform: scale(1.02);
+    transform: translateY(-2px);
   }
 
-  .btn-secondary {
-    background-color: #6b7280;
+  .venue-btn-detail {
+    display: block;
+    background-color: #3b82f6;
+    color: white;
+    text-align: center;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 10px 0;
+    text-decoration: none;
+    transition: all 0.2s ease;
   }
 
-  .btn-secondary:hover {
-    background-color: #4b5563;
+  .venue-btn-detail:hover {
+    background-color: #2563eb;
+    transform: translateY(-2px);
   }
 
   @media (max-width: 480px) {
-    .card {
+    .venue-card {
       width: 100%;
-      padding: 16px;
-    }
-    .image {
-      height: 110px;
     }
   }
 </style>

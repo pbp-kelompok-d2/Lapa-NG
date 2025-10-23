@@ -1,7 +1,7 @@
-from django.forms import ModelForm
-from booking.models import Venue
+from django import forms
+from .models import Booking
 
-class VenueForm(ModelForm):
+class BookingForm(forms.ModelForm):
     class Meta:
-        model = Venue
-        fields = ["name", "price", "description", "time", "capacity", "category", "thumbnail", "is_featured"]
+        model = Booking
+        fields = ['booking_date', 'start_time', 'end_time']

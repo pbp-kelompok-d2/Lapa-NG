@@ -1,63 +1,34 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from booking.forms import VenueForm
-from booking.models import Venue
-from django.http import HttpResponse
-from django.core import serializers
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from booking.models import Booking
+from booking.forms import BookingForm
+from main.models import Venue
 
-def show_booking(request):
-    venue_list = Venue.objects.all()
+@login_required
+def booking_by_venue(request, venue_id):
+    venue = get_object_or_404(Venue, id=venue_id)
+    form = BookingForm(request.POST or None)
+    
+    if request.method == "POST" and form.is_valid():
+        booking = form.save(commit=False)
+        booking.user = request.user
+        booking.venue = venue
 
-    context = {
-        'npm' : '240123456',
-        'name': 'Haru Urara',
-        'class': 'PBP A',
-        'venue_list': venue_list
-    }
+        duration_hours = (
+            (booking.end_time.hour + booking.end_time.minute / 60)
+            - (booking.start_time.hour + booking.start_time.minute / 60)
+        )
+        booking.total_price = int(duration_hours * (venue.price or 0))
 
-    return render(request, "booking.html", context)
+        booking.save()
+        return redirect("booking:booking_success")
+    
+    return render(request, "booking_form.html", {"form": form, "venue": venue})
 
-def create_venue(request):
-    form = VenueForm(request.POST or None)
+def venue_list(request):
+    venues = Venue.objects.all()
+    return render(request, "venue_list.html", {"venues": venues})
 
-    if form.is_valid() and request.method == "POST":
-        form.save()
-        return redirect('main:show_venue')
-
-    context = {'form': form}
-    return render(request, "create_venue.html", context)
-
-def show_venue(request, id):
-    venue = get_object_or_404(Venue, pk=id)
-    venue.increment_views()
-
-    context = {
-        'venue': venue
-    }
-
-    return render(request, "venue_detail.html", context)
-
-def show_xml(request):
-    venue_list = Venue.objects.all()
-    xml_data = serializers.serialize("xml", venue_list)
-    return HttpResponse(xml_data, content_type="application/xml")
-
-def show_json(request):
-    venue_list = Venue.objects.all()
-    json_data = serializers.serialize("json", venue_list)
-    return HttpResponse(json_data, content_type="application/json")
-
-def show_xml_by_id(request, venue_id):
-    try:
-        venue_item = Venue.objects.filter(pk=venue_id)
-        xml_data = serializers.serialize("xml", venue_item)
-        return HttpResponse(xml_data, content_type="application/xml")
-    except Venue.DoesNotExist:
-        return HttpResponse(status=404)
-
-def show_json_by_id(request, venue_id):
-    try:
-        venue_item = Venue.objects.get(pk=venue_id)
-        json_data = serializers.serialize("json", [venue_item])
-        return HttpResponse(json_data, content_type="application/json")
-    except Venue.DoesNotExist:
-        return HttpResponse(status=404)
+def show_venue(request, venue_id):
+    venue = get_object_or_404(Venue, id=venue_id)
+    return render(request, 'venue_detail.html', {'venue': venue})
