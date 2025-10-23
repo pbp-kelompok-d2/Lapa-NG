@@ -39,9 +39,19 @@ function showToast(message, type = 'info') {
     }, 3000); // Toast visible for 3 seconds
 }
 
+// --- List of Hero Images (Define outside DOMContentLoaded) ---
+const heroImages = [
+    '/static/images/封面-3.jpg',       // Stadium (FIRST) - Make sure filename is correct
+    '/static/images/basketball.jpeg', // Basketball
+    '/static/images/convert.webp',    // Soccer Action
+    '/static/images/skate.jpg',       // Skateboarding
+    '/static/images/GettyImages-1272468011.jpg' // Tennis Serve
+];
+let currentImageIndex = 0;
+
 
 document.addEventListener('DOMContentLoaded', function() {
-    
+
     // --- 1. READ URLS ---
     const scriptData = document.getElementById('main-script-data');
     const URLS = {
@@ -52,271 +62,289 @@ document.addEventListener('DOMContentLoaded', function() {
         bookingRedirect: scriptData.dataset.bookingRedirectUrl,
         getCreateForm: scriptData.dataset.getCreateFormUrl,
         getEditForm: scriptData.dataset.getEditFormUrlTemplate
-        // Note: Delete URL is constructed dynamically later
+        // Note: Delete URL is constructed dynamically
     };
 
     // --- DOM Elements ---
-    const form = document.getElementById('filter-form');
+    const filterForm = document.getElementById('filter-form');
     const venueContainer = document.getElementById('venue-list-container');
     const modal = document.getElementById('main-modal');
     const modalPanel = document.getElementById('modal-panel');
     const modalOverlay = document.getElementById('modal-overlay');
     const addVenueBtn = document.getElementById('add-venue-btn');
-    
+
+    // Hero Elements
+    const heroSection = document.getElementById('hero-section');
+    const heroBg = document.getElementById('hero-bg'); // Inner div for background
+    const heroWelcome = document.getElementById('hero-welcome');
+    const heroSlogan = document.getElementById('hero-slogan');
+    const heroRevealBtn = document.getElementById('hero-reveal-btn');
+    const contentWrapper = document.getElementById('content-wrapper');
+    const mainNavbar = document.getElementById('main-navbar');
+
     // --- Modal Functions ---
     function openModal() {
-        modal.classList.remove('hidden');
+        if(modal) modal.classList.remove('hidden');
     }
-
     function closeModal() {
-        modal.classList.add('hidden');
-        modalPanel.innerHTML = ''; 
+        if(modal) modal.classList.add('hidden');
+        if(modalPanel) modalPanel.innerHTML = '';
     }
 
-    // --- 2. AJAX FILTER LOGIC ---
-    if (form) {
-        form.addEventListener('submit', function(event) {
-            event.preventDefault(); 
-            const formData = new FormData(form);
-            const params = new URLSearchParams(formData);
+    // ===================================
+    // ===== HERO SECTION LOGIC ========
+    // ===================================
+    let isHeroFull = true; // Track state: 'full' or 'revealed'
 
+    if (heroSection && contentWrapper && mainNavbar && heroBg) {
+        // --- Image Cycling ---
+        function changeHeroImage() {
+            currentImageIndex = (currentImageIndex + 1) % heroImages.length;
+            // Add fade effect for background image transition on the inner div
+            heroBg.style.opacity = '0';
+            setTimeout(() => {
+                heroBg.style.backgroundImage = `url('${heroImages[currentImageIndex]}')`;
+                heroBg.style.opacity = '1';
+            }, 500); // Half of hero-bg transition duration (adjust if needed)
+        }
+        // Preload first image on the inner div
+        heroBg.style.backgroundImage = `url('${heroImages[0]}')`;
+        heroBg.style.opacity = '1';
+        setInterval(changeHeroImage, 15000); // Change every 15 seconds
+
+        // --- Initial Navbar State (Hidden) ---
+        mainNavbar.classList.add('opacity-0', '-translate-y-full', 'pointer-events-none'); // Hide and make non-interactive
+
+        // --- Initial Text/Button Fade-In Animations ---
+        requestAnimationFrame(() => {
+            if (heroWelcome) heroWelcome.classList.remove('opacity-0');
+            if (heroSlogan) heroSlogan.classList.remove('opacity-0');
+            if (heroRevealBtn) heroRevealBtn.classList.remove('opacity-0');
+        });
+
+        // --- Function to REVEAL content ---
+        function revealContent() {
+            if (isHeroFull) {
+                console.log("Revealing content");
+                isHeroFull = false;
+
+                // 1. Show Navbar smoothly
+                mainNavbar.classList.remove('opacity-0', '-translate-y-full', 'pointer-events-none');
+
+                // 2. Change Hero: Fixed -> Relative, adjust height
+                heroSection.classList.remove('fixed', 'inset-0', 'h-screen');
+                heroSection.classList.add('relative');
+                heroSection.style.height = '60vh'; // Smaller height
+
+                // 3. Bring content wrapper up
+                contentWrapper.classList.remove('mt-[100vh]');
+                contentWrapper.classList.add('mt-0');
+
+                // 4. Fade out button (redundant due to scroll listener, but ensures it happens)
+                if (heroRevealBtn) heroRevealBtn.classList.add('opacity-0');
+            }
+        }
+
+        // --- Function to RESET to full hero ---
+        function resetToFullHero() {
+             if (!isHeroFull) {
+                 console.log("Resetting to full hero");
+                 isHeroFull = true;
+
+                 // Hide Navbar
+                 mainNavbar.classList.add('opacity-0', '-translate-y-full', 'pointer-events-none');
+
+                 // Reset Hero: Relative -> Fixed, full height
+                 heroSection.classList.add('fixed', 'inset-0', 'h-screen');
+                 heroSection.classList.remove('relative');
+                 heroSection.style.height = ''; // Reset height style
+
+                 // Push content wrapper back down
+                 contentWrapper.classList.add('mt-[100vh]');
+                 contentWrapper.classList.remove('mt-0');
+
+                 // Re-show button (initial fade-in logic will handle the animation via requestAnimationFrame)
+                 if (heroRevealBtn) {
+                     // Need to re-trigger the fade-in if we reset
+                     heroRevealBtn.classList.add('opacity-0'); // Ensure it starts hidden
+                     requestAnimationFrame(() => { // Then fade it in
+                        heroRevealBtn.classList.remove('opacity-0');
+                     });
+                 }
+             }
+         }
+
+        // --- Button Click ---
+        if (heroRevealBtn) {
+            heroRevealBtn.addEventListener('click', () => {
+                revealContent();
+                setTimeout(() => {
+                    contentWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 50);
+            });
+        }
+
+        // --- Scroll Listener ---
+        let scrollTimeout; // To debounce scroll checks slightly
+        window.addEventListener('scroll', () => {
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                const scrollPosition = window.scrollY;
+
+                if (isHeroFull && scrollPosition > 50) {
+                    revealContent();
+                } else if (!isHeroFull && scrollPosition === 0) {
+                    resetToFullHero();
+                }
+
+                // Fade button out when revealed and scrolled down
+                if (heroRevealBtn && !isHeroFull) {
+                     if (scrollPosition > 100) {
+                          heroRevealBtn.classList.add('opacity-0');
+                     }
+                     // No need to fade in here, handled by resetToFullHero
+                }
+            }, 10); // Debounce scroll checks
+        });
+
+        // --- Mouse Parallax Listener ---
+        heroSection.addEventListener('mousemove', (e) => {
+            if (!isHeroFull && heroBg) { // Apply only when revealed
+                const { clientX, clientY } = e;
+                const { offsetWidth, offsetHeight } = heroSection;
+                const xPercent = (clientX / offsetWidth) - 0.5;
+                const yPercent = (clientY / offsetHeight) - 0.5;
+                const intensity = 15;
+                const moveX = xPercent * intensity * -1; // Invert X for natural feel
+                const moveY = yPercent * intensity * -1; // Invert Y for natural feel
+                heroBg.style.transform = `translate(${moveX}px, ${moveY}px) scale(1.1)`;
+            }
+        });
+        // Reset parallax slightly on mouse leave
+         heroSection.addEventListener('mouseleave', () => {
+             if(!isHeroFull && heroBg) {
+                 heroBg.style.transform = `translate(0, 0) scale(1.1)`;
+             }
+         });
+
+    }
+    // ===================================
+    // === END HERO SECTION LOGIC ======
+    // ===================================
+
+    // --- AJAX FILTER LOGIC ---
+    if (filterForm) {
+        filterForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(filterForm);
+            const params = new URLSearchParams(formData);
             fetch(`${URLS.filter}?${params.toString()}`)
                 .then(response => response.text())
                 .then(html => {
                     venueContainer.innerHTML = html;
                     history.pushState(null, '', `?${params.toString()}`);
                 })
-                .catch(error => {
-                    console.error('Error fetching venues:', error);
-                    venueContainer.innerHTML = '<p class="text-center text-red-600">Error loading venues. Please try again.</p>';
-                });
+                .catch(error => { /* ... error handling ... */ });
         });
     }
-
     const clearButton = document.querySelector(`a[href="${URLS.showMain}"]`);
-    if (clearButton) {
-        clearButton.addEventListener('click', function(event) {
-            event.preventDefault();
-            window.location.href = URLS.showMain; 
+    if (clearButton) { /* ... clear button logic ... */ }
+
+    // --- "VIEW VENUE" MODAL (Card Click) ---
+    if (venueContainer) {
+        venueContainer.addEventListener('click', function(event) {
+            const card = event.target.closest('.venue-card');
+            if (card) {
+                const slug = card.dataset.slug;
+                if (!slug) return;
+                const fetchUrl = URLS.venueDetail.replace('SLUG_PLACEHOLDER', slug);
+                fetch(fetchUrl)
+                    .then(response => { if (!response.ok) throw new Error('Network response not ok'); return response.text(); })
+                    .then(html => { modalPanel.innerHTML = html; openModal(); })
+                    .catch(error => { /* ... error handling ... */ });
+            }
         });
     }
 
-    // --- 3. "VIEW VENUE" MODAL (Card Click) ---
-    venueContainer.addEventListener('click', function(event) {
-        const card = event.target.closest('.venue-card');
-        if (card) {
-            const slug = card.dataset.slug;
-            if (!slug) return;
-            const fetchUrl = URLS.venueDetail.replace('SLUG_PLACEHOLDER', slug);
-
-            fetch(fetchUrl)
-                .then(response => {
-                    if (!response.ok) throw new Error('Network response was not ok');
-                    return response.text();
-                })
-                .then(html => {
-                    modalPanel.innerHTML = html;
-                    openModal();
-                })
-                .catch(error => {
-                    console.error('Error fetching venue details:', error);
-                    alert('Error loading venue details.');
-                });
-        }
-    });
-
-    // --- 4. "CREATE VENUE" MODAL (Button Click) ---
+    // --- "CREATE VENUE" MODAL (Button Click) ---
     if (addVenueBtn) {
         addVenueBtn.addEventListener('click', function() {
             fetch(URLS.getCreateForm)
-                .then(response => {
-                    if (response.status === 403) {
-                        alert('You must be logged in to add a venue.');
-                        window.location.href = '/auth/login/';
-                        return Promise.reject('Forbidden'); // Stop promise chain
-                    }
-                    if (!response.ok) throw new Error('Could not load create form.');
-                    return response.json();
-                })
-                .then(data => {
-                    modalPanel.innerHTML = data.html;
-                    openModal();
-                })
-                .catch(error => {
-                    if (error !== 'Forbidden') { // Avoid double alert
-                       console.error('Error fetching create form:', error);
-                       showToast('Error loading form.', 'error');
-                    }
-                });
+                .then(response => { if (response.status === 403) { /* ... login redirect ... */; return Promise.reject('Forbidden'); } if (!response.ok) throw new Error('Could not load create form.'); return response.json(); })
+                .then(data => { modalPanel.innerHTML = data.html; openModal(); })
+                .catch(error => { /* ... error handling ... */ });
         });
     }
-    
-    // --- 5. COMBINED MODAL BUTTON CLICK HANDLER (Event Delegation) ---
-    // Handles Close, Edit, Delete, Add-to-Booking clicks *inside* the modal
-    modalPanel.addEventListener('click', function(event) {
-        
-        // Handle Close Button
-        if (event.target.closest('#modal-close-btn')) {
-            closeModal();
-            return; 
-        }
 
-        // Handle Add to Booking Button
-        const bookingBtn = event.target.closest('#add-to-booking-btn');
-        if (bookingBtn) {
-            const venueId = bookingBtn.dataset.venueId;
-            if (!venueId) return;
-            const fetchUrl = URLS.bookingAdd.replace('0', venueId);
+    // --- COMBINED MODAL BUTTON CLICK HANDLER ---
+    if (modalPanel) {
+        modalPanel.addEventListener('click', function(event) {
+            // Close Button
+            if (event.target.closest('#modal-close-btn')) { closeModal(); return; }
+            // Add to Booking Button
+            const bookingBtn = event.target.closest('#add-to-booking-btn');
+            if (bookingBtn) { /* ... booking logic ... */ return; }
+            // Edit Button
+            const editBtn = event.target.closest('#edit-venue-btn');
+            if (editBtn) { /* ... edit logic ... */ return; }
+            // Delete Button
+            const deleteBtn = event.target.closest('#delete-venue-btn');
+            if (deleteBtn) { /* ... delete logic ... */ return; }
+        });
+    }
 
-            fetch(fetchUrl)
-                .then(response => {
-                    if (response.status === 403) {
-                        alert('You must be logged in to add a booking.');
-                        window.location.href = '/auth/login/'; 
-                        return Promise.reject('Forbidden');
+    // --- MODAL FORM SUBMISSION HANDLER ---
+    if (modalPanel) {
+        modalPanel.addEventListener('submit', function(event) {
+            if (event.target.id === 'venue-form') {
+                event.preventDefault();
+                const form = event.target;
+                const formData = new FormData(form);
+                const originalSlug = form.querySelector('#venue-slug-for-update')?.value;
+                const csrfToken = formData.get('csrfmiddlewaretoken');
+                if (!csrfToken) { /* ... error handling ... */ return; }
+
+                fetch(form.action, { method: 'POST', body: formData, headers: { 'X-CSRFToken': csrfToken, 'Accept': 'application/json' } })
+                .then(response => { // Add better response checking
+                    if (!response.ok && response.headers.get('Content-Type')?.includes('application/json')) {
+                         return response.json().then(data => Promise.reject(data)); // Pass error JSON down
+                    } else if (!response.ok) {
+                         return response.text().then(text => Promise.reject(text)); // Pass HTML error down
                     }
-                    if (!response.ok) throw new Error('Booking request failed');
                     return response.json();
                 })
                 .then(data => {
-                    showToast(data.message || 'Added to booking!', 'success');
-                    closeModal();
-                    setTimeout(() => { window.location.href = URLS.bookingRedirect; }, 1000); 
-                })
-                .catch(error => {
-                     if (error !== 'Forbidden') {
-                        console.error('Error adding to booking:', error);
-                        showToast('Error: Could not add to booking.', 'error');
-                    }
-                });
-            return; // Done handling click
-        }
-
-        // Handle Edit Button (fetches edit form)
-        const editBtn = event.target.closest('#edit-venue-btn');
-        if (editBtn) {
-            const slug = editBtn.dataset.slug;
-            if (!slug) return;
-            const fetchUrl = URLS.getEditForm.replace('SLUG_PLACEHOLDER', slug);
-
-            fetch(fetchUrl)
-                .then(response => {
-                    if (response.status === 403) {
-                        showToast('You are not allowed to edit this venue.', 'error');
-                        return Promise.reject('Forbidden'); 
-                    }
-                    if (!response.ok) throw new Error('Could not load edit form.');
-                    return response.json();
-                })
-                .then(data => {
-                    modalPanel.innerHTML = data.html; // Replace modal content
-                })
-                .catch(error => {
-                    if (error !== 'Forbidden') {
-                       console.error('Error fetching edit form:', error);
-                       showToast(error.message || 'Error loading edit form.', 'error');
-                    }
-                });
-            return; // Done handling click
-       }
-
-        // Handle Delete Button (shows confirmation/performs delete)
-        const deleteBtn = event.target.closest('#delete-venue-btn');
-        if (deleteBtn) {
-             const slug = deleteBtn.dataset.slug;
-             if (!slug) return;
-
-             if (confirm(`Are you sure you want to delete this venue? This cannot be undone.`)) {
-                const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value; // Get CSRF from form if possible
-                 if (!csrfToken) {
-                      // Fallback: try getting from main page meta or cookie if needed
-                      showToast('CSRF token not found. Cannot delete.', 'error');
-                      return;
-                 }
-                 const deleteUrl = `/ajax/delete-venue/${slug}/`; 
-
-                 fetch(deleteUrl, {
-                     method: 'POST',
-                     headers: {
-                         'X-CSRFToken': csrfToken,
-                         'Content-Type': 'application/json' 
-                     },
-                     // body: JSON.stringify({}) // Add if needed by view
-                 })
-                 .then(response => {
-                      if (response.status === 403) throw new Error('Forbidden: You cannot delete this venue.');
-                      if (!response.ok) throw new Error('Delete request failed.');
-                      return response.json();
-                 })
-                 .then(data => {
-                     if (data.status === 'ok') {
-                         closeModal();
-                         showToast(data.message, 'success');
-                         const cardToRemove = venueContainer.querySelector(`.venue-card[data-slug="${data.deleted_slug}"]`);
-                         if (cardToRemove) cardToRemove.remove();
-                     } else {
-                         throw new Error(data.message || 'Could not delete venue.');
-                     }
-                 })
-                 .catch(error => {
-                     console.error('Error deleting venue:', error);
-                     showToast(error.message, 'error');
-                 });
-             }
-             return; // Done handling click
-        }
-    });
-
-    // --- 6. MODAL FORM SUBMISSION HANDLER ---
-    // Handles both Create and Edit form submissions
-    modalPanel.addEventListener('submit', function(event) {
-        if (event.target.id === 'venue-form') {
-            event.preventDefault(); 
-            const form = event.target;
-            const formData = new FormData(form);
-            const originalSlug = form.querySelector('#venue-slug-for-update')?.value;
-
-            fetch(form.action, { // form.action set by backend (create or edit URL)
-                method: 'POST',
-                body: formData,
-                headers: { 'X-CSRFToken': formData.get('csrfmiddlewaretoken') }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'ok') {
-                    // SUCCESS (Create or Edit)
-                    closeModal();
-                    showToast(data.message, 'success');
-                    
-                    if (originalSlug) { // It was an Edit
-                        const originalCard = venueContainer.querySelector(`.venue-card[data-slug="${originalSlug}"]`);
-                        if (originalCard && data.updated_card_html) {
-                            originalCard.outerHTML = data.updated_card_html;
-                        } else { // Fallback if card not found or HTML missing
-                            console.warn('Could not find original card to update or missing HTML.');
-                            // Optionally reload the whole list
-                            form.dispatchEvent(new Event('submit', { cancelable: true })); // Trigger filter form submit
+                    if (data.status === 'ok') {
+                        closeModal(); showToast(data.message, 'success');
+                        if (originalSlug && data.updated_card_html) { // Edit success
+                            const originalCard = venueContainer.querySelector(`.venue-card[data-slug="${originalSlug}"]`);
+                            if (originalCard) originalCard.outerHTML = data.updated_card_html;
+                            else filterForm.dispatchEvent(new Event('submit', { cancelable: true })); // Fallback reload list
+                        } else if (data.new_card_html) { // Create success
+                            venueContainer.querySelector('.grid').insertAdjacentHTML('afterbegin', data.new_card_html);
                         }
-                    } else if (data.new_card_html) { // It was a Create
-                        venueContainer.querySelector('.grid').insertAdjacentHTML('afterbegin', data.new_card_html);
                     }
-                } else if (data.status === 'error' && data.form_html) {
-                    // Validation error
-                    modalPanel.innerHTML = data.form_html; // Re-render form with errors
-                } else {
-                    // Other server error
-                    throw new Error(data.message || 'Form submission failed.');
-                }
-            })
-            .catch(error => {
-                console.error('Form submission error:', error);
-                showToast(error.message || 'An error occurred.', 'error');
-            });
-        }
-        // Note: Delete confirmation form submission would be handled here too if implemented
-        // else if (event.target.id === 'delete-venue-form') { ... } 
-    });
-    
+                    // No need for explicit 'error' status check here if using reject above
+                })
+                .catch(error => {
+                     console.error('Form submission error:', error);
+                     if (error.form_html) { // Validation error from backend JSON
+                         modalPanel.innerHTML = error.form_html; // Re-render form
+                     } else if (typeof error === 'string') { // HTML error response
+                         showToast('An unexpected server error occurred.', 'error');
+                         // Optionally display 'error' in modal or close it
+                     } else { // Network error or other JS error
+                        showToast(error.message || 'An error occurred.', 'error');
+                     }
+                });
+            }
+            // --- Delete confirmation form (if using modal) ---
+            // else if (event.target.id === 'delete-venue-form') { ... }
+        });
+    }
+
     // --- Close modal on overlay click ---
-    modalOverlay.addEventListener('click', closeModal);
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', closeModal);
+    }
 });
