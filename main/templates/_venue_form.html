@@ -15,7 +15,7 @@
         </button>
     </div>
 
-    <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+    <div class="p-6 space-y-6">
         <input type="hidden" id="venue-slug-for-update" value="{{ venue.slug|default:'' }}">
 
         {% if form.non_field_errors %}
@@ -99,24 +99,3 @@
         </button>
     </div>
 </form>
-
-<script>
-    (function() {
-        const form = document.getElementById('venue-form');
-        const inputs = form.querySelectorAll(
-            'input[type="text"], input[type="number"], input[type="time"], select, textarea'
-        );
-        inputs.forEach(input => {
-            input.classList.add(
-                'w-full', 'px-4', 'py-3', 'border', 'border-gray-300', 
-                'rounded-md', 'focus:outline-none', 'focus:border-green-500', 
-                'transition-colors', 'bg-white'
-            );
-        });
-        
-        const checkbox = form.querySelector('input[type="checkbox"]');
-        if (checkbox) {
-            checkbox.classList.add('h-4', 'w-4', 'text-green-600', 'border-gray-300', 'rounded');
-        }
-    })();
-</script>
