@@ -1,0 +1,12 @@
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    {% for venue in venues %}
+               {% include '_venue_card.html' with venue=venue %}
+    
+    {% empty %}
+        <div class="md-col-span-3">
+            <p class="text-center text-gray-600 py-12">
+                No venues found matching your criteria.
+            </p>
+        </div>
+    {% endfor %}
+</div>
