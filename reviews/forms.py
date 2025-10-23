@@ -4,10 +4,8 @@ from reviews.models import Reviews
 class ReviewForm(forms.ModelForm):
     class Meta:
         model = Reviews
-        # 'user' tidak ada di sini karena akan diisi otomatis oleh view
         fields = ['venue_name', 'rating', 'comment', 'image_url']
         
-        # Berikan styling Tailwind langsung ke widget
         widgets = {
             'venue_name': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 transition',

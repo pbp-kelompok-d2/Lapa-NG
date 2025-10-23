@@ -1,4 +1,4 @@
-/* Styling untuk background gradient yang tetap (fixed) */
+/* styling untuk background gradient yang tetap */
 .fixed-gradient {
     position: fixed;
     top: 0;
@@ -9,22 +9,22 @@
     z-index: -10;
 }
 
-/* Membuat wrapper konten menjadi transparan */
+/* membuat wrapper konten menjadi transparan */
 .reviews-page-wrapper {
     background-color: transparent;
 }
 
 
-/* ===== PERUBAHAN WARNA TOMBOL FILTER DI SINI ===== */
+/* ===== perubahan warna tombol filter ===== */
 .filter-btn {
     color: white;
     transition: all 0.3s ease;
-    background-color: rgba(255, 255, 255, 0.2); /* Tombol tidak aktif */
+    background-color: rgba(255, 255, 255, 0.2); 
     backdrop-filter: blur(5px);
 }
 
 .filter-btn.active-filter {
-    background-color: #F97316; /* Warna oranye, sama seperti tombol Add Review */
+    background-color: #F97316;
     color: white;
     box-shadow: 0 4px 15px -5px rgba(249, 115, 22, 0.6);
 }
@@ -32,10 +32,8 @@
 .filter-btn:hover:not(.active-filter) {
     background-color: rgba(255, 255, 255, 0.4);
 }
-/* =============================================== */
 
-
-/* Modal */
+/* modal */
 .modal {
     transition: opacity 0.3s ease;
 }

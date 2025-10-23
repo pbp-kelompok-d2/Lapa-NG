@@ -1,20 +1,14 @@
-// reviews/static/js/reviews.js - KODE LENGKAP PENGGANTI
-
 document.addEventListener("DOMContentLoaded", () => {
-    // ===================================
-    // KONFIGURASI DAN ELEMEN
-    // ===================================
+    // konfigurasi dan elemen
     const reviewCardsContainer = document.getElementById('review-cards-container');
     const loadingSpinner = document.getElementById('loading-spinner');
     const emptyState = document.getElementById('empty-state');
     const filterButtons = document.querySelectorAll('.filter-btn');
 
-    let currentFilter = 'all'; // Menyimpan state filter saat ini
-    let reviewIdToDelete = null; // Variabel untuk menyimpan ID yang akan dihapus
+    let currentFilter = 'all'; 
+    let reviewIdToDelete = null;
 
-    // ===================================
-    // FUNGSI UTAMA (MEMUAT REVIEW)
-    // ===================================
+    // funsgi utama (memuat review)
     async function loadReviews(filter = 'all') {
         showLoading(true);
         try {
@@ -35,9 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // ===================================
-    // FUNGSI PEMBUATAN KARTU REVIEW
-    // ===================================
+    // fungsi buat kartu review
     function createReviewCard(review) {
         const card = document.createElement('div');
         card.className = 'review-card bg-white rounded-xl shadow-lg overflow-hidden flex flex-col transition-all duration-300 hover:shadow-2xl hover:-translate-y-1';
@@ -56,19 +48,16 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="h-48 bg-gray-100"><img src="${imageUrl}" alt="Foto ${review.venue_name}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/400x300/e2e8f0/94a3b8?text=Error';"></div>
             <div class="p-4 flex flex-col flex-grow">
                 <h3 class="font-bold font-heading text-lg text-gray-800 truncate mb-1" title="${review.venue_name}">${review.venue_name}</h3>
-                <p class="text-xs text-gray-500 mb-2">Oleh: <strong class="text-gray-700">${review.user_username}</strong></p>
+                <p class="text-xs text-gray-500 mb-2">Reviewed by: <strong class="text-gray-700">${review.user_username}</strong></p>
                 <div class="flex items-center justify-between mb-3"><div class="flex items-center space-x-1">${starsHTML}</div><span class="font-semibold text-gray-700 text-sm">${review.rating}/5</span></div>
                 <div class="mt-auto flex justify-between items-center pt-2">
-                    <button class="view-detail-btn w-auto bg-orange-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors text-sm">Lihat Komentar</button>
+                    <button class="view-detail-btn w-auto bg-orange-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors text-sm">Review Details</button>
                     ${buttonsHTML}
                 </div>
             </div>`;
         return card;
     }
 
-    // ===================================
-    // HANDLER UNTUK SEMUA AKSI (CREATE, UPDATE, DELETE)
-    // ===================================
 
     // ADD REVIEW
     const addReviewForm = document.getElementById('add-review-form');
@@ -140,16 +129,15 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // --- PERUBAHAN UTAMA DIMULAI DI SINI ---
 
-    // DELETE REVIEW: FUNGSI INI HANYA MEMBUKA MODAL KONFIRMASI
+    // DELETE REVIEW: fungsi ini hanya membuka modal konfirmasi
     function confirmDeleteReview(reviewId) {
-        reviewIdToDelete = reviewId; // Simpan ID untuk digunakan nanti
+        reviewIdToDelete = reviewId;
         const confirmModal = document.getElementById('confirm-delete-modal');
         showModal(confirmModal);
     }
 
-    // FUNGSI UNTUK EKSEKUSI PENGHAPUSAN SETELAH DIKONFIRMASI
+    // fungsi untuk eksekusi penghapusan setelah dikonfirmasi
     async function executeDelete() {
         if (!reviewIdToDelete) return;
 
@@ -166,16 +154,11 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (error) {
             showToast(`Gagal menghapus: ${error.message}`, 'error');
         } finally {
-            reviewIdToDelete = null; // Reset ID setelah selesai
+            reviewIdToDelete = null;
             closeModal(document.getElementById('confirm-delete-modal'));
         }
     }
 
-    // --- PERUBAHAN UTAMA SELESAI DI SINI ---
-
-    // ===================================
-    // EVENT LISTENERS (DELEGATION & MODALS)
-    // ===================================
     reviewCardsContainer.addEventListener('click', (e) => {
         const reviewCard = e.target.closest('.review-card');
         if (!reviewCard) return;
@@ -183,7 +166,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (e.target.closest('.view-detail-btn')) openDetailModal(reviewId);
         else if (e.target.closest('.edit-btn')) openEditModal(reviewId);
-        // Panggil fungsi konfirmasi, bukan delete langsung
         else if (e.target.closest('.delete-btn')) confirmDeleteReview(reviewId);
     });
 
@@ -198,9 +180,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     initializeModals();
 
-    // ===================================
-    // FUNGSI UNTUK MODAL
-    // ===================================
+    // fungsi untuk modal
     function initializeModals() {
         // ADD MODAL
         const addModal = document.getElementById('add-review-modal');
@@ -277,9 +257,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // ===================================
-    // FUNGSI HELPERS
-    // ===================================
+ 
+    // helpers
     function getCsrfToken() { return document.querySelector('[name=csrfmiddlewaretoken]').value; }
     function showLoading(isLoading) {
         loadingSpinner.classList.toggle('hidden', !isLoading);
@@ -344,8 +323,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 3000);
     }
     
-    // ===================================
-    // INISIALISASI
-    // ===================================
+    // inisialisasi <3
     loadReviews();
 });

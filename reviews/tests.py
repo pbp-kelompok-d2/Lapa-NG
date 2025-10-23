@@ -44,7 +44,6 @@ class ReviewTestCase(TestCase):
 
     def test_get_reviews_json(self):
         """Test JSON endpoint returns reviews"""
-        # Create a test review
         Reviews.objects.create(
             user=self.user,
             venue_name='Test Venue',
@@ -73,7 +72,6 @@ class ReviewTestCase(TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(Reviews.objects.count(), 1)
         
-        # Verify the created review
         review = Reviews.objects.first()
         self.assertEqual(review.venue_name, 'Lapangan Futsal Merdeka')
         self.assertEqual(review.rating, 5)
@@ -83,9 +81,9 @@ class ReviewTestCase(TestCase):
         self.client.login(username='testuser', password='testpass123')
         
         invalid_data = {
-            'venue_name': '',  # Empty venue name
-            'rating': 6,       # Invalid rating
-            'comment': ''      # Empty comment
+            'venue_name': '',  
+            'rating': 6,       
+            'comment': ''
         }
         
         response = self.client.post(
@@ -99,7 +97,6 @@ class ReviewTestCase(TestCase):
 
     def test_review_ordering(self):
         """Test that reviews are ordered by creation date (newest first)"""
-        # Create multiple reviews
         for i in range(3):
             Reviews.objects.create(
                 user=self.user,
@@ -109,8 +106,8 @@ class ReviewTestCase(TestCase):
             )
         
         reviews = Reviews.objects.all()
-        self.assertEqual(reviews[0].venue_name, 'Venue 2')  # Newest first
-        self.assertEqual(reviews[2].venue_name, 'Venue 0')  # Oldest last
+        self.assertEqual(reviews[0].venue_name, 'Venue 2')
+        self.assertEqual(reviews[2].venue_name, 'Venue 0')
 
     def test_review_string_representation(self):
         """Test the string representation of Review model"""
