@@ -6,6 +6,7 @@ from main.models import Venue
 from booking.models import Booking
 from booking.forms import BookingForm
 from django.contrib import messages
+from django.template.loader import render_to_string
 
 @login_required(login_url='authentication:login')
 def view_booking_cart(request):
@@ -166,7 +167,6 @@ def checkout_confirm(request):
     for item in cart:
         venue = Venue.objects.get(id=item['id'])
 
-        # ✅ Format parsing diperbaiki (support string dengan detik)
         booking_date = (
             datetime.strptime(item['booking_date'], "%Y-%m-%d").date()
             if item.get('booking_date') else None
@@ -200,13 +200,35 @@ def checkout_confirm(request):
 @login_required(login_url='authentication:login')
 def booking_list(request):
     bookings = Booking.objects.filter(user=request.user).order_by('-booking_date')
-    return render(request, 'booking_list.html', {'bookings': bookings})
+    sport_types = [c[0] for c in Venue.CATEGORIES]  # ambil semua jenis sport
+
+    # ambil filter dari GET
+    venue_name = request.GET.get('venue_name', '')
+    sport_type = request.GET.get('sport_type', '')
+    booker_name = request.GET.get('booker_name', '')
+
+    if venue_name:
+        bookings = bookings.filter(venue__name__icontains=venue_name)
+    if sport_type:
+        bookings = bookings.filter(venue__category=sport_type)
+    if booker_name:
+        bookings = bookings.filter(borrower_name__icontains=booker_name)
+
+    # Kalau AJAX → return partial HTML (tanpa reload seluruh halaman)
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        html = render_to_string('booking_cards.html', {'bookings': bookings})
+        return JsonResponse({'html': html})
+
+    # request biasa (GET awal)
+    return render(request, 'booking_list.html', {
+        'bookings': bookings,
+        'sport_types': sport_types,
+    })
 
 @login_required(login_url='authentication:login')
 def clear_booking(request, booking_id):
     if request.method == "POST":
         booking = get_object_or_404(Booking, id=booking_id, user=request.user)
         booking.delete()
-        messages.success(request, "Booking berhasil dihapus. Terima kasih telah meminjam!")
         return redirect('booking:booking_list')
     return redirect('booking:booking_list')
