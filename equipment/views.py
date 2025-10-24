@@ -77,6 +77,7 @@ def equipment_create(request):
 
     return render(request, 'add_equipment.html', {'form': form})
 
+
 def edit_equipment(request, id):
     equipment = get_object_or_404(Equipment, pk=id)
 
