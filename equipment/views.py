@@ -4,7 +4,6 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from .models import Equipment
 from .forms import EquipmentForm
-from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from .models import Equipment
@@ -74,7 +73,6 @@ def equipment_create(request):
             equipment = form.save(commit=False)
             equipment.owner = request.user
             equipment.save()
-            messages.success(request, '🛒 Equipment added successfully!')
             return redirect('equipment:equipment_list')
 
     return render(request, 'add_equipment.html', {'form': form})
@@ -107,6 +105,5 @@ def edit_equipment(request, id):
 def delete_equipment(request, id):
     equipment = get_object_or_404(Equipment, pk=id)
     equipment.delete()
-    messages.warning(request, '🗑 Equipment has been deleted.')
     return HttpResponseRedirect(reverse('equipment:equipment_list'))
 
