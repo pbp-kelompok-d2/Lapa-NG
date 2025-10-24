@@ -24,19 +24,17 @@ PRICE_RANGES = {
 }
 
 def show_main(request):
-    # Get all distinct categories for the filter dropdown
+    # kategori sport dari database
     categories = Venue.objects.values_list('category', flat=True).order_by('category').distinct()
 
     venues = Venue.objects.all()
 
-    # Get filter values from the request
     search_query = request.GET.get('q', '')
     category_filter = request.GET.get('category', '')
     price_range_key = request.GET.get('price_range', '') # Get the selected price range key
 
-    # Apply filters kalau  exist
     if search_query:
-        # Filter by name or address containing the query (case-insensitive)
+        # Filter by name atau address containing the query (case-insensitive)
         venues = venues.filter(
             Q(name__icontains=search_query) | 
             Q(address__icontains=search_query)
@@ -88,12 +86,10 @@ def filter_venues(request):
     # same logic dengan show_main
     venues = Venue.objects.all()
 
-    # Get filter values from the request
     search_query = request.GET.get('q', '')
     category_filter = request.GET.get('category', '')
     price_range_key = request.GET.get('price_range', '') # Get the selected price range key
 
-    # Apply filters kalau exist
     if search_query:
         venues = venues.filter(
             Q(name__icontains=search_query) | 
@@ -150,56 +146,6 @@ def venue_detail(request, slug):
     }
     return render(request, "venue_detail.html", context)
 
-# @login_required(login_url='authentication:login') # Redirect to login if not authenticated
-# def create_venue(request):
-#     form = VenueForm() # Initialize an empty form
-
-#     if request.method == 'POST':
-#         form = VenueForm(request.POST)
-#         if form.is_valid():
-#             venue = form.save(commit=False)  # Don't save to DB yet
-#             venue.owner = request.user       
-#             venue.save()                     
-#             return redirect('main:venue_detail', slug=venue.slug) # Redirect to the new venue's detail page
-
-#     context = {'form': form}
-#     return render(request, 'create_venue.html', context)
-
-# @login_required(login_url='authentication:login')
-# def edit_venue(request, slug):
-#     venue = get_object_or_404(Venue, slug=slug) # Get the venue to edit
-
-#     # Security Check: Only the owner can edit
-#     if venue.owner != request.user:
-#         return HttpResponseForbidden("You are not allowed to edit this venue.")
-
-#     # Pre-populate the form with the venue's existing data
-#     form = VenueForm(request.POST or None, instance=venue)
-
-#     if request.method == 'POST':
-#         if form.is_valid():
-#             form.save() # Save the changes to the existing venue
-#             return redirect('main:venue_detail', slug=venue.slug) # Redirect to detail page
-
-#     context = {'form': form, 'venue': venue}
-#     return render(request, 'edit_venue.html', context)
-
-# @login_required(login_url='authentication:login')
-# def delete_venue(request, slug):
-#     venue = get_object_or_404(Venue, slug=slug)
-
-#     # Security Check: Only the owner can delete
-#     if venue.owner != request.user:
-#         return HttpResponseForbidden("You are not allowed to delete this venue.")
-
-#     if request.method == 'POST':
-#         venue.delete() 
-#         return redirect('main:show_main') # Redirect to the homepage
-
-#     # If GET request, just redirect (or show a confirmation page)
-#     return redirect('main:venue_detail', slug=venue.slug)
-
-
 #=============AJAX STUFF ===============
 def get_venue_details(request, slug):
     venue = get_object_or_404(Venue, slug=slug) 
@@ -226,7 +172,6 @@ def create_venue_ajax(request):
         venue.owner = request.user
         venue.save()
         
-        # Render the new card to send back to the JS
         new_card_html = render_to_string('_venue_card.html', {'venue': venue})
         
         return JsonResponse({
@@ -412,7 +357,6 @@ def import_venues_from_csv(request):
 
                     except Exception:
                         errors += 1
-                        # lanjut baris berikutnya, kita tidak rollback seluruhnya
                         continue
 
         except Exception as e:
@@ -430,8 +374,6 @@ def add_to_booking_draft_stub(request, venue_id):
 
     venue = get_object_or_404(Venue, id=venue_id)
     
-    # In a booking app, bakal ada BookingDraft object here, e.g.:
-    # BookingDraft.objects.create(user=request.user, venue=venue)
     
     print(f"STUB: User {request.user.username} added venue {venue.name} (ID: {venue_id}) to booking draft.")
 

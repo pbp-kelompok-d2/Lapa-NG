@@ -231,9 +231,6 @@ class TestMainViews(TestCase):
     def test_get_create_form_as_customer(self):
         self.client.login(username='customer', password='password123')
         response = self.client.get(reverse('main:get_create_form'), HTTP_X_REQUESTED_WITH='XMLHttpRequest')
-        # Fails inside the view, but the decorator passes. The view's internal logic returns 403.
-        # This behavior is from the `create_venue_ajax` view which is what the form points to.
-        # Let's test the `get_create_form_html` view itself.
         response_get_form = self.client.get(reverse('main:get_create_form'), HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         self.assertEqual(response_get_form.status_code, 200) # The GET view itself doesn't check role
         self.assertIn('html', response_get_form.json())
@@ -246,7 +243,7 @@ class TestMainViews(TestCase):
 
     def test_create_venue_ajax_not_logged_in(self):
         response = self.client.post(reverse('main:create_venue_ajax'), self.valid_venue_data, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
-        self.assertEqual(response.status_code, 302) # Redirects to login
+        self.assertEqual(response.status_code, 302) 
 
     def test_create_venue_ajax_as_customer(self):
         self.client.login(username='customer', password='password123')
@@ -270,13 +267,12 @@ class TestMainViews(TestCase):
     def test_create_venue_ajax_as_owner_invalid_data(self):
         self.client.login(username='owner', password='password123')
         invalid_data = self.valid_venue_data.copy()
-        del invalid_data['name'] # Remove required field
+        del invalid_data['name'] 
         response = self.client.post(reverse('main:create_venue_ajax'), invalid_data, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         self.assertEqual(response.status_code, 400)
         data = response.json()
         self.assertEqual(data['status'], 'error')
-        self.assertIn('form_html', data) # Should return form with errors
-        # FIX: Tell assertContains to expect a 400 status code
+        self.assertIn('form_html', data) 
         self.assertContains(response, 'This field is required.', status_code=400) # Error message
         self.assertEqual(Venue.objects.count(), self.initial_venue_count)
         
@@ -293,29 +289,29 @@ class TestMainViews(TestCase):
         self.assertEqual(response.status_code, 302)
 
     def test_get_edit_form_not_owner(self):
-        self.client.login(username='customer', password='password123') # Log in as customer
+        self.client.login(username='customer', password='password123') 
         response = self.client.get(reverse('main:get_edit_form', kwargs={'slug': self.venue_owner.slug}), HTTP_X_REQUESTED_WITH='XMLHttpRequest')
-        self.assertEqual(response.status_code, 403) # Forbidden
+        self.assertEqual(response.status_code, 403) 
         
     def test_get_edit_form_wrong_owner(self):
-        self.client.login(username='owner', password='password123') # Log in as owner
+        self.client.login(username='owner', password='password123') 
         response = self.client.get(reverse('main:get_edit_form', kwargs={'slug': self.venue_other.slug}), HTTP_X_REQUESTED_WITH='XMLHttpRequest') # Try to edit owner2's venue
-        self.assertEqual(response.status_code, 403) # Forbidden
+        self.assertEqual(response.status_code, 403) 
 
     def test_get_edit_form_correct_owner(self):
-        self.client.login(username='owner', password='password123') # Log in as owner
+        self.client.login(username='owner', password='password123') 
         response = self.client.get(reverse('main:get_edit_form', kwargs={'slug': self.venue_owner.slug}), HTTP_X_REQUESTED_WITH='XMLHttpRequest') # Edit own venue
         self.assertEqual(response.status_code, 200)
         self.assertIn('html', response.json())
 
     def test_edit_venue_ajax_wrong_owner(self):
-        self.client.login(username='owner', password='password123') # Log in as owner
+        self.client.login(username='owner', password='password123') 
         response = self.client.post(
             reverse('main:edit_venue_ajax', kwargs={'slug': self.venue_other.slug}), 
             self.valid_venue_data,
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
-        self.assertEqual(response.status_code, 403) # Forbidden
+        self.assertEqual(response.status_code, 403) 
         
     def test_edit_venue_ajax_success(self):
         self.client.login(username='owner', password='password123')
@@ -330,13 +326,13 @@ class TestMainViews(TestCase):
         data = response.json()
         self.assertEqual(data['status'], 'ok')
         self.assertIn('updated_card_html', data)
-        self.venue_owner.refresh_from_db() # Get updated data from DB
+        self.venue_owner.refresh_from_db()
         self.assertEqual(self.venue_owner.name, "Nama Sudah Diupdate")
         
     def test_edit_venue_ajax_invalid_data(self):
         self.client.login(username='owner', password='password123')
         invalid_data = self.valid_venue_data.copy()
-        invalid_data['name'] = "" # Invalid empty name
+        invalid_data['name'] = "" 
         response = self.client.post(
             reverse('main:edit_venue_ajax', kwargs={'slug': self.venue_owner.slug}), 
             invalid_data,
@@ -347,12 +343,12 @@ class TestMainViews(TestCase):
         self.assertEqual(data['status'], 'error')
         self.assertIn('form_html', data)
         self.venue_owner.refresh_from_db()
-        self.assertNotEqual(self.venue_owner.name, "") # Name should not have changed
+        self.assertNotEqual(self.venue_owner.name, "") 
         
     def test_edit_venue_ajax_wrong_method(self):
         self.client.login(username='owner', password='password123')
         response = self.client.get(reverse('main:edit_venue_ajax', kwargs={'slug': self.venue_owner.slug}), HTTP_X_REQUESTED_WITH='XMLHttpRequest')
-        self.assertEqual(response.status_code, 405) # Method Not Allowed
+        self.assertEqual(response.status_code, 405) 
 
 
     # --- Test Delete Views (GET and POST) ---
@@ -375,7 +371,7 @@ class TestMainViews(TestCase):
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(Venue.objects.count(), self.initial_venue_count) # Nothing deleted
+        self.assertEqual(Venue.objects.count(), self.initial_venue_count) 
         
     def test_delete_venue_ajax_success(self):
         # FIX: Correct the password from the previous typo
@@ -388,20 +384,20 @@ class TestMainViews(TestCase):
         data = response.json()
         self.assertEqual(data['status'], 'ok')
         self.assertEqual(data['deleted_slug'], self.venue_owner.slug)
-        self.assertEqual(Venue.objects.count(), self.initial_venue_count - 1) # One was deleted
+        self.assertEqual(Venue.objects.count(), self.initial_venue_count - 1) 
         self.assertFalse(Venue.objects.filter(slug=self.venue_owner.slug).exists())
         
     def test_delete_venue_ajax_wrong_method(self):
         self.client.login(username='owner', password='password123')
         response = self.client.get(reverse('main:delete_venue_ajax', kwargs={'slug': self.venue_owner.slug}), HTTP_X_REQUESTED_WITH='XMLHttpRequest')
-        self.assertEqual(response.status_code, 405) # Method Not Allowed
+        self.assertEqual(response.status_code, 405) 
 
     # --- Test Misc Views ---
 
     def test_import_csv_not_staff(self):
         self.client.login(username='owner', password='password123')
         response = self.client.get(reverse('main:import_venues_csv'))
-        self.assertEqual(response.status_code, 302) # Redirects (because @staff_member_required)
+        self.assertEqual(response.status_code, 302) 
     
     @patch('pathlib.Path.exists', return_value=True)
     @patch('builtins.open', new_callable=mock_open, read_data="name,category,address,price,capacity,opening_time,closing_time,time,thumbnail\nTest CSV Venue,soccer,123 CSV St,50000,10,10:00,18:00,10-18,img.jpg\nVenue Duplikat,soccer,Alamat A,1,1,10:00,18:00,,")
@@ -419,7 +415,7 @@ class TestMainViews(TestCase):
         self.assertEqual(data['stats']['created'], 1)
         self.assertEqual(data['stats']['updated'], 1)
         self.assertEqual(data['stats']['skipped'], 0)
-        self.assertEqual(Venue.objects.count(), count_before + 1) # +1 created
+        self.assertEqual(Venue.objects.count(), count_before + 1) 
         self.assertTrue(Venue.objects.filter(name='Test CSV Venue').exists())
 
     @patch('pathlib.Path.exists', return_value=False)
@@ -430,7 +426,7 @@ class TestMainViews(TestCase):
         self.assertIn('CSV not found', response.json()['error'])
 
     @patch('pathlib.Path.exists', return_value=True)
-    @patch('builtins.open', new_callable=mock_open, read_data="nama,kategori\nVenue,soccer") # Wrong headers
+    @patch('builtins.open', new_callable=mock_open, read_data="nama,kategori\nVenue,soccer") 
     def test_import_csv_missing_columns(self, mock_file, mock_exists):
         self.client.login(username='staffuser', password='password123')
         response = self.client.get(reverse('main:import_venues_csv'))
@@ -449,4 +445,4 @@ class TestMainViews(TestCase):
         response = self.client.post(
             reverse('main:stub_add_to_booking', kwargs={'venue_id': self.venue_filter_1.id})
         )
-        self.assertEqual(response.status_code, 302) # Redirect to login
+        self.assertEqual(response.status_code, 302) 
