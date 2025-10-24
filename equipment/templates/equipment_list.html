@@ -3,19 +3,9 @@
 
 {% block content %}
 {% include 'navbar.html' %}
+{% include 'edit_modal.html' %}
 
-<div class="px-8 py-6">
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-3xl font-bold text-gray-800">Daftar Equipment</h1>
-
-    {% if user.is_authenticated %}
-      <a href="{% url 'equipment:add_equipment' %}" 
-         class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-semibold shadow-md transition">
-        + Add Equipment
-      </a>
-    {% endif %}
-  </div>
-
+<div class="px-8 py-20">
   <!-- Search & Filter Section -->
   <div class="bg-white rounded-xl shadow p-4 mb-8">
     <div class="flex flex-wrap items-center gap-4">
@@ -31,20 +21,41 @@
       </div>
 
       <!-- Sport Category Filter -->
-      <select id="sportFilter" class="border rounded-lg px-3 py-2">
-        <option value="all">All Sports</option>
-        {% for value, label in sports %}
-          <option value="{{ value }}">{{ label }}</option>
-        {% endfor %}
-      </select>
+        <div class="relative">
+        <select id="sportFilter"
+            class="appearance-none border border-gray-300 rounded-lg px-4 py-2 pr-10 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 cursor-pointer transition">
+            <option value="all">All Sports</option>
+            {% for value, label in sports %}
+            <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+        </select>
 
-      <!-- Region Filter -->
-      <select id="regionFilter" class="border rounded-lg px-3 py-2">
-        <option value="all">All Regions</option>
-        {% for value, label in regions %}
-          <option value="{{ value }}">{{ label }}</option>
-        {% endfor %}
-      </select>
+
+        <svg xmlns="http://www.w3.org/2000/svg"
+            class="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+        </div>
+
+        <!-- Region Filter -->
+        <div class="relative">
+        <select id="regionFilter"
+            class="appearance-none border border-gray-300 rounded-lg px-4 py-2 pr-10 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 cursor-pointer transition">
+            <option value="all">All Regions</option>
+            {% for value, label in regions %}
+            <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+        </select>
+
+        </div>
+        <!-- Add Equipment Button -->
+        {% if user.is_authenticated and user.customuser.role == "owner" %}
+            <a href="{% url 'equipment:add_equipment' %}" 
+                class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-semibold shadow-md transition ml-auto">
+                + Add Equipment
+            </a>
+        {% endif %}
     </div>
   </div>
 
@@ -63,17 +74,18 @@
         {% else %}
           <p class="text-red-500 text-sm font-semibold mt-1">Tidak tersedia</p>
         {% endif %}
+
+        <!-- Edit and Delete Button-->
         {% if user == eq.owner %}
-          <div class="flex justify-between mt-3">
-            <a href="{% url 'equipment:edit_equipment' eq.id %}" 
-               class="bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition text-sm">
-              Edit
-            </a>
+        <div class="flex justify-between mt-3">
+            <button data-id="{{ eq.id }}" class="editBtn bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition text-sm">
+            Edit
+            </button>
             <a href="{% url 'equipment:delete_equipment' eq.id %}" 
-               class="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-600 transition text-sm">
-              Delete
+            class="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-600 transition text-sm">
+            Delete
             </a>
-          </div>
+        </div>
         {% endif %}
       </div>
     {% empty %}
@@ -82,48 +94,100 @@
   </div>
 </div>
 
+
 <!-- AJAX Filtering -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-  $(document).ready(function(){
+$(document).ready(function(){
+    // Fungsi fetch untuk filter/search
     function fetchEquipments(){
-      const sport = $('#sportFilter').val();
-      const region = $('#regionFilter').val();
-      const search = $('#searchInput').val();
+        const sport = $('#sportFilter').val();
+        const region = $('#regionFilter').val();
+        const search = $('#searchInput').val();
 
-      $.ajax({
-        url: "{% url 'equipment:equipment_list' %}",
-        data: { sport_category: sport, region: region, search: search },
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        success: function(response){
-          const equipments = response.equipments;
-          let html = '';
-          if(equipments.length === 0){
-            html = '<p class="text-gray-500">Tidak ada equipment ditemukan.</p>';
-          } else {
-            equipments.forEach(eq => {
-              html += `
-                <div class="bg-white rounded-2xl shadow-md hover:shadow-lg transition p-4">
-                  <img src="${eq.thumbnail}" alt="${eq.name}" class="w-full h-40 object-cover rounded-xl mb-3">
-                  <h2 class="font-semibold text-lg text-gray-800">${eq.name}</h2>
-                  <p class="text-sm text-gray-500">Kategori: ${eq.sport_category}</p>
-                  <p class="text-sm text-gray-500">Wilayah: ${eq.region}</p>
-                  <p class="text-sm text-gray-700 font-medium mt-2">💰 Rp ${eq.price_per_hour}</p>
-                  <p class="text-sm text-gray-700">📦 Quantity: ${eq.quantity}</p>
-                  ${eq.available ? 
-                    '<p class="text-green-600 text-sm font-semibold mt-1">Tersedia</p>' :
-                    '<p class="text-red-500 text-sm font-semibold mt-1">Tidak tersedia</p>'
-                  }
-                </div>`;
-            });
-          }
-          $('#equipmentGrid').html(html);
-        }
-      });
+        $.ajax({
+            url: "{% url 'equipment:equipment_list' %}",
+            data: { sport_category: sport, region: region, search: search },
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            success: function(response){
+                const equipments = response.equipments;
+                let html = '';
+                if(equipments.length === 0){
+                    html = '<p class="text-gray-500">No equipment available.</p>';
+                } else {
+                    equipments.forEach(eq => {
+                        html += `
+                        <div class="bg-white rounded-2xl shadow-md hover:shadow-lg transition p-4">
+                            <img src="${eq.thumbnail}" alt="${eq.name}" class="w-full h-40 object-cover rounded-xl mb-3">
+                            <h2 class="font-semibold text-lg text-gray-800">${eq.name}</h2>
+                            <p class="text-sm text-gray-500">Kategori: ${eq.sport_category}</p>
+                            <p class="text-sm text-gray-500">Wilayah: ${eq.region}</p>
+                            <p class="text-sm text-gray-700 font-medium mt-2">💰 Rp ${eq.price_per_hour}</p>
+                            <p class="text-sm text-gray-700">📦 Quantity: ${eq.quantity}</p>
+                            ${eq.available
+                                ? '<p class="text-green-600 text-sm font-semibold mt-1">Tersedia</p>'
+                                : '<p class="text-red-500 text-sm font-semibold mt-1">Tidak tersedia</p>'
+                            }
+                            ${eq.is_owner ? `
+                            <div class="flex justify-between mt-3">
+                                <button data-id="${eq.id}" class="editBtn bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition text-sm">
+                                    Edit
+                                </button>
+                                <a href="/equipment/delete/${eq.id}/" 
+                                   class="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-600 transition text-sm">
+                                   Delete
+                                </a>
+                            </div>` : ''}
+                        </div>`;
+                    });
+                }
+                $('#equipmentGrid').html(html);
+            }
+        });
     }
 
     $('#sportFilter, #regionFilter, #searchInput').on('input change', fetchEquipments);
-  });
+
+    // Edit button click
+    $(document).on('click', '.editBtn', function() {
+        const eqId = $(this).data('id');
+
+        $.ajax({
+            url: `/equipment/edit/${eqId}/`,
+            type: 'GET',
+            success: function(response) {
+                openModal(response);
+            }
+        });
+    });
+
+    // Submit form via AJAX
+    $(document).on('submit', '#editForm', function(e) {
+        e.preventDefault();
+        const form = $(this);
+        const eqId = form.data('id');
+
+        $.ajax({
+            url: `/equipment/edit/${eqId}/`,
+            type: 'POST',
+            data: new FormData(this),
+            processData: false,
+            contentType: false,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            success: function(response) {
+                if(response.success){
+                    closeModal();
+                    fetchEquipments(); // reload grid
+                } else {
+                    // Render ulang form dengan error
+                    $('#modalContent').html(response);
+                }
+            }
+        });
+    });
+});
+
+
 </script>
 
 {% endblock %}

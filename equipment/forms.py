@@ -13,3 +13,4 @@ class EquipmentForm(ModelForm):
             'available',
             'thumbnail',
         ]
+        

@@ -4,18 +4,75 @@
 {% block content %}
 {% include 'navbar.html' %}
 
-<div class="max-w-xl mx-auto bg-white p-6 rounded-xl shadow mt-10">
-  <h1 class="text-2xl font-bold mb-4">
-    {% if equipment %}Edit{% else %}Add{% endif %} Equipment
-  </h1>
+<div class="bg-gray-50 w-full min-h-screen flex items-center justify-center py-10 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md mx-auto bg-white rounded-2xl shadow-md p-6 mt-8 border border-gray-200 relative">
 
-  <form method="POST" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
+        <!-- Tombol Back -->
+        <div class="flex items-center mb-6">
+            <button onclick="history.back()" 
+                class="bg-gray-100 hover:bg-orange-100 text-gray-600 hover:text-orange-500 rounded-full p-2 shadow-sm transition flex items-center justify-center mr-3"
+                title="Back">
+                <svg xmlns="http://www.w3.org/2000/svg" 
+                    class="w-5 h-5" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor" 
+                    stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
 
-    <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg mt-4">
-      {% if equipment %}Update{% else %}Add{% endif %}
-    </button>
-  </form>
+            <h2 class="text-2xl font-semibold text-gray-800">Add Equipment</h2>
+        </div>
+
+        <!-- Form -->
+        <form method="POST" class="space-y-5">
+            {% csrf_token %}
+            {% for field in form %}
+                <div>
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ field.label }}
+                    </label>
+                    <div class="w-full">
+                        {{ field }}
+                    </div>
+                    {% if field.help_text %}
+                        <p class="mt-1 text-sm text-gray-500">{{ field.help_text }}</p>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+
+            <button type="submit" 
+                class="w-full bg-orange-500 text-white font-semibold py-2 rounded-lg hover:bg-orange-600 transition shadow-md">
+                Add Equipment
+            </button>
+        </form>
+    </div>
 </div>
+
+<style>
+    input[type="text"],
+    input[type="number"],
+    input[type="file"],
+    select,
+    textarea {
+        width: 100%;
+        border: 1px solid #d1d5db; 
+        border-radius: 0.5rem; 
+        padding: 0.5rem 0.75rem; 
+        outline: none;
+        transition: box-shadow 0.2s, border-color 0.2s;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+        border-color: #fb923c; 
+        box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.3);
+    }
+</style>
+
 {% endblock content %}
