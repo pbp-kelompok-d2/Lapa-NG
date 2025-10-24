@@ -33,9 +33,7 @@ class ReviewTestCase(TestCase):
             'comment': 'Lapangan sangat bagus dan bersih!'
         }
 
-    # ===================================
     # Test untuk Model
-    # ===================================
     def test_review_model_creation(self):
         """Test membuat instance model Reviews"""
         self.assertEqual(self.review.venue_name, 'Lapangan Keren')
@@ -47,9 +45,7 @@ class ReviewTestCase(TestCase):
         expected_str = f"Lapangan Keren - 5★ by testcustomer"
         self.assertEqual(str(self.review), expected_str)
 
-    # ===================================
     # Test untuk Views (Halaman dan JSON)
-    # ===================================
     def test_show_reviews_page(self):
         """Test halaman utama review dapat diakses (tanpa login)"""
         response = self.client.get(reverse('reviews:show_reviews'))
@@ -63,7 +59,7 @@ class ReviewTestCase(TestCase):
         data = json.loads(response.content)
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]['venue_name'], 'Lapangan Keren')
-        self.assertFalse(data[0]['can_modify']) # Pastikan can_modify False
+        self.assertFalse(data[0]['can_modify'])
 
     def test_get_reviews_json_as_owner_of_review(self):
         """Test endpoint JSON sebagai pemilik review (can_modify harus True)"""
@@ -83,7 +79,6 @@ class ReviewTestCase(TestCase):
 
     def test_get_my_reviews_filter(self):
         """Test filter 'my_reviews' hanya mengembalikan review milik user"""
-        # Buat review lain oleh owner
         Reviews.objects.create(user=self.user_owner, venue_name='Venue Owner', rating=3, comment='Oke.')
         
         self.client.login(username='testcustomer', password='testpass123')
@@ -115,11 +110,8 @@ class ReviewTestCase(TestCase):
         """Test endpoint detail jika review tidak ada"""
         response = self.client.get(reverse('reviews:get_review_detail_json', args=[999]))
         self.assertEqual(response.status_code, 500) # get_object_or_404 akan raise Http404, ditangkap sbg Exception
-    
-    # ===================================
+ 
     # Test untuk AJAX: Add, Edit, Delete
-    # ===================================
-
     # --- ADD REVIEW ---
     def test_add_review_ajax_success(self):
         """Test berhasil menambah review sebagai customer"""
