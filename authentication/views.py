@@ -20,7 +20,7 @@ INITIAL_LIMIT = 12
 MAX_LIMIT = 50  # safety cap for AJAX requests
 
 def get_model_safe(label):
-    #Return model class for 'app_label.ModelName' or None if not found.
+    # Return model class for 'app_label.ModelName' or None if not found.
     try:
         return apps.get_model(label)
     except LookupError:
@@ -78,7 +78,7 @@ def serialize_obj_minimal(obj):
     """
     d = {}
     # common fields we might want
-    for key in ('id', 'pk', 'name', 'title', 'court', 'location', 'date', 'start_time', 'end_time', 'created_at'):
+    for key in ('id', 'pk', 'name', 'title', 'court', 'location', 'date', 'booking_date', 'venue', 'start_time', 'end_time', 'total_price', 'created_at'):
         try:
             val = getattr(obj, key)
             # if attr is a related object, try to get a friendly representation
@@ -91,12 +91,54 @@ def serialize_obj_minimal(obj):
                 d[key] = val
         except Exception:
             continue
+
     # ensure id present
     if 'id' not in d:
         try:
             d['id'] = int(getattr(obj, 'pk'))
         except Exception:
             d['id'] = None
+    try:
+        img = None
+        # common image field names to try
+        if hasattr(obj, 'thumbnail'):
+            fld = getattr(obj, 'thumbnail')
+            if fld:
+                # try FieldFile url or str fallback
+                try:
+                    img = fld.url
+                except Exception:
+                    img = str(fld)
+                if img:
+                    d['venue_image'] = img
+    except Exception:
+        pass
+
+    # If this object has a related venue, try to include friendly venue fields
+    try:
+        if hasattr(obj, 'venue') and getattr(obj, 'venue') is not None:
+            v = getattr(obj, 'venue')
+            try:
+                d['name'] = getattr(v, 'name')
+            except Exception:
+                pass
+            # try common image attributes on the related venue
+            try:
+                if hasattr(obj, 'thumbnail'):
+                    fld = getattr(obj, 'thumbnail')
+                    if fld:
+                        # try FieldFile url or str fallback
+                        try:
+                            img = fld.url
+                        except Exception:
+                            img = str(fld)
+                        if img:
+                            d['venue_image'] = img
+            except Exception:
+                pass
+    except Exception:
+        pass
+
     return d
 
 @login_required
@@ -108,7 +150,7 @@ def show_dashboard(request):
     Equipment = get_model_safe('equipment.Equipment')
 
     counts = {'bookings': 0, 'equipment': 0, 'reviews': 0}
-    recent = {'bookings': [], 'equipment': [], 'reviews': []}
+    recent = {'bookings': []}
 
     # --- BOOKINGS ---
     if Booking is not None:
@@ -122,33 +164,28 @@ def show_dashboard(request):
             counts['bookings'] = 0
             recent['bookings'] = []
 
-    # --- EQUIPMENT (equipment / owned equipment) ---
+    # --- EQUIPMENT (count only) ---
+    Equipment = get_model_safe('equipment.Equipment')
     if Equipment is not None:
         try:
             user_field = discover_user_field(Equipment) or 'user'
-            ordering = choose_ordering(Equipment)
-            qs = Equipment.objects.filter(**{user_field: user}).order_by(ordering)
+            qs = Equipment.objects.filter(**{user_field: user})
             counts['equipment'] = qs.count()
-            recent['equipment'] = list(qs[:INITIAL_LIMIT])
         except Exception:
             counts['equipment'] = 0
-            recent['equipment'] = []
 
-    # --- REVIEWS ---
-    Review = get_model_safe('reviews.Review')
+    # --- REVIEWS (count only) ---
+    Review = get_model_safe('review.Review') or get_model_safe('reviews.Review')
     if Review is not None:
         try:
             user_field = discover_user_field(Review) or 'user'
-            ordering = choose_ordering(Review)
-            qs = Review.objects.filter(**{user_field: user}).order_by(ordering)
+            qs = Review.objects.filter(**{user_field: user})
             counts['reviews'] = qs.count()
-            recent['reviews'] = list(qs[:INITIAL_LIMIT])
         except Exception:
             counts['reviews'] = 0
-            recent['reviews'] = []
 
     # If this is an AJAX request, support incremental loading:
-    # ?type=bookings&offset=12&limit=12
+    # ?type=bookings&offset=12&limit=12  OR ?type=my_courts&offset=0&limit=12
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         typ = request.GET.get('type', 'bookings')
         try:
@@ -168,15 +205,28 @@ def show_dashboard(request):
             qs = Booking.objects.filter(**{user_field: user}).order_by(ordering)
             items = qs[offset: offset + limit]
             data = [serialize_obj_minimal(o) for o in items]
-            return JsonResponse({'success': True, 'items': data, 'total': qs.count()})
-        
-        elif typ == 'equipment' and Equipment is not None:
-            user_field = discover_user_field(Equipment) or 'user'
-            ordering = choose_ordering(Equipment)
-            qs = Equipment.objects.filter(**{user_field: user}).order_by(ordering)
-            items = qs[offset: offset + limit]
-            data = [serialize_obj_minimal(o) for o in items]
-            return JsonResponse({'success': True, 'items': data, 'total': qs.count()})
+            total = qs.count()
+            has_more = (offset + len(items)) < total
+            return JsonResponse({'success': True, 'items': data, 'total': total, 'has_more': has_more})
+
+        elif typ == 'my_courts':
+            # Try to find the Venue/Court model in common locations
+            Venue = get_model_safe('main.Venue') or get_model_safe('venue.Venue') or get_model_safe('venues.Venue') or get_model_safe('court.Venue') or get_model_safe('main.Court')
+            if Venue is None:
+                return JsonResponse({'success': False, 'error': 'Venue model not found.'}, status=400)
+            try:
+                owner_field = discover_user_field(Venue) or 'owner' or 'user'
+                ordering = choose_ordering(Venue)
+                qs = Venue.objects.filter(**{owner_field: user}).order_by(ordering)
+                total = qs.count()
+                items = qs[offset: offset + limit]
+                data = [serialize_obj_minimal(o) for o in items]
+                has_more = (offset + len(items)) < total
+                return JsonResponse({'success': True, 'items': data, 'total': total, 'has_more': has_more})
+            except Exception:
+                traceback.print_exc()
+                return JsonResponse({'success': False, 'error': 'Failed to fetch venues.'}, status=500)
+
         else:
             return JsonResponse({'success': False, 'error': 'Unknown type or model missing.'}, status=400)
 
@@ -187,6 +237,8 @@ def show_dashboard(request):
         'recent': recent,            # contains model instances lists (bookings/equipment/reviews)
         'bookings_limit': INITIAL_LIMIT,
         'equipment_limit': INITIAL_LIMIT,
+        # convenience flag
+        'is_owner': getattr(profile, 'role', '') == 'owner',
     }
     return render(request, 'user_dashboard.html', context)
 

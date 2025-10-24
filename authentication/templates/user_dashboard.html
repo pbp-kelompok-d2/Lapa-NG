@@ -8,497 +8,146 @@
 {% block content %}
 {% include 'navbar.html' %}
 
-<div class="min-h-screen bg-gray-50 pt-24 px-6 pb-6">
-  <div class="max-w-7xl mx-auto" style="height: calc(50vh - 4rem);">
-    <div class="flex flex-col lg:flex-row lg:items-start gap-6 h-full">
+<style>
+/* Hide scrollbar for panels while keeping them scrollable */
+#bookings-panel::-webkit-scrollbar,
+#courts-panel::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+#bookings-panel,
+#courts-panel {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Toggle buttons */
+.panel-toggle { display: inline-flex; gap: 8px; align-items: center; }
+.panel-toggle button {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.12);
+  color: #0f172a;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .18s ease;
+}
+.panel-toggle button[data-active="true"] {
+  background: rgba(255,255,255,0.92);
+  color: #065f46;
+  box-shadow: 0 4px 14px rgba(2,6,23,0.06);
+  border-color: rgba(255,255,255,0.95);
+}
+
+/* panel sizing */
+.panel-body {
+  height: calc(50vh - 6rem);
+}
+
+#bookings-list,
+#courts-list {
+  padding: 0 0.75rem 0.75rem 0.75rem; /* adds spacing from edges */
+}
+
+#bookings-list > div,
+#courts-list > div {
+  margin-left: 0.25rem;
+  margin-right: 0.25rem;
+}
+</style>
+
+<div class="min-h-1/2 bg-gray-50 pt-24 px-6 pb-6">
+  <div class="max-w-7xl mx-auto">
+    <div class="flex flex-col lg:flex-row lg:items-start gap-6">
 
       <!-- LEFT CARD -->
-      <aside class="w-full lg:w-3/12 flex-none">
+      <aside id="left-card" class="w-full lg:w-3/12 flex-none">
         <div class="lg:sticky lg:top-24">
-            <div class="w-full flex items-stretch">
-            <!-- Card: flex column so content stacks and can grow naturally -->
-            <div class="bg-gradient-to-br from-white to-green-50 rounded-2xl shadow-lg p-6 text-center w-full flex flex-col items-center justify-start">
-                
-                {% if profile and profile.profile_picture %}
-                <img src="{{ profile.profile_picture }}" alt="{{ user.username }}"
-                    class="w-36 h-36 rounded-full object-cover border-2 border-white shadow-sm mb-4 profile-avatar" />
-                {% else %}
-                <img src="{% static 'images/user.png' %}" alt="avatar"
-                    class="w-36 h-36 rounded-full object-cover border-2 border-white shadow-sm mb-4 profile-avatar" />
-                {% endif %}
+          <div class="bg-gradient-to-br from-[#3b82f680] to-[#10b98180] rounded-2xl shadow-lg p-6 text-center flex flex-col items-center justify-start">
+            {% if profile and profile.profile_picture %}
+            <img src="{{ profile.profile_picture }}" alt="{{ user.username }}" class="w-36 h-36 rounded-full object-cover border-2 border-white shadow-sm mb-4 profile-avatar" />
+            {% else %}
+            <img src="{% static 'images/user.png' %}" alt="avatar" class="w-36 h-36 rounded-full object-cover border-2 border-white shadow-sm mb-4 profile-avatar" />
+            {% endif %}
 
-                <h2 class="text-2xl font-extrabold text-gray-900 profile-fullname">
-                {{ user.customuser.name }}
-                </h2>
+            <h2 class="text-2xl font-extrabold text-gray-900 profile-fullname">{{ user.customuser.name }}</h2>
+            {% if profile.number %}
+            <p id="profile-number" class="text-gray-500 text-sm mt-1" data-raw="{{ profile.number }}">{{ profile.formatted_number }}</p>
+            {% endif %}
+            <p class="text-sm text-green-600 mt-1 profile-role">{{ profile.role|capfirst }}</p>
 
-                {% if profile.number %}
-                <p class="text-gray-500 text-sm mt-1">{{ profile.formatted_number }}</p>
-                {% endif %}
-
-                <p class="text-sm text-green-600 mt-1 profile-role">{{ profile.role|capfirst }}</p>
-
-                <!-- Stats grid -->
-                <div class="mt-6 grid grid-cols-3 gap-3 text-center w-full max-w-xs">
-                <div>
-                    <div class="text-xs text-gray-500">Bookings</div>
-                    <div class="font-semibold text-gray-800">{{ counts.bookings|default:0 }}</div>
-                </div>
-                <div>
-                    <div class="text-xs text-gray-500">Equipment</div>
-                    <div class="font-semibold text-gray-800">{{ counts.equipment|default:0 }}</div>
-                </div>
-                <div>
-                    <div class="text-xs text-gray-500">Reviews</div>
-                    <div class="font-semibold text-gray-800">{{ counts.reviews|default:0 }}</div>
-                </div>
-                </div>
-
-                <!-- Buttons row INSIDE the card. mt-auto pushes it to the bottom and the card grows -->
-                <div class="mt-auto w-full flex justify-center gap-3 pt-6 pb-2">
-                <button id="edit-profile-btn"
-                        data-username="{{ user.username|default:'' }}"
-                        data-name="{{ profile.name|default:user.get_full_name|default:'' }}"
-                        data-number="{{ profile.number|default:'' }}"
-                        data-profile_picture="{{ profile.profile_picture|default:'' }}"
-                        class="flex items-center gap-2 px-4 py-2 bg-white border rounded text-sm shadow-sm hover:bg-gray-50 hover:shadow-md transition">
-                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15.232 5.232l3.536 3.536M9 11l6-6 3 3-6 6H9v-3z" />
-                    </svg>
-                    <span class="text-gray-700">Edit</span>
-                </button>
-
-                <button id="delete-profile-btn"
-                        class="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded text-sm shadow-sm hover:bg-red-700 transition">
-                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                    <span>Delete</span>
-                </button>
-                </div>
-
+            <div class="mt-6 grid grid-cols-3 gap-3 text-center w-full max-w-xs">
+              <div><div class="text-xs text-gray-500">Bookings</div><div class="font-semibold text-gray-800">{{ counts.bookings|default:0 }}</div></div>
+              <div><div class="text-xs text-gray-500">Equipment</div><div class="font-semibold text-gray-800">{{ counts.equipment|default:0 }}</div></div>
+              <div><div class="text-xs text-gray-500">Reviews</div><div class="font-semibold text-gray-800">{{ counts.reviews|default:0 }}</div></div>
             </div>
+
+            <div class="mt-auto w-full flex justify-center gap-3 pt-6 pb-2">
+              <button id="edit-profile-btn"
+                      data-username="{{ user.username|default:'' }}"
+                      data-name="{{ profile.name|default:user.get_full_name|default:'' }}"
+                      data-number="{{ profile.number|default:'' }}"
+                      data-profile_picture="{{ profile.profile_picture|default:'' }}"
+                      data-edit-url="{% url 'authentication:edit_profile' %}"
+                      class="flex items-center gap-2 px-4 py-2 rounded text-sm border border-white/60 bg-white/20 backdrop-blur-sm text-gray-800 shadow-sm hover:bg-white/25 hover:shadow-md transition">
+                <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 11l6-6 3 3-6 6H9v-3z"/></svg>
+                <span>Edit</span>
+              </button>
+
+              <button id="delete-profile-btn"
+                      data-delete-url="{% url 'authentication:delete_profile' %}"
+                      class="flex items-center gap-2 px-4 py-2 rounded text-sm border border-red-500 bg-red-500/20 backdrop-blur-sm text-red-600 shadow-sm hover:bg-red-500/40 hover:shadow-md transition">
+                <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                <span>Delete</span>
+              </button>
             </div>
+          </div>
         </div>
-        </aside>
-
+      </aside>
 
       <!-- RIGHT CARD -->
-      <main class="w-full lg:flex-1 h-full">
-        <div class="bg-white rounded-2xl shadow-lg overflow-hidden h-full flex flex-col">
-          <!-- header (fixed) -->
-          <div class="px-6 py-5 border-b">
-            <h3 class="text-2xl font-extrabold text-green-600">Booked Courts</h3>
-            <p class="text-sm text-gray-500 mt-1">Your current bookings</p>
+      <main id="right-card" class="w-full lg:flex-1">
+        <div class="bg-gradient-to-br from-[#3b82f680] to-[#10b98180] rounded-2xl shadow-lg h-[50vh] flex flex-col overflow-hidden">
+          <div class="px-6 py-5 flex justify-between items-center flex-none">
+            <h2 id="dashboard-title" class="text-2xl font-extrabold text-green-600">Booked Courts</h2>
+            <div class="flex gap-2">
+              <button id="tab-bookings" class="px-4 py-1 rounded-full bg-white text-green-600 font-semibold text-sm shadow-sm">Booked Courts</button>
+              {% if user.customuser.role == "owner" %}
+              <button id="tab-courts" class="px-4 py-1 rounded-full bg-white/30 text-gray-700 font-semibold text-sm shadow-sm hover:bg-white/40">My Courts</button>
+              {% endif %}
+            </div>
           </div>
 
-          <!-- scrollable content area (flex-1) - intentionally empty for now -->
-          <div class="p-6 flex-1 overflow-y-auto pr-2">
-            <div class="space-y-6">
+          <div class="relative flex-1 overflow-hidden px-6 pb-6">
+            <div id="bookings-panel" data-limit="{{ bookings_limit|default:12 }}" data-default-image="{% static 'images/No_Image_Available.jpg' %}" class="absolute inset-0 overflow-y-auto pr-2 space-y-4 transition-all duration-300">
+              <div id="bookings-list" class="space-y-4"></div>
+              <div id="bookings-loading" class="text-center py-4 hidden">Loading...</div>
             </div>
+
+            {% if user.customuser.role == "owner" %}
+            <div id="courts-panel" data-limit="{{ bookings_limit|default:12 }}" data-default-image="{% static 'images/No_Image_Available.jpg' %}" class="absolute inset-0 overflow-y-auto pr-2 space-y-4 hidden transition-all duration-300">
+              <div id="courts-list" class="space-y-4"></div>
+              <div id="courts-loading" class="text-center py-4 hidden">Loading...</div>
+            </div>
+            {% endif %}
           </div>
         </div>
       </main>
-
     </div>
   </div>
 </div>
 
 <!-- Toast container -->
 <div id="global-toast" class="fixed bottom-6 right-6 z-60 hidden">
-  <div id="global-toast-inner"
-       class="max-w-sm w-full rounded-lg shadow-lg p-3 flex items-center gap-3 bg-green-600 text-white transform transition-all duration-500 opacity-0 translate-y-4">
-    <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414L9 14.414 5.293 10.707a1 1 0 011.414-1.414L9 11.586l6.293-6.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-    </svg>
+  <div id="global-toast-inner" class="max-w-sm w-full rounded-lg shadow-lg p-3 flex items-center gap-3 bg-green-600 text-white transform transition-all duration-500 opacity-0 translate-y-4">
     <div id="global-toast-message" class="text-sm font-medium">Profile Updated!</div>
   </div>
 </div>
 
-<style>
-  /* Smooth slide-up + fade animation for toast */
-  @keyframes toastSlideIn {
-    from {
-      opacity: 0;
-      transform: translateY(16px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  @keyframes toastSlideOut {
-    from {
-      opacity: 1;
-      transform: translateY(0);
-    }
-    to {
-      opacity: 0;
-      transform: translateY(16px);
-    }
-  }
-  .toast-show {
-    animation: toastSlideIn 0.4s ease-out forwards;
-  }
-  .toast-hide {
-    animation: toastSlideOut 0.4s ease-in forwards;
-  }
-</style>
-
-
-<!--Show Toast Script-->
-<script>
-function showToast(message = 'Saved', {duration = 2500} = {}) {
-  const toastWrap = document.getElementById('global-toast');
-  const toastInner = document.getElementById('global-toast-inner');
-  const toastMsg = document.getElementById('global-toast-message');
-  if (!toastWrap || !toastInner || !toastMsg) return;
-
-  toastMsg.textContent = message;
-  toastWrap.classList.remove('hidden');
-  toastInner.classList.remove('toast-hide');
-  toastInner.classList.add('toast-show');
-
-  clearTimeout(toastWrap._hideTimeout);
-  toastWrap._hideTimeout = setTimeout(() => {
-    toastInner.classList.remove('toast-show');
-    toastInner.classList.add('toast-hide');
-    setTimeout(() => {
-      toastWrap.classList.add('hidden');
-    }, 400); // wait for hide animation
-  }, duration);
-}
-</script>
-
-<!--Edit Profile Modal-->
-<div id="edit-profile-modal" class="fixed inset-0 z-50 hidden items-center justify-center px-4">
-  <div class="absolute inset-0 bg-black/40"></div>
-
-  <div class="relative w-full max-w-lg mx-auto">
-    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-      <div class="px-6 py-4 border-b flex items-center justify-between">
-        <h3 class="text-lg font-semibold text-gray-800">Edit profile</h3>
-        <button id="edit-profile-close" class="text-2xl leading-none text-gray-500 hover:text-gray-700">&times;</button>
-      </div>
-
-      <div class="px-6 py-5">
-        <div id="edit-profile-alert" class="hidden mb-4 p-3 rounded text-sm"></div>
-
-        <form id="edit-profile-form" method="post" novalidate>
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-              <input name="username" id="ep-username" class="w-full px-4 py-2 border rounded" />
-              <p class="text-red-600 text-sm mt-1 hidden ep-err" data-field="username"></p>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Full name</label>
-              <input name="name" id="ep-name" class="w-full px-4 py-2 border rounded" />
-              <p class="text-red-600 text-sm mt-1 hidden ep-err" data-field="name"></p>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Phone number</label>
-              <input name="number" id="ep-number" class="w-full px-4 py-2 border rounded" inputmode="numeric" />
-              <p class="text-xs text-gray-500 mt-1">Enter digits only, no leading 0 or +62</p>
-              <p class="text-red-600 text-sm mt-1 hidden ep-err" data-field="number"></p>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Profile picture (URL)</label>
-              <input name="profile_picture" id="ep-profile_picture" class="w-full px-4 py-2 border rounded" />
-              <p class="text-red-600 text-sm mt-1 hidden ep-err" data-field="profile_picture"></p>
-            </div>
-
-            <div class="pt-3">
-              <button id="ep-submit" type="submit" class="w-full bg-green-600 text-white px-4 py-2 rounded">Save changes</button>
-            </div>
-          </div>
-        </form>
-      </div>
-
-    </div>
-  </div>
-</div>
-
-<!--Delete Profile Modal-->
-<div id="delete-confirm-modal" class="fixed inset-0 z-50 hidden items-center justify-center px-4">
-  <div class="absolute inset-0 bg-black/50"></div>
-
-  <div class="relative w-full max-w-md mx-auto">
-    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-      <div class="px-6 py-6 text-center">
-        <h3 class="text-xl font-bold text-gray-800 mb-2">Are you sure?</h3>
-        <p class="text-sm text-gray-500 mb-6">This will permanently delete your profile and you will be logged out.</p>
-
-        <div class="flex items-center justify-center gap-4">
-          <button id="confirm-delete-yes"
-                  class="px-5 py-2 border border-green-600 text-green-600 bg-white rounded hover:bg-green-50">
-            Yes
-          </button>
-
-          <button id="confirm-delete-no"
-                  class="px-5 py-2 bg-red-600 text-white rounded hover:opacity-90">
-            No
-          </button>
-        </div>
-
-      </div>
-    </div>
-  </div>
-</div>
-
-<!--AJAX for Edit Modal-->
-<script>
-(function(){
-  const editBtn = document.getElementById('edit-profile-btn');
-  const modal = document.getElementById('edit-profile-modal');
-  const closeBtn = document.getElementById('edit-profile-close');
-  const form = document.getElementById('edit-profile-form');
-  const alertBox = document.getElementById('edit-profile-alert');
-
-  // inputs
-  const inUsername = document.getElementById('ep-username');
-  const inName = document.getElementById('ep-name');
-  const inRole = document.getElementById('ep-role');
-  const inNumber = document.getElementById('ep-number');
-  const inProfilePicture = document.getElementById('ep-profile_picture');
-
-  function openModal() {
-    inUsername.value = editBtn.dataset.username || '';
-    inName.value = editBtn.dataset.name || '';
-    inNumber.value = editBtn.dataset.number || '';
-    inProfilePicture.value = editBtn.dataset.profile_picture || '';
-
-    clearErrors();
-    alertBox.classList.add('hidden');
-    modal.classList.remove('hidden');
-    inUsername.focus();
-    }
-
-  function closeModal() {
-    modal.classList.add('hidden');
-  }
-
-  function clearErrors() {
-    document.querySelectorAll('.ep-err').forEach(el => {
-      el.textContent = '';
-      el.classList.add('hidden');
-    });
-    alertBox.classList.add('hidden');
-    alertBox.textContent = '';
-    alertBox.className = 'hidden';
-  }
-
-  function showErrors(errors) {
-    // errors: { field: [msg,...], ... }
-    clearErrors();
-    for (const [field, msgs] of Object.entries(errors || {})) {
-      const el = document.querySelector(`.ep-err[data-field="${field}"]`);
-      if (el) {
-        el.textContent = msgs.join(' ');
-        el.classList.remove('hidden');
-      }
-    }
-  }
-
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
-    }
-    return cookieValue;
-  }
-
-  async function submitForm(ev) {
-    ev.preventDefault();
-    clearErrors();
-    alertBox.classList.add('hidden');
-
-    const data = new URLSearchParams();
-    data.append('username', inUsername.value.trim());
-    data.append('name', inName.value.trim());
-    data.append('number', inNumber.value.trim());
-    data.append('profile_picture', inProfilePicture.value.trim());
-
-    const csrftoken = getCookie('csrftoken');
-
-    let resp;
-    try {
-        resp = await fetch("{% url 'authentication:edit_profile' %}", {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': csrftoken,
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'application/json',
-            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-        },
-        body: data.toString()
-        });
-    } catch (e) {
-        alertBox.className = 'mb-4 p-3 rounded text-sm bg-red-50 border border-red-200 text-red-700';
-        alertBox.textContent = 'Network error. Please try again.';
-        alertBox.classList.remove('hidden');
-        return;
-    }
-
-    if (resp.ok) {
-      const json = await resp.json();
-      // update data-* on button for future opens
-      editBtn.dataset.username = json.username || editBtn.dataset.username;
-      editBtn.dataset.name = json.name || editBtn.dataset.name;
-      editBtn.dataset.role = json.role || editBtn.dataset.role;
-      editBtn.dataset.number = json.number || editBtn.dataset.number;
-      editBtn.dataset.profile_picture = json.profile_picture || editBtn.dataset.profile_picture;
-
-      // update visible DOM fields
-      const nameEl = document.querySelector('.profile-fullname');
-      if (nameEl) nameEl.textContent = json.name || nameEl.textContent;
-      const roleEl = document.querySelector('.profile-role');
-      if (roleEl) roleEl.textContent = json.role ? (json.role.charAt(0).toUpperCase()+json.role.slice(1)) : roleEl.textContent;
-      const avatarImg = document.querySelector('.profile-avatar');
-      if (avatarImg && json.profile_picture) avatarImg.src = json.profile_picture;
-
-      showToast('Profile Updated!', { duration: 2200 });
-
-      // success feedback in modal then close
-      alertBox.className = 'mb-4 p-3 rounded text-sm bg-green-50 border border-green-200 text-green-700';
-      alertBox.textContent = json.message || 'Saved';
-      alertBox.classList.remove('hidden');
-
-      setTimeout(() => closeModal(), 700);
-    } else {
-      const err = await resp.json().catch(() => null);
-      if (err && err.errors) {
-        showErrors(err.errors);
-      } else {
-        alertBox.className = 'mb-4 p-3 rounded text-sm bg-red-50 border border-red-200 text-red-700';
-        alertBox.textContent = (err && err.error) ? err.error : 'An unexpected error occurred.';
-        alertBox.classList.remove('hidden');
-      }
-    }
-  }
-
-  // wire up events
-  if (editBtn) editBtn.addEventListener('click', openModal);
-  if (closeBtn) closeBtn.addEventListener('click', closeModal);
-  if (form) form.addEventListener('submit', submitForm);
-
-  // close modal on outside click
-  if (modal) modal.addEventListener('click', function(e){
-    if (e.target === modal) closeModal();
-  });
-
-  // close modal on escape
-  document.addEventListener('keydown', function(e){
-    if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
-  });
-})();
-</script>
-
-<!--Function for Delete-->
-<script>
-(function(){
-  const deleteBtn = document.getElementById('delete-profile-btn');
-  const confirmModal = document.getElementById('delete-confirm-modal');
-  const yesBtn = document.getElementById('confirm-delete-yes');
-  const noBtn = document.getElementById('confirm-delete-no');
-
-  function openConfirm() {
-    confirmModal.classList.remove('hidden');
-  }
-  function closeConfirm() {
-    confirmModal.classList.add('hidden');
-  }
-
-  deleteBtn.addEventListener('click', openConfirm);
-  noBtn.addEventListener('click', closeConfirm);
-
-  // helper to read CSRF cookie
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let i=0;i<cookies.length;i++){
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length+1) === (name + '=')) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length+1));
-          break;
-        }
-      }
-    }
-    return cookieValue;
-  }
-
-  async function performDelete(ev) {
-    ev.preventDefault();
-    // disable buttons to avoid double clicks
-    yesBtn.disabled = true;
-    noBtn.disabled = true;
-
-    const csrftoken = getCookie('csrftoken');
-
-    try {
-      const resp = await fetch("{% url 'authentication:delete_profile' %}", {
-        method: 'POST',
-        headers: {
-          'X-CSRFToken': csrftoken,
-          'X-Requested-With': 'XMLHttpRequest',
-          'Accept': 'application/json'
-        },
-        body: '' // empty body is fine
-      });
-
-      if (!resp.ok) {
-        // try to show returned JSON error if present
-        let err = null;
-        try { err = await resp.json(); } catch(e) { }
-        const msg = (err && err.error) ? err.error : `Delete failed (status ${resp.status})`;
-        // show an in-modal alert (assuming you have edit alert style); fallback to alert()
-        alert(msg);
-        yesBtn.disabled = false;
-        noBtn.disabled = false;
-        return;
-      }
-
-      const json = await resp.json();
-      if (json.success) {
-        // response should include redirect and cookies are already set by server for toast
-        window.location.href = json.redirect || '/';
-      } else {
-        alert(json.error || 'Delete failed');
-        yesBtn.disabled = false;
-        noBtn.disabled = false;
-      }
-
-    } catch (e) {
-      console.error('Delete error', e);
-      alert('Network error, try again.');
-      yesBtn.disabled = false;
-      noBtn.disabled = false;
-    }
-  }
-
-  yesBtn.addEventListener('click', performDelete);
-
-  // close modal on outside click or esc
-  confirmModal.addEventListener('click', function(e){
-    if (e.target === confirmModal) closeConfirm();
-  });
-  document.addEventListener('keydown', function(e){
-    if (e.key === 'Escape' && !confirmModal.classList.contains('hidden')) closeConfirm();
-  });
-
-})();
-</script>
-
 {% endblock content %}
+
+{% block scripts %}
+<script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock scripts %}
