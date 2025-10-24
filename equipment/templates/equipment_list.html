@@ -1,0 +1,358 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+{% include 'navbar.html' %}
+{% include 'edit_modal.html' %}
+
+<div class="px-8 py-20">
+  <!-- Search & Filter Section -->
+  <div class="bg-white rounded-xl shadow p-4 mb-8">
+    <div class="flex flex-wrap items-center gap-4">
+      <!-- Search Bar -->
+      <div class="flex items-center border rounded-lg px-3 py-2 w-full md:w-1/3">
+        <input type="text" id="searchInput" placeholder="Search equipment..." 
+               class="flex-grow focus:outline-none" />
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"/>
+        </svg>
+      </div>
+
+      <!-- Sport Category Filter -->
+        <div class="relative">
+        <select id="sportFilter"
+            class="appearance-none border border-gray-300 rounded-lg px-4 py-2 pr-10 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 cursor-pointer transition">
+            <option value="all">All Sports</option>
+            {% for value, label in sports %}
+            <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+        </select>
+
+        <svg xmlns="http://www.w3.org/2000/svg"
+            class="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+        </div>
+
+        <!-- Region Filter -->
+        <div class="relative">
+        <select id="regionFilter"
+            class="appearance-none border border-gray-300 rounded-lg px-4 py-2 pr-10 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 cursor-pointer transition">
+            <option value="all">All Regions</option>
+            {% for value, label in regions %}
+            <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+        </select>
+
+        <svg xmlns="http://www.w3.org/2000/svg"
+            class="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+
+        </div>
+        <!-- Add Equipment Button -->
+        {% if user.is_authenticated and user.customuser.role == "owner" %}
+            <a href="{% url 'equipment:add_equipment' %}" 
+                class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-semibold shadow-md transition ml-auto">
+                + Add Equipment
+            </a>
+        {% endif %}
+    </div>
+    <!-- Contact Modal -->
+    <div id="contactModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-md w-full max-w-sm p-6 relative">
+        <button onclick="closeContactModal()" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">&times;</button>
+        <h2 class="text-xl font-semibold mb-4">Contact Owner</h2>
+        <p id="contactOwnerName" class="font-medium mb-2"></p>
+        <p id="contactOwnerNumber" class="text-gray-700"></p>
+    </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-3 pointer-events-none"></div>
+  </div>
+
+  <!-- Equipment Grid -->
+    <div id="equipmentGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+    {% for eq in equipments %}
+        <div class="bg-white rounded-2xl shadow-md hover:shadow-lg transition flex flex-col justify-between relative equipmentCard p-4"
+            data-owner="{{ eq.owner.customuser.name }}"
+            data-contact="{{ eq.owner.customuser.formatted_number }}"
+            style="min-height: 420px;">
+        
+        <!-- Bagian gambar -->
+        <div class="relative -mt-4 -mx-4 mb-3">
+            <img src="{{ eq.thumbnail }}" alt="{{ eq.name }}" 
+                class="w-full h-44 object-cover rounded-t-2xl">
+            <button 
+            class="contactBtn absolute top-2 right-2 w-8 h-8 rounded-full bg-green-500 flex items-center justify-center hover:bg-green-600 transition shadow-md"
+            data-owner="{{ eq.owner.customuser.name }}"
+            data-contact="{{ eq.owner.customuser.formatted_number }}">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" 
+                alt="WA" class="w-5 h-5">
+            </button>
+        </div>
+
+        <!-- Konten tengah -->
+        <div class="flex-grow flex flex-col justify-between">
+            <div>
+            <h2 class="font-semibold text-lg text-gray-800 leading-tight mb-1">{{ eq.name }}</h2>
+            <p class="text-sm text-gray-500 mb-0.5">Kategori: {{ eq.get_sport_category_display }}</p>
+            <p class="text-sm text-gray-500 mb-2">Wilayah: {{ eq.get_region_display }}</p>
+            <p class="text-sm text-gray-700 font-medium">💰 Rp {{ eq.price_per_hour }}</p>
+            <p class="text-sm text-gray-700">📦 Quantity: {{ eq.quantity }}</p>
+            {% if eq.available %}
+                <p class="text-green-600 text-sm font-semibold mt-1">Tersedia</p>
+            {% else %}
+                <p class="text-red-500 text-sm font-semibold mt-1">Tidak tersedia</p>
+            {% endif %}
+            </div>
+        </div>
+
+        <!-- Tombol di bawah -->
+        {% if user == eq.owner %}
+        <div class="flex justify-between mt-4 pt-2 border-t border-gray-100">
+            <button data-id="{{ eq.id }}" 
+                    class="editBtn bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition text-sm">
+            Edit
+            </button>
+            <a href="{% url 'equipment:delete_equipment' eq.id %}" 
+            class="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-600 transition text-sm">
+            Delete
+            </a>
+        </div>
+        {% endif %}
+        </div>
+        {% empty %}
+        <style>
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-up { animation: fadeUp 400ms cubic-bezier(.2,.9,.2,1) both; }
+        </style>
+
+        <div class="col-span-full flex items-center justify-center min-h-[60vh] w-full">
+        <div class="flex flex-col items-center text-center text-gray-500 animate-fade-up">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                class="w-16 h-16 text-gray-400 mb-4"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9.75 9.75h4.5v4.5h-4.5v-4.5z M3 3h18v18H3V3z" />
+            </svg>
+
+            <h3 class="text-xl font-semibold text-gray-700">No Equipment Available</h3>
+            <p class="text-sm text-gray-400 mt-2">Looks like there are no equipments available right now. Please check back later!</p>
+
+        </div>
+        </div>
+        {% endfor %}
+
+  </div>
+</div>
+
+
+<style>
+    #toast-container .toast {
+    pointer-events: auto;
+    min-width: 180px;
+    max-width: 320px;
+    padding: 0.6rem 0.9rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 6px 18px rgba(20,20,20,0.08);
+    color: #fff;
+    font-weight: 600;
+    display: inline-block;
+    }
+    @keyframes toast-in {
+    from { opacity: 0; transform: translateY(-8px) scale(.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes toast-out {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to   { opacity: 0; transform: translateY(-6px) scale(.98); }
+    }
+    .toast-show { animation: toast-in 220ms cubic-bezier(.2,.9,.2,1) both; }
+    .toast-hide { animation: toast-out 200ms ease-in forwards; }
+    .toast-success { background: #16a34a; } 
+    .toast-error   { background: #dc2626; } 
+    .toast-warning { background: #f59e0b; } 
+    .toast-info    { background: #6b7280; } 
+</style>
+
+<!-- AJAX Filtering -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+
+    function openContactModal(name, number){
+        $('#contactOwnerName').text(name);
+        $('#contactOwnerNumber').text(number);
+        $('#contactModal').removeClass('hidden');
+    }
+    function closeContactModal(){
+        $('#contactModal').addClass('hidden');
+    }
+
+    $(document).ready(function(){
+        // ----------------- ------------------
+            function showToast(message, type='success', duration=3000) {
+            
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const div = document.createElement('div');
+            div.className = `toast toast-${type} toast-show`;
+            div.textContent = message;
+
+            container.appendChild(div);
+
+            setTimeout(() => {
+                div.classList.remove('toast-show');
+                div.classList.add('toast-hide');
+                setTimeout(() => div.remove(), 350);
+            }, duration);
+            }
+
+
+        // Fungsi fetch untuk filter/search
+        function fetchEquipments(){
+            const sport = $('#sportFilter').val();
+            const region = $('#regionFilter').val();
+            const search = $('#searchInput').val();
+
+            $.ajax({
+                url: "{% url 'equipment:equipment_list' %}",
+                data: { sport_category: sport, region: region, search: search },
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                success: function(response){
+                    const equipments = response.equipments || [];
+                    let html = '';
+                    if (equipments.length === 0) {
+                        html = `
+                                <div class="col-span-full flex items-center justify-center min-h-[60vh] w-full">
+                                <div class="flex flex-col items-center text-center text-gray-500 animate-fade-up">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75h4.5v4.5h-4.5v-4.5z M3 3h18v18H3V3z" />
+                                    </svg>
+                                    <h3 class="text-xl font-semibold text-gray-700">No Equipment Available</h3>
+                                    <p class="text-sm text-gray-400 mt-2">Looks like there are no equipments available right now. Please check back later!</p>
+                                </div>
+                                </div>
+                                `;
+                    } else {
+                        equipments.forEach(eq => {
+                            // fallback thumbnail jika kosong
+                            const thumb = eq.thumbnail && eq.thumbnail.length ? eq.thumbnail : '/static/images/placeholder.png';
+
+                            html += `
+                            <div class="bg-white rounded-2xl shadow-md hover:shadow-lg transition flex flex-col justify-between relative equipmentCard p-4 h-full min-h-[420px]"
+                                data-owner="${escapeHtml(eq.owner_name)}"
+                                data-contact="${escapeHtml(eq.owner_number)}">
+                                
+                                <div class="relative -mt-4 -mx-4 mb-3">
+                                    <img src="${escapeHtml(thumb)}" alt="${escapeHtml(eq.name)}"
+                                        class="w-full h-44 object-cover rounded-t-2xl">
+                                    <button class="contactBtn absolute top-2 right-2 w-8 h-8 rounded-full bg-green-500 flex items-center justify-center hover:bg-green-600 transition shadow-md"
+                                            data-owner="${escapeHtml(eq.owner_name)}"
+                                            data-contact="${escapeHtml(eq.owner_number)}">
+                                        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WA" class="w-5 h-5">
+                                    </button>
+                                </div>
+
+                                <div class="flex-grow flex flex-col justify-between">
+                                    <div>
+                                        <h2 class="font-semibold text-lg text-gray-800 leading-tight mb-1">${escapeHtml(eq.name)}</h2>
+                                        <p class="text-sm text-gray-500 mb-0.5">Kategori: ${escapeHtml(eq.sport_category)}</p>
+                                        <p class="text-sm text-gray-500 mb-2">Wilayah: ${escapeHtml(eq.region)}</p>
+                                        <p class="text-sm text-gray-700 font-medium">💰 Rp ${escapeHtml(eq.price_per_hour)}</p>
+                                        <p class="text-sm text-gray-700">📦 Quantity: ${escapeHtml(eq.quantity)}</p>
+                                        ${eq.available ? '<p class="text-green-600 text-sm font-semibold mt-1">Tersedia</p>'
+                                                    : '<p class="text-red-500 text-sm font-semibold mt-1">Tidak tersedia</p>'}
+                                    </div>
+                                </div>
+
+                                ${eq.is_owner ? `
+                                <div class="flex justify-between mt-4 pt-2 border-t border-gray-100">
+                                    <button data-id="${eq.id}" class="editBtn bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition text-sm">Edit</button>
+                                    <a href="/equipment/delete/${eq.id}/" class="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-600 transition text-sm">Delete</a>
+                                </div>` : ''}
+                            </div>
+                            `;
+                        });
+                    }
+                    $('#equipmentGrid').html(html);
+
+                },
+                error: function(xhr, status, err){
+                    console.error('AJAX error', status, err);
+                    $('#equipmentGrid').html('<p class="text-red-500">Gagal memuat equipment. Cek console.</p>');
+                }
+            });
+        }
+
+        function escapeHtml(str){
+            if (str === null || typeof str === 'undefined') return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+
+    $('#sportFilter, #regionFilter, #searchInput').on('input change', fetchEquipments);
+
+    // Edit button click
+    $(document).on('click', '.editBtn', function() {
+        const eqId = $(this).data('id');
+
+        $.ajax({
+            url: `/equipment/edit/${eqId}/`,
+            type: 'GET',
+            success: function(response) {
+                openModal(response);
+            }
+        });
+    });
+
+    // Submit form via AJAX
+    $(document).on('submit', '#editForm', function(e) {
+        e.preventDefault();
+        const form = $(this);
+        const eqId = form.data('id');
+
+        $.ajax({
+            url: `/equipment/edit/${eqId}/`,
+            type: 'POST',
+            data: new FormData(this),
+            processData: false,
+            contentType: false,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            success: function(response) {
+                if(response.success){
+                    closeModal();
+                    fetchEquipments();
+                    showToast('Perubahan berhasil disimpan.', 'success');
+                } else {
+                    $('#modalContent').html(response);
+                }
+            }
+        });
+    });
+    $(document).on('click', '.contactBtn', function(e){
+        e.stopPropagation(); 
+        const ownerName = $(this).data('owner');
+        const ownerNumber = $(this).data('contact');
+
+        openContactModal(ownerName, ownerNumber);
+    });
+
+    });
+
+</script>
+
+{% endblock content%}
