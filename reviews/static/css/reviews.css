@@ -1,39 +1,26 @@
-/* styling untuk background gradient yang tetap */
-.fixed-gradient {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100vh;
-    background-image: linear-gradient(to bottom right, #A1E4C2, #4B8FFF);
-    z-index: -10;
-}
-
-/* membuat wrapper konten menjadi transparan */
+/* Menghapus background gradient */
 .reviews-page-wrapper {
-    background-color: transparent;
+    background-color: #FFFFFF; /* Atau bisa juga #F8F9FA untuk abu-abu muda */
 }
 
-
-/* ===== perubahan warna tombol filter ===== */
+/* Tombol Filter dengan style baru untuk background putih */
 .filter-btn {
-    color: white;
+    color: #4B5563; /* Abu-abu gelap */
     transition: all 0.3s ease;
-    background-color: rgba(255, 255, 255, 0.2); 
-    backdrop-filter: blur(5px);
+    background-color: #F3F4F6; /* Abu-abu muda */
 }
 
 .filter-btn.active-filter {
-    background-color: #F97316;
+    background-color: #F97316; /* Oranye */
     color: white;
     box-shadow: 0 4px 15px -5px rgba(249, 115, 22, 0.6);
 }
 
 .filter-btn:hover:not(.active-filter) {
-    background-color: rgba(255, 255, 255, 0.4);
+    background-color: #E5E7EB; /* Abu-abu sedikit lebih gelap saat hover */
 }
 
-/* modal */
+/* Modal (tidak berubah) */
 .modal {
     transition: opacity 0.3s ease;
 }
@@ -41,17 +28,17 @@
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-/* Kartu Review */
+/* Kartu Review (tidak berubah) */
 .review-card {
     border: 1px solid #e5e7eb;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
 }
 .review-card:hover {
-    border-color: #10b981;
-    box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.1), 0 4px 6px -4px rgba(16, 185, 129, 0.1);
+    border-color: #F97316; /* Hover oranye */
+    box-shadow: 0 10px 15px -3px rgba(249, 115, 22, 0.1), 0 4px 6px -4px rgba(249, 115, 22, 0.1);
 }
 
-/* Bintang Rating */
+/* Bintang Rating (tidak berubah) */
 .star {
     transition: color 0.2s ease, transform 0.2s ease;
 }
