@@ -78,7 +78,7 @@ def serialize_obj_minimal(obj):
     """
     d = {}
     # common fields we might want
-    for key in ('id', 'pk', 'name', 'title', 'court', 'location', 'date', 'start_time', 'end_time', 'created_at'):
+    for key in ('id', 'pk', 'name', 'title', 'court', 'location', 'date', 'booking_date', 'venue', 'start_time', 'end_time', 'total_price', 'created_at'):
         try:
             val = getattr(obj, key)
             # if attr is a related object, try to get a friendly representation
@@ -97,6 +97,44 @@ def serialize_obj_minimal(obj):
             d['id'] = int(getattr(obj, 'pk'))
         except Exception:
             d['id'] = None
+
+        # If this object has a related venue, try to include friendly venue fields
+        try:
+            if hasattr(obj, 'venue') and getattr(obj, 'venue') is not None:
+                v = getattr(obj, 'venue')
+                try:
+                    d['venue_name'] = getattr(v, 'name')
+                except Exception:
+                    pass
+                # try common image attributes: image, thumbnail, photo, or 'image.url' if ImageField
+                try:
+                    img = None
+                    if hasattr(v, 'image') and getattr(v, 'image'):
+                        img_field = getattr(v, 'image')
+                        # image may be a FieldFile with url
+                        try:
+                            img = img_field.url
+                        except Exception:
+                            img = str(img_field)
+                    elif hasattr(v, 'thumbnail') and getattr(v, 'thumbnail'):
+                        thumb = getattr(v, 'thumbnail')
+                        try:
+                            img = thumb.url
+                        except Exception:
+                            img = str(thumb)
+                    elif hasattr(v, 'photo') and getattr(v, 'photo'):
+                        photo = getattr(v, 'photo')
+                        try:
+                            img = photo.url
+                        except Exception:
+                            img = str(photo)
+                    if img:
+                        d['venue_image'] = img
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
     return d
 
 @login_required
@@ -108,7 +146,7 @@ def show_dashboard(request):
     Equipment = get_model_safe('equipment.Equipment')
 
     counts = {'bookings': 0, 'equipment': 0, 'reviews': 0}
-    recent = {'bookings': [], 'equipment': [], 'reviews': []}
+    recent = {'bookings': []}
 
     # --- BOOKINGS ---
     if Booking is not None:
@@ -122,30 +160,25 @@ def show_dashboard(request):
             counts['bookings'] = 0
             recent['bookings'] = []
 
-    # --- EQUIPMENT (equipment / owned equipment) ---
+    # --- EQUIPMENT (count only) ---
+    Equipment = get_model_safe('equipment.Equipment')
     if Equipment is not None:
         try:
             user_field = discover_user_field(Equipment) or 'user'
-            ordering = choose_ordering(Equipment)
-            qs = Equipment.objects.filter(**{user_field: user}).order_by(ordering)
+            qs = Equipment.objects.filter(**{user_field: user})
             counts['equipment'] = qs.count()
-            recent['equipment'] = list(qs[:INITIAL_LIMIT])
         except Exception:
             counts['equipment'] = 0
-            recent['equipment'] = []
 
-    # --- REVIEWS ---
-    Review = get_model_safe('reviews.Review')
+    # --- REVIEWS (count only) ---
+    Review = get_model_safe('review.Review') or get_model_safe('reviews.Review')
     if Review is not None:
         try:
             user_field = discover_user_field(Review) or 'user'
-            ordering = choose_ordering(Review)
-            qs = Review.objects.filter(**{user_field: user}).order_by(ordering)
+            qs = Review.objects.filter(**{user_field: user})
             counts['reviews'] = qs.count()
-            recent['reviews'] = list(qs[:INITIAL_LIMIT])
         except Exception:
             counts['reviews'] = 0
-            recent['reviews'] = []
 
     # If this is an AJAX request, support incremental loading:
     # ?type=bookings&offset=12&limit=12
@@ -168,15 +201,9 @@ def show_dashboard(request):
             qs = Booking.objects.filter(**{user_field: user}).order_by(ordering)
             items = qs[offset: offset + limit]
             data = [serialize_obj_minimal(o) for o in items]
-            return JsonResponse({'success': True, 'items': data, 'total': qs.count()})
-        
-        elif typ == 'equipment' and Equipment is not None:
-            user_field = discover_user_field(Equipment) or 'user'
-            ordering = choose_ordering(Equipment)
-            qs = Equipment.objects.filter(**{user_field: user}).order_by(ordering)
-            items = qs[offset: offset + limit]
-            data = [serialize_obj_minimal(o) for o in items]
-            return JsonResponse({'success': True, 'items': data, 'total': qs.count()})
+            total = qs.count()
+            has_more = (offset + len(items)) < total
+            return JsonResponse({'success': True, 'items': data, 'total': total, 'has_more': has_more})
         else:
             return JsonResponse({'success': False, 'error': 'Unknown type or model missing.'}, status=400)
 

@@ -97,7 +97,7 @@
                   {% if request.resolver_match.view_name == 'main:show_main' %}text-[#10b981]{% else %}text-gray-700{% endif %}">
            Home
         </a>
-        <a href="#" 
+        <a href="{% url 'booking:booking_page' %}" 
            class="block font-medium py-2 transition hover:text-gray-900
                   {% if request.resolver_match.view_name == 'booking:show_booking' %}text-[#10b981]{% else %}text-gray-700{% endif %}">
            Booking
