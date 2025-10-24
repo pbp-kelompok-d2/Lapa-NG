@@ -39,9 +39,24 @@ function showToast(message, type = 'info') {
     }, 3000); // Toast visible for 3 seconds
 }
 
+// --- List of Hero Images (Define outside DOMContentLoaded) ---
+const heroImages = [
+    '/static/images/封面-3.jpg',       // Stadium (FIRST)
+    '/static/images/basketball.jpeg', // Basketball
+    '/static/images/convert.webp',    // Soccer Action
+    '/static/images/skate.png',       // Skateboarding
+    '/static/images/GettyImages-1272468011.jpg' // Tennis Serve
+];
+let currentImageIndex = 0;
+
+// Preload hero images
+heroImages.forEach(src => {
+    const img = new Image();
+    img.src = src;
+});
 
 document.addEventListener('DOMContentLoaded', function() {
-    
+
     // --- 1. READ URLS ---
     const scriptData = document.getElementById('main-script-data');
     const URLS = {
@@ -51,272 +66,511 @@ document.addEventListener('DOMContentLoaded', function() {
         bookingAdd: scriptData.dataset.bookingAddUrlTemplate,
         bookingRedirect: scriptData.dataset.bookingRedirectUrl,
         getCreateForm: scriptData.dataset.getCreateFormUrl,
-        getEditForm: scriptData.dataset.getEditFormUrlTemplate
-        // Note: Delete URL is constructed dynamically later
+        getEditForm: scriptData.dataset.getEditFormUrlTemplate,
+        getDeleteForm: scriptData.dataset.getDeleteFormUrlTemplate // URL untuk konfirmasi delete
     };
 
     // --- DOM Elements ---
-    const form = document.getElementById('filter-form');
+    const filterForm = document.getElementById('filter-form');
     const venueContainer = document.getElementById('venue-list-container');
     const modal = document.getElementById('main-modal');
     const modalPanel = document.getElementById('modal-panel');
     const modalOverlay = document.getElementById('modal-overlay');
     const addVenueBtn = document.getElementById('add-venue-btn');
-    
+
+    // Hero Elements
+    const heroSection = document.getElementById('hero-section');
+    const heroSliderTrack = document.getElementById('hero-slider-track');
+    const heroSlides = document.querySelectorAll('.hero-slide');
+    const heroDotsContainer = document.getElementById('hero-dots');
+    const heroWelcome = document.getElementById('hero-welcome');
+    const heroSlogan = document.getElementById('hero-slogan');
+    const heroRevealBtn = document.getElementById('hero-reveal-btn');
+    const contentWrapper = document.getElementById('content-wrapper');
+    const mainNavbar = document.getElementById('main-navbar');
+    const heroBg = document.getElementById('hero-bg'); // For parallax
+    let heroDots = [];
+    let heroInterval;
+
     // --- Modal Functions ---
     function openModal() {
-        modal.classList.remove('hidden');
+        if (modal) modal.classList.remove('hidden');
     }
-
     function closeModal() {
-        modal.classList.add('hidden');
-        modalPanel.innerHTML = ''; 
+        if (modal) modal.classList.add('hidden');
+        if (modalPanel) modalPanel.innerHTML = ''; // Kosongkan modal saat ditutup
     }
 
-    // --- 2. AJAX FILTER LOGIC ---
-    if (form) {
-        form.addEventListener('submit', function(event) {
-            event.preventDefault(); 
-            const formData = new FormData(form);
-            const params = new URLSearchParams(formData);
+    // ===================================
+    // ===== HERO SECTION LOGIC ========
+    // ===================================
+    let isHeroFull = true;
+    let isScrollingProgrammatically = false;
 
+    if (heroSection && contentWrapper && mainNavbar && heroSliderTrack && heroSlides.length > 0) {
+
+        // --- Set Initial Slide Backgrounds ---
+        heroSlides.forEach((slide, index) => {
+             if (heroImages[index]) {
+                 slide.style.backgroundImage = `url('${heroImages[index]}')`;
+             }
+        });
+
+        // --- Generate Dots ---
+        if (heroDotsContainer) { // Cek jika elemen ada
+            heroImages.forEach((_, index) => {
+                const dot = document.createElement('button');
+                dot.classList.add('hero-dot', 'w-1', 'h-1', 'rounded-full', 'bg-white', 'bg-opacity-50', 'transition-all');
+                dot.dataset.index = index;
+                if (index === 0) dot.classList.add('bg-opacity-100', 'scale-125'); // Active state
+                heroDotsContainer.appendChild(dot);
+                heroDots.push(dot);
+            });
+        }
+
+        // --- Function to Go To a Specific Slide ---
+        function goToSlide(index) {
+            if (index < 0 || index >= heroImages.length) return;
+            if (!heroSliderTrack) return; // Cek jika elemen ada
+
+            heroSliderTrack.style.transform = `translateX(-${index * 100}%)`;
+            currentImageIndex = index;
+
+            // Update active dot
+            heroDots.forEach((dot, i) => {
+                if (i === index) {
+                    dot.classList.add('bg-opacity-100', 'scale-125');
+                } else {
+                    dot.classList.remove('bg-opacity-100', 'scale-125');
+                }
+            });
+        }
+
+        // --- Auto-Slide Function ---
+        function autoSlide() {
+             let nextIndex = (currentImageIndex + 1) % heroImages.length;
+             goToSlide(nextIndex);
+        }
+
+        // --- Start Auto-Sliding ---
+        heroInterval = setInterval(autoSlide, 5000);
+
+        // --- Add Click Listeners to Dots ---
+        if (heroDotsContainer) {
+            heroDotsContainer.addEventListener('click', (e) => {
+                 if (e.target.classList.contains('hero-dot')) {
+                     const index = parseInt(e.target.dataset.index, 10);
+                     goToSlide(index);
+                     // Reset interval
+                     clearInterval(heroInterval);
+                     heroInterval = setInterval(autoSlide, 10000);
+                 }
+             });
+         }
+
+        // --- Initial Navbar State (Hidden) ---
+        if (mainNavbar) {
+            mainNavbar.classList.add('opacity-0', '-translate-y-full', 'pointer-events-none');
+        }
+        // --- Initial Text/Button Fade-In Animations ---
+        requestAnimationFrame(() => {
+            if (heroWelcome) heroWelcome.classList.remove('opacity-0');
+            if (heroSlogan) heroSlogan.classList.remove('opacity-0');
+            if (heroRevealBtn) heroRevealBtn.classList.remove('opacity-0');
+        });
+
+        // --- Function to REVEAL content ---
+        function revealContent() {
+            if (isHeroFull) {
+                console.log("Revealing content");
+                isHeroFull = false;
+
+                if (mainNavbar) mainNavbar.classList.remove('opacity-0', '-translate-y-full', 'pointer-events-none');
+                heroSection.classList.remove('fixed', 'inset-0', 'h-screen');
+                heroSection.classList.add('relative');
+                heroSection.style.height = '60vh';
+                contentWrapper.classList.remove('mt-[100vh]');
+                contentWrapper.classList.add('mt-0');
+                if (heroRevealBtn) heroRevealBtn.classList.add('opacity-0');
+            }
+        }
+
+        // --- Function to RESET to full hero ---
+        function resetToFullHero() {
+             if (!isHeroFull) {
+                 console.log("Resetting to full hero");
+                 isHeroFull = true;
+
+                 if (mainNavbar) mainNavbar.classList.add('opacity-0', '-translate-y-full', 'pointer-events-none');
+                 heroSection.classList.add('fixed', 'inset-0', 'h-screen');
+                 heroSection.classList.remove('relative');
+                 heroSection.style.height = '';
+                 contentWrapper.classList.add('mt-[100vh]');
+                 contentWrapper.classList.remove('mt-0');
+                 if (heroRevealBtn) {
+                     heroRevealBtn.classList.add('opacity-0');
+                     requestAnimationFrame(() => {
+                        heroRevealBtn.classList.remove('opacity-0');
+                     });
+                 }
+             }
+         }
+
+        // --- Button Click ---
+        if (heroRevealBtn) {
+            heroRevealBtn.addEventListener('click', function onHeroRevealClick() {
+                if (!isHeroFull) return;
+                heroRevealBtn.disabled = true;
+                console.log('Revealing content (unified handler)');
+                revealContent();
+                isScrollingProgrammatically = true;
+                requestAnimationFrame(() => {
+                    setTimeout(() => {
+                        const NUDGE_PX = 120;
+                        window.scrollBy({ top: NUDGE_PX, behavior: 'smooth' });
+                        setTimeout(() => {
+                            isScrollingProgrammatically = false;
+                            heroRevealBtn.disabled = false;
+                        }, 700);
+                    }, 120);
+                });
+            });
+        }
+
+        // --- Scroll Listener ---
+        let scrollTimeout;
+        window.addEventListener('scroll', () => {
+            if (isScrollingProgrammatically) {
+                console.log("Scroll event ignored (programmatic)");
+                return;
+            }
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                if (isScrollingProgrammatically) return;
+                const scrollPosition = window.scrollY;
+                console.log("Manual Scroll Detected:", scrollPosition);
+
+                if (isHeroFull && scrollPosition > 50) {
+                    revealContent();
+                } else if (!isHeroFull && scrollPosition === 0) {
+                    resetToFullHero();
+                }
+
+                if (heroRevealBtn && !isHeroFull && scrollPosition > 100) {
+                     heroRevealBtn.classList.add('opacity-0');
+                }
+            }, 50);
+        });
+
+        // --- Mouse Parallax Listener ---
+        if (heroBg) { // Cek jika elemen parallax ada
+            heroSection.addEventListener('mousemove', (e) => {
+                if (!isHeroFull) {
+                    const { clientX, clientY } = e;
+                    const { offsetWidth, offsetHeight } = heroSection;
+                    const xPercent = (clientX / offsetWidth) - 0.5;
+                    const yPercent = (clientY / offsetHeight) - 0.5;
+                    const intensity = 15;
+                    const moveX = xPercent * intensity * -1;
+                    const moveY = yPercent * intensity * -1;
+                    heroBg.style.transform = `translate(${moveX}px, ${moveY}px) scale(1.1)`;
+                }
+            });
+            heroSection.addEventListener('mouseleave', () => {
+                 if (!isHeroFull) {
+                     heroBg.style.transform = `translate(0, 0) scale(1.1)`;
+                 }
+             });
+         }
+    }
+    // ===================================
+    // === END HERO SECTION LOGIC ======
+    // ===================================
+
+    // --- AJAX FILTER LOGIC ---
+    if (filterForm) {
+        filterForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(filterForm);
+            const params = new URLSearchParams(formData);
             fetch(`${URLS.filter}?${params.toString()}`)
                 .then(response => response.text())
                 .then(html => {
-                    venueContainer.innerHTML = html;
-                    history.pushState(null, '', `?${params.toString()}`);
+                    if (venueContainer) venueContainer.innerHTML = html;
+                    history.pushState(null, '', `${URLS.showMain}?${params.toString()}`);
                 })
                 .catch(error => {
-                    console.error('Error fetching venues:', error);
-                    venueContainer.innerHTML = '<p class="text-center text-red-600">Error loading venues. Please try again.</p>';
-                });
+                    console.error('Filter error:', error);
+                    if (venueContainer) venueContainer.innerHTML = '<p class="text-center text-red-600">Error loading venues.</p>';
+                 });
         });
     }
 
+    // --- Clear Filter Button Logic ---
     const clearButton = document.querySelector(`a[href="${URLS.showMain}"]`);
     if (clearButton) {
         clearButton.addEventListener('click', function(event) {
             event.preventDefault();
-            window.location.href = URLS.showMain; 
+            fetch(URLS.filter) // Ambil daftar tanpa filter
+                .then(response => response.text())
+                .then(html => {
+                    if (venueContainer) venueContainer.innerHTML = html;
+                    if (filterForm) filterForm.reset();
+                    history.pushState(null, '', URLS.showMain);
+                })
+                .catch(error => {
+                    console.error('Error fetching unfiltered venues:', error);
+                    if (venueContainer) venueContainer.innerHTML = '<p class="text-center text-red-600">Error loading venues.</p>';
+                });
         });
     }
 
-    // --- 3. "VIEW VENUE" MODAL (Card Click) ---
-    venueContainer.addEventListener('click', function(event) {
-        const card = event.target.closest('.venue-card');
-        if (card) {
-            const slug = card.dataset.slug;
-            if (!slug) return;
-            const fetchUrl = URLS.venueDetail.replace('SLUG_PLACEHOLDER', slug);
+    // --- "VIEW VENUE" MODAL (Card Click) ---
+    if (venueContainer) {
+        venueContainer.addEventListener('click', function(event) {
+            const card = event.target.closest('.venue-card');
+            if (card && card.dataset.slug) {
+                const slug = card.dataset.slug;
+                const fetchUrl = URLS.venueDetail.replace('SLUG_PLACEHOLDER', slug);
+                fetch(fetchUrl)
+                    .then(response => { if (!response.ok) throw new Error('Network response not ok'); return response.text(); })
+                    .then(html => {
+                        if (modalPanel) modalPanel.innerHTML = html;
+                        openModal();
+                     })
+                    .catch(error => {
+                        console.error("View Venue Error:", error);
+                        showToast('Could not load venue details.', 'error');
+                     });
+            }
+        });
+    }
 
-            fetch(fetchUrl)
-                .then(response => {
-                    if (!response.ok) throw new Error('Network response was not ok');
-                    return response.text();
-                })
-                .then(html => {
-                    modalPanel.innerHTML = html;
-                    openModal();
-                })
-                .catch(error => {
-                    console.error('Error fetching venue details:', error);
-                    alert('Error loading venue details.');
-                });
-        }
-    });
-
-    // --- 4. "CREATE VENUE" MODAL (Button Click) ---
+    // --- "CREATE VENUE" MODAL (Button Click) ---
     if (addVenueBtn) {
         addVenueBtn.addEventListener('click', function() {
             fetch(URLS.getCreateForm)
                 .then(response => {
                     if (response.status === 403) {
-                        alert('You must be logged in to add a venue.');
-                        window.location.href = '/auth/login/';
-                        return Promise.reject('Forbidden'); // Stop promise chain
+                        showToast('Please login to add a venue.', 'error');
+                        // Opsional: Redirect ke login
+                        // window.location.href = '/auth/login/';
+                        return Promise.reject('Forbidden');
                     }
                     if (!response.ok) throw new Error('Could not load create form.');
                     return response.json();
-                })
+                 })
                 .then(data => {
-                    modalPanel.innerHTML = data.html;
+                    if (modalPanel) modalPanel.innerHTML = data.html;
                     openModal();
-                })
+                 })
                 .catch(error => {
-                    if (error !== 'Forbidden') { // Avoid double alert
-                       console.error('Error fetching create form:', error);
-                       showToast('Error loading form.', 'error');
+                    if (error !== 'Forbidden') { // Jangan tampilkan toast jika hanya masalah login
+                       console.error("Create Venue Load Error:", error);
+                       showToast('Could not open the add venue form.', 'error');
                     }
-                });
+                 });
         });
     }
-    
-    // --- 5. COMBINED MODAL BUTTON CLICK HANDLER (Event Delegation) ---
-    // Handles Close, Edit, Delete, Add-to-Booking clicks *inside* the modal
-    modalPanel.addEventListener('click', function(event) {
-        
-        // Handle Close Button
-        if (event.target.closest('#modal-close-btn')) {
-            closeModal();
-            return; 
+
+    // --- COMBINED MODAL BUTTON CLICK HANDLER (Edit, Delete, Add to Booking, Close) ---
+    if (modalPanel) {
+        // Helper CSRF
+        function getCSRFToken() {
+            const name = 'csrftoken=';
+            const parts = document.cookie.split(';').map(s => s.trim());
+            for (const p of parts) {
+                if (p.startsWith(name)) return p.substring(name.length);
+            }
+            return null;
         }
 
-        // Handle Add to Booking Button
-        const bookingBtn = event.target.closest('#add-to-booking-btn');
-        if (bookingBtn) {
-            const venueId = bookingBtn.dataset.venueId;
-            if (!venueId) return;
-            const fetchUrl = URLS.bookingAdd.replace('0', venueId);
+        modalPanel.addEventListener('click', function(event) {
+            // Close Button
+            if (event.target.closest('#modal-close-btn')) {
+                closeModal();
+                return;
+            }
 
-            fetch(fetchUrl)
-                .then(response => {
-                    if (response.status === 403) {
-                        alert('You must be logged in to add a booking.');
-                        window.location.href = '/auth/login/'; 
-                        return Promise.reject('Forbidden');
-                    }
-                    if (!response.ok) throw new Error('Booking request failed');
-                    return response.json();
-                })
-                .then(data => {
-                    showToast(data.message || 'Added to booking!', 'success');
-                    closeModal();
-                    setTimeout(() => { window.location.href = URLS.bookingRedirect; }, 1000); 
-                })
-                .catch(error => {
-                     if (error !== 'Forbidden') {
-                        console.error('Error adding to booking:', error);
-                        showToast('Error: Could not add to booking.', 'error');
-                    }
-                });
-            return; // Done handling click
-        }
-
-        // Handle Edit Button (fetches edit form)
-        const editBtn = event.target.closest('#edit-venue-btn');
-        if (editBtn) {
-            const slug = editBtn.dataset.slug;
-            if (!slug) return;
-            const fetchUrl = URLS.getEditForm.replace('SLUG_PLACEHOLDER', slug);
-
-            fetch(fetchUrl)
-                .then(response => {
-                    if (response.status === 403) {
-                        showToast('You are not allowed to edit this venue.', 'error');
-                        return Promise.reject('Forbidden'); 
-                    }
-                    if (!response.ok) throw new Error('Could not load edit form.');
-                    return response.json();
-                })
-                .then(data => {
-                    modalPanel.innerHTML = data.html; // Replace modal content
-                })
-                .catch(error => {
-                    if (error !== 'Forbidden') {
-                       console.error('Error fetching edit form:', error);
-                       showToast(error.message || 'Error loading edit form.', 'error');
-                    }
-                });
-            return; // Done handling click
-       }
-
-        // Handle Delete Button (shows confirmation/performs delete)
-        const deleteBtn = event.target.closest('#delete-venue-btn');
-        if (deleteBtn) {
-             const slug = deleteBtn.dataset.slug;
-             if (!slug) return;
-
-             if (confirm(`Are you sure you want to delete this venue? This cannot be undone.`)) {
-                const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value; // Get CSRF from form if possible
-                 if (!csrfToken) {
-                      // Fallback: try getting from main page meta or cookie if needed
-                      showToast('CSRF token not found. Cannot delete.', 'error');
-                      return;
-                 }
-                 const deleteUrl = `/ajax/delete-venue/${slug}/`; 
-
-                 fetch(deleteUrl, {
-                     method: 'POST',
-                     headers: {
-                         'X-CSRFToken': csrfToken,
-                         'Content-Type': 'application/json' 
-                     },
-                     // body: JSON.stringify({}) // Add if needed by view
-                 })
-                 .then(response => {
-                      if (response.status === 403) throw new Error('Forbidden: You cannot delete this venue.');
-                      if (!response.ok) throw new Error('Delete request failed.');
-                      return response.json();
-                 })
-                 .then(data => {
-                     if (data.status === 'ok') {
-                         closeModal();
-                         showToast(data.message, 'success');
-                         const cardToRemove = venueContainer.querySelector(`.venue-card[data-slug="${data.deleted_slug}"]`);
-                         if (cardToRemove) cardToRemove.remove();
-                     } else {
-                         throw new Error(data.message || 'Could not delete venue.');
-                     }
-                 })
-                 .catch(error => {
-                     console.error('Error deleting venue:', error);
-                     showToast(error.message, 'error');
-                 });
-             }
-             return; // Done handling click
-        }
-    });
-
-    // --- 6. MODAL FORM SUBMISSION HANDLER ---
-    // Handles both Create and Edit form submissions
-    modalPanel.addEventListener('submit', function(event) {
-        if (event.target.id === 'venue-form') {
-            event.preventDefault(); 
-            const form = event.target;
-            const formData = new FormData(form);
-            const originalSlug = form.querySelector('#venue-slug-for-update')?.value;
-
-            fetch(form.action, { // form.action set by backend (create or edit URL)
-                method: 'POST',
-                body: formData,
-                headers: { 'X-CSRFToken': formData.get('csrfmiddlewaretoken') }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'ok') {
-                    // SUCCESS (Create or Edit)
-                    closeModal();
-                    showToast(data.message, 'success');
-                    
-                    if (originalSlug) { // It was an Edit
-                        const originalCard = venueContainer.querySelector(`.venue-card[data-slug="${originalSlug}"]`);
-                        if (originalCard && data.updated_card_html) {
-                            originalCard.outerHTML = data.updated_card_html;
-                        } else { // Fallback if card not found or HTML missing
-                            console.warn('Could not find original card to update or missing HTML.');
-                            // Optionally reload the whole list
-                            form.dispatchEvent(new Event('submit', { cancelable: true })); // Trigger filter form submit
-                        }
-                    } else if (data.new_card_html) { // It was a Create
-                        venueContainer.querySelector('.grid').insertAdjacentHTML('afterbegin', data.new_card_html);
-                    }
-                } else if (data.status === 'error' && data.form_html) {
-                    // Validation error
-                    modalPanel.innerHTML = data.form_html; // Re-render form with errors
-                } else {
-                    // Other server error
-                    throw new Error(data.message || 'Form submission failed.');
+            // --- Add to Booking ---
+            const bookingBtn = event.target.closest('#add-to-booking-btn');
+            if (bookingBtn) {
+                // --- Logika Add to Booking ---
+                // (Kode Anda untuk Add to Booking ada di sini)
+                // Pastikan menggunakan URLS.bookingAdd dan URLS.bookingRedirect jika perlu
+                const venueId = bookingBtn.dataset.venueId || bookingBtn.getAttribute('data-venue-id');
+                if (!venueId) {
+                    showToast('Venue ID not found for booking.', 'error');
+                    return;
                 }
-            })
-            .catch(error => {
-                console.error('Form submission error:', error);
-                showToast(error.message || 'An error occurred.', 'error');
-            });
-        }
-        // Note: Delete confirmation form submission would be handled here too if implemented
-        // else if (event.target.id === 'delete-venue-form') { ... } 
-    });
-    
+                // Ganti '0' di URL template dengan ID venue yang benar
+                const url = URLS.bookingAdd.replace('0', venueId);
+
+                const csrftoken = getCSRFToken();
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken || '',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => res.json()) // Asumsikan selalu JSON
+                .then(data => {
+                    if (data.status === 'ok') {
+                        showToast(data.message || 'Added to booking.', 'success');
+                        // Opsional: Redirect jika backend mengirim URL
+                        // if (data.redirect) window.location.href = data.redirect;
+                        // Atau redirect ke halaman booking
+                         if (URLS.bookingRedirect) window.location.href = URLS.bookingRedirect;
+                         else closeModal(); // Tutup modal jika tidak redirect
+                    } else {
+                        throw new Error(data.message || 'Failed to add to booking');
+                    }
+                })
+                .catch(err => {
+                    console.error('Booking add error:', err);
+                    showToast(err.message || 'Could not add to booking.', 'error');
+                });
+                return;
+            }
+
+            // --- Edit Venue (load edit form into modal) ---
+            const editBtn = event.target.closest('#edit-venue-btn');
+            if (editBtn) {
+                const slug = editBtn.dataset.slug;
+                if (!slug || !URLS.getEditForm) { showToast('Cannot load edit form.', 'error'); return; }
+                const fetchUrl = URLS.getEditForm.replace('SLUG_PLACEHOLDER', slug);
+                fetch(fetchUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(res => { if (!res.ok) throw new Error('Could not load edit form'); return res.json(); })
+                    .then(data => {
+                        if (data.html) {
+                            modalPanel.innerHTML = data.html;
+                            openModal(); // Pastikan modal tetap terbuka/dibuka
+                        } else { throw new Error('Edit form unavailable.'); }
+                    })
+                    .catch(err => { console.error('Load edit form error:', err); showToast(err.message, 'error'); });
+                return;
+            }
+
+            // --- Delete Venue (load delete confirmation into modal) ---
+            const deleteBtn = event.target.closest('#delete-venue-btn');
+            if (deleteBtn) {
+                const slug = deleteBtn.dataset.slug;
+                if (!slug || !URLS.getDeleteForm) { showToast('Cannot load delete confirmation.', 'error'); return; }
+                const fetchUrl = URLS.getDeleteForm.replace('SLUG_PLACEHOLDER', slug);
+                fetch(fetchUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(res => { if (!res.ok) throw new Error('Could not load delete confirmation'); return res.json(); })
+                    .then(data => {
+                        if (data.html) {
+                            modalPanel.innerHTML = data.html;
+                            openModal(); // Pastikan modal tetap terbuka/dibuka
+                        } else { throw new Error('Delete confirmation unavailable.'); }
+                    })
+                    .catch(err => { console.error('Load delete form error:', err); showToast(err.message, 'error'); });
+                return;
+            }
+        }); // --- Akhir dari modalPanel 'click' listener ---
+    } // --- Akhir dari if (modalPanel) ---
+
+
+    // --- MODAL FORM SUBMISSION HANDLER (Create, Edit, Delete Confirmation) ---
+    if (modalPanel) {
+        modalPanel.addEventListener('submit', function(event) {
+
+            // --- Logika untuk form CREATE dan EDIT ---
+            if (event.target.id === 'venue-form') {
+                event.preventDefault();
+                const form = event.target;
+                const formData = new FormData(form);
+                const originalSlug = form.querySelector('#venue-slug-for-update')?.value;
+                const csrfToken = formData.get('csrfmiddlewaretoken');
+                if (!csrfToken) { showToast('CSRF Token missing.', 'error'); return; }
+
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-CSRFToken': csrfToken, 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(response => {
+                    // Cek jika response adalah JSON, jika tidak, reject dengan text
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        return response.json().then(data => ({ ok: response.ok, status: response.status, data }));
+                    }
+                    return response.text().then(text => Promise.reject(new Error(`Server response was not JSON: ${text}`)));
+                })
+                .then(({ ok, status, data }) => {
+                    if (ok && data.status === 'ok') {
+                        closeModal();
+                        showToast(data.message, 'success');
+                        if (originalSlug && data.updated_card_html) { // Edit success
+                            const originalCard = venueContainer.querySelector(`.venue-card[data-slug="${originalSlug}"]`);
+                            if (originalCard) originalCard.outerHTML = data.updated_card_html;
+                            else if (filterForm) filterForm.dispatchEvent(new Event('submit', { cancelable: true })); // Reload list jika card tidak ditemukan
+                        } else if (data.new_card_html) { // Create success
+                           if (venueContainer) {
+                               const grid = venueContainer.querySelector('.grid');
+                               if (grid) grid.insertAdjacentHTML('afterbegin', data.new_card_html);
+                           }
+                        }
+                    } else if (!ok && data.form_html) { // Validation error from backend
+                        modalPanel.innerHTML = data.form_html; // Re-render form with errors
+                    } else { // Error lain dari backend
+                       throw new Error(data.message || `Server error: ${status}`);
+                    }
+                })
+                .catch(error => {
+                     console.error('Form submission error:', error);
+                     // Jangan re-render jika bukan error validasi form
+                     if (!modalPanel.innerHTML.includes(error.form_html)) {
+                        showToast(error.message || 'An error occurred during submission.', 'error');
+                     }
+                });
+            }
+
+            // --- Logika untuk form DELETE Confirmation ---
+            else if (event.target.id === 'delete-venue-form') {
+                event.preventDefault();
+                const form = event.target;
+                const formData = new FormData(form);
+                const csrfToken = formData.get('csrfmiddlewaretoken');
+                if (!csrfToken) { showToast('CSRF Token missing.', 'error'); return; }
+
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': csrfToken || '',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json()) // Asumsikan delete selalu return JSON
+                .then(data => {
+                    if (data.status === 'ok') {
+                        closeModal();
+                        showToast(data.message, 'success');
+                        if (data.deleted_slug && venueContainer) {
+                            const card = venueContainer.querySelector(`.venue-card[data-slug="${data.deleted_slug}"]`);
+                            if (card) card.remove();
+                        }
+                    } else {
+                       throw new Error(data.message || 'Deletion failed.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Delete submission error:', error);
+                    showToast(error.message || 'Could not delete venue.', 'error');
+                });
+            }
+
+        }); // <-- Akhir dari addEventListener 'submit'
+    } // <-- Akhir dari if (modalPanel)
+
     // --- Close modal on overlay click ---
-    modalOverlay.addEventListener('click', closeModal);
-});
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', closeModal);
+    }
+
+}); // <-- Akhir dari DOMContentLoaded

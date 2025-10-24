@@ -34,6 +34,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "abdurrahman-ammar-lapang.pbp.cs.ui.ac.id"]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://abdurrahman-ammar-lapang.pbp.cs.ui.ac.id"
+]
 
 # Application definition
 
@@ -48,6 +51,8 @@ INSTALLED_APPS = [
     'equipment',
     'reviews',
     'authentication',
+    'django.contrib.humanize',
+    'booking',
 ]
 
 MIDDLEWARE = [

@@ -23,5 +23,6 @@ urlpatterns = [
     path('', include('equipment.urls')),
     path('reviews/', include('reviews.urls')),
     path('auth/', include('authentication.urls', namespace='authentication')),
+    path('booking/', include('booking.urls')),
 ]
 

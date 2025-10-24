@@ -18,6 +18,7 @@ class CustomUser(models.Model):
     name = models.CharField(max_length=255)
     role = models.CharField(max_length=20, choices=ROLES, default='owner')
     number = models.CharField(max_length=11, validators=[digit_validator])
+    profile_picture = models.URLField(blank=True,null=True)
 
     @property
     def formatted_number(self):

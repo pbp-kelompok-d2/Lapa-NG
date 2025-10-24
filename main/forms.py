@@ -21,30 +21,51 @@ class VenueForm(forms.ModelForm):
         # ----------------------------
 
         # ------  Attributes  ------
+        # ------  Attributes  ------
+        
+        # Definisikan class styling-nya sekali saja
+        
+
+        input_classes = 'w-full px-4 py-3 border border-gray-400 rounded-md focus:outline-none focus:border-green-500 transition-colors bg-white'
+
         widgets = {
             'name': forms.TextInput(attrs={
-                'placeholder': 'e.g., LapaNG Futsal Center'
+                'placeholder': 'e.g., LapaNG Futsal Center',
+                'class': input_classes
             }),
+            
+            # Kita HARUS menambahkan 'category' di sini agar ikut di-style
+            'category': forms.Select(attrs={
+                'class': input_classes
+            }),
+
             'description': forms.Textarea(attrs={
                 'rows': 3, 
-                'placeholder': 'Tell users about your venue, the facilities, floor type, etc.'
+                'placeholder': 'Tell users about your venue, the facilities, floor type, etc.',
+                'class': input_classes
             }),
             'address': forms.TextInput(attrs={  
-                'placeholder': 'e.g., Jl. Margonda Raya No. 100, Depok'
+                'placeholder': 'e.g., Jl. Margonda Raya No. 100, Depok',
+                'class': input_classes
             }),
             'price': forms.NumberInput(attrs={
-                'placeholder': '50000'
+                'placeholder': '50000',
+                'class': input_classes
             }),
             'capacity': forms.NumberInput(attrs={
-                'placeholder': '10'
+                'placeholder': '10',
+                'class': input_classes
             }),
             'opening_time': forms.TimeInput(attrs={
-                'type': 'time'  # This gives you the "clock" picker
+                'type': 'time',
+                'class': input_classes
             }),
             'closing_time': forms.TimeInput(attrs={
-                'type': 'time'  # This gives you the "clock" picker
+                'type': 'time',
+                'class': input_classes
             }),
             'thumbnail': forms.TextInput(attrs={
-                'placeholder': 'e.g., my_venue.jpg or https://...'
+                'placeholder': 'e.g., my_venue.jpg or https://...',
+                'class': input_classes
             }),
         }

@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from authentication.models import CustomUser
 import csv
 from datetime import datetime
 from pathlib import Path
@@ -183,6 +184,12 @@ def create_venue_ajax(request):
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
 
+    try:
+        if request.user.customuser.role != 'owner':
+            return JsonResponse({'status': 'error', 'message': 'Hanya Owner yang dapat menambah venue.'}, status=403)
+    except CustomUser.DoesNotExist:
+         return JsonResponse({'status': 'error', 'message': 'Profil pengguna tidak ditemukan.'}, status=404)
+    
     form = VenueForm(request.POST)
     
     if form.is_valid():
@@ -299,6 +306,20 @@ def delete_venue_ajax(request, slug):
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': 'Could not delete venue.'}, status=500)
 
+@login_required(login_url='authentication:login')
+def get_delete_form_html(request, slug):
+    venue = get_object_or_404(Venue, slug=slug)
+
+    # Security Check
+    if venue.owner != request.user:
+        return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
+
+    context = {
+        'venue': venue, 
+    }
+    # Render template konfirmasi yang sudah ada
+    html = render_to_string('_venue_delete_confirm.html', context, request=request)
+    return JsonResponse({'html': html})
 
 # LOAD CSV IMPORT FUNCTIONALITY
 CSV_RELATIVE_PATH = Path("data") / "venues - courts_enriched_data.csv"  
@@ -307,12 +328,11 @@ def _parse_hhmm(s: str):
     if not s:
         return None
     s = s.strip()
-    # CSV kamu konsisten "H:MM" atau "HH:MM"
     return datetime.strptime(s, "%H:%M").time()
 
 @staff_member_required 
 def import_venues_from_csv(request):
-    if request.method != "POST":
+    if request.method != "GET":
         return HttpResponseNotAllowed(["POST"])
 
     csv_path = Path(settings.BASE_DIR) / CSV_RELATIVE_PATH
@@ -326,7 +346,6 @@ def import_venues_from_csv(request):
             with open(csv_path, newline="", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
                 expected = ["name","category","address","price","capacity","opening_time","closing_time","time","thumbnail"]
-                # cek header minimal
                 missing = [h for h in expected if h not in reader.fieldnames]
                 if missing:
                     return JsonResponse({"ok": False, "error": f"Missing columns: {missing}"}, status=400)
