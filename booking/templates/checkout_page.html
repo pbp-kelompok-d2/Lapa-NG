@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="max-w-6xl mx-auto px-4 pt-24">
+    <h2 class="text-3xl font-bold text-center mb-8">Keranjang Booking Kamu</h2>
+
+    {% if venues %}
+        <div class="grid md:grid-cols-3 gap-6">
+            {% for venue in venues %}
+            <div class="bg-white shadow-md rounded-2xl p-5 flex flex-col justify-between" data-venue-id="{{ venue.id }}">
+                <div>
+                    <h5 class="text-xl font-semibold mb-2">{{ venue.name }}</h5>
+                    <p class="text-gray-500 text-sm mb-1">{{ venue.address }}</p>
+                    <p class="text-gray-700"><strong>Harga per jam:</strong> Rp {{ venue.price|floatformat:0 }}</p>
+
+                    <p class="mt-2 booking-date">
+                        <strong>Tanggal:</strong>
+                        {% if venue.booking_date %}
+                            {{ venue.booking_date }}
+                        {% else %}
+                            <span class="italic text-gray-500">Belum diatur</span>
+                        {% endif %}
+                    </p>
+                    <p class="booking-time">
+                        <strong>Jam:</strong>
+                        {% if venue.start_time and venue.end_time %}
+                            {{ venue.start_time }} - {{ venue.end_time }}
+                        {% else %}
+                            <span class="italic text-gray-500">Belum diatur</span>
+                        {% endif %}
+                    </p>
+
+                    {% if venue.borrower_name %}
+                        <p class="borrower-name mt-1">
+                            <strong>Nama Peminjam:</strong> 
+                            <span class="text-black">{{ venue.borrower_name }}</span>
+                        </p>
+                    {% else %}
+                        <p class="borrower-name mt-1">
+                            <strong>Nama Peminjam:</strong> 
+                            <span class="text-gray-500 italic">Belum diatur</span>
+                        </p>
+                    {% endif %}
+
+                    <p class="text-green-600 font-semibold mt-3 subtotal">
+                        Subtotal: Rp {{ venue.total_price|floatformat:0 }}
+                    </p>
+                </div>
+
+                <div class="flex justify-between items-center mt-4">
+                    <button 
+                        class="px-3 py-1.5 text-sm font-medium border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 transition"
+                        onclick="document.getElementById('modal-{{ forloop.counter }}').showModal()">
+                        Edit
+                    </button>
+
+                    <button 
+                        onclick="document.getElementById('delete-modal-{{ forloop.counter }}').showModal()"
+                        class="px-3 py-1.5 text-sm font-medium border border-red-500 text-red-600 rounded-lg hover:bg-red-50 transition">
+                        Hapus
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Edit -->
+            <dialog id="modal-{{ forloop.counter }}" class="rounded-xl p-6 w-96 backdrop:bg-black/40">
+                <h3 class="text-lg font-semibold mb-4">Edit Booking - {{ venue.name }}</h3>
+                <form method="post" action="{% url 'booking:edit_booking' venue.id %}" class="edit-booking-form" data-venue-id="{{ venue.id }}">
+                    {% csrf_token %}
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Nama Peminjam</label>
+                            <input type="text" name="borrower_name" value="{{ venue.borrower_name }}" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Tanggal Booking</label>
+                            <input type="date" name="booking_date" value="{{ venue.booking_date }}" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Mulai</label>
+                            <input type="time" name="start_time" value="{{ venue.start_time }}" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Selesai</label>
+                            <input type="time" name="end_time" value="{{ venue.end_time }}" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none">
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2 mt-5">
+                        <button type="button" onclick="document.getElementById('modal-{{ forloop.counter }}').close()" class="px-3 py-1.5 rounded-lg text-gray-600 hover:bg-gray-100 transition">Batal</button>
+                        <button type="submit" class="px-4 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">Simpan</button>
+                    </div>
+                </form>
+            </dialog>
+
+            <!-- Modal Hapus -->
+            <dialog id="delete-modal-{{ forloop.counter }}" class="rounded-xl p-6 w-80 backdrop:bg-black/40">
+                <h3 class="text-lg font-semibold mb-3 text-red-600">Konfirmasi Hapus</h3>
+                <p class="text-gray-600 mb-5">Apakah kamu yakin ingin menghapus <strong>{{ venue.name }}</strong> dari keranjang?</p>
+                <div class="flex justify-end gap-3">
+                    <button onclick="document.getElementById('delete-modal-{{ forloop.counter }}').close()" class="px-3 py-1.5 rounded-lg text-gray-600 hover:bg-gray-100 transition">Batal</button>
+                    <a href="{% url 'booking:remove_from_cart' venue.id %}" class="confirm-delete px-4 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Hapus</a>
+                </div>
+            </dialog>
+            {% endfor %}
+        </div>
+
+        <!-- Total dan Checkout -->
+        <div class="text-right mt-8">
+            <h4 class="text-xl font-semibold">
+                Total Keseluruhan: 
+                <span id="total-price" class="text-green-600 font-bold">Rp {{ total_price|floatformat:0 }}</span>
+            </h4>
+            <a href="{% url 'booking:checkout_confirm' %}" id="checkout-button" class="inline-block mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition">
+               Bayar Sekarang
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- 🟩 Toast Container (pojok kanan bawah) -->
+<div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-3"></div>
+
+<script>
+// --- TOAST FUNCTION ---
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `p-4 rounded-lg shadow-lg text-white font-medium transition-all duration-300 transform translate-x-full`;
+    toast.innerText = message;
+
+    if (type === 'success') toast.classList.add('bg-green-600');
+    else if (type === 'error') toast.classList.add('bg-red-600');
+    else toast.classList.add('bg-blue-600');
+
+    container.appendChild(toast);
+
+    setTimeout(() => toast.classList.remove('translate-x-full'), 10);
+    setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-x-full');
+        toast.addEventListener('transitionend', () => toast.remove());
+    }, 3000);
+}
+
+// --- EDIT BOOKING HANDLER ---
+document.querySelectorAll('.edit-booking-form').forEach(form => {
+    form.addEventListener('submit', async e => {
+        e.preventDefault();
+        try {
+            const res = await fetch(form.action, { method: 'POST', body: new FormData(form) });
+            const data = await res.json();
+            if (data.success) {
+                const venueId = form.dataset.venueId;
+                const card = document.querySelector(`[data-venue-id="${venueId}"]`);
+                card.querySelector('.borrower-name span').innerText = form.borrower_name.value;
+                card.querySelector('.booking-date').innerHTML = `<strong>Tanggal:</strong> ${form.booking_date.value}`;
+                card.querySelector('.booking-time').innerHTML = `<strong>Jam:</strong> ${form.start_time.value} - ${form.end_time.value}`;
+                card.querySelector('.subtotal').innerText = `Subtotal: Rp ${parseInt(data.total_price).toLocaleString('id-ID')}`;
+                form.closest('dialog').close();
+                showToast('Booking berhasil diperbarui!', 'success');
+            } else showToast('Gagal memperbarui booking.', 'error');
+        } catch {
+            showToast('Terjadi kesalahan koneksi.', 'error');
+        }
+    });
+});
+
+// --- DELETE HANDLER ---
+document.querySelectorAll('.confirm-delete').forEach(link => {
+    link.addEventListener('click', async e => {
+        e.preventDefault();
+        const url = link.getAttribute('href');
+        link.closest('dialog').close();
+
+        try {
+            const res = await fetch(url);
+            if (res.redirected) {
+                showToast('Venue berhasil dihapus dari keranjang.', 'error');
+                setTimeout(() => { window.location.href = res.url; }, 800);
+            } else if (res.ok) {
+                showToast('Venue berhasil dihapus dari keranjang.', 'error');
+                setTimeout(() => window.location.reload(), 800);
+            } else {
+                showToast('Gagal menghapus venue.', 'error');
+            }
+        } catch {
+            showToast('Gagal terhubung ke server.', 'error');
+        }
+    });
+});
+
+// --- BAYAR HANDLER ---
+document.getElementById('checkout-button').addEventListener('click', e => {
+    const invalid = Array.from(document.querySelectorAll('[data-venue-id]')).some(card => {
+        const borrower = card.querySelector('.borrower-name span')?.innerText.trim();
+        const date = card.querySelector('.booking-date').innerText.includes('Belum diatur');
+        const time = card.querySelector('.booking-time').innerText.includes('Belum diatur');
+        return !borrower || borrower === 'Belum diatur' || date || time;
+    });
+    if (invalid) {
+        e.preventDefault();
+        showToast('Lengkapi semua data booking sebelum membayar!', 'error');
+    }
+});
+</script>
+
+{% endblock %}

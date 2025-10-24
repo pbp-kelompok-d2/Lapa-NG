@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block content %}
+{% include "navbar.html" %}
+
+{% if bookings %}
+<div class="max-w-5xl mx-auto px-6 pt-24">
+    <h2 class="text-3xl font-bold text-center mb-8">Booking Kamu</h2>
+
+    <!-- 🔍 FILTER FORM -->
+    <div class="mb-8 p-6 bg-white border border-gray-200 rounded-xl shadow-lg">
+        <form id="filter-form" method="GET" action="{% url 'booking:booking_list' %}" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <!-- Nama Venue -->
+            <div>
+                <label for="venue_name" class="block text-sm font-medium text-gray-700 mb-1">Nama Venue</label>
+                <input 
+                    type="text" 
+                    name="venue_name" 
+                    id="venue_name"
+                    value="{{ request.GET.venue_name }}"
+                    placeholder="Cari nama venue..."
+                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-50">
+            </div>
+
+            <!-- Sport Type -->
+            <div>
+                <label for="sport_type" class="block text-sm font-medium text-gray-700 mb-1">Sport Type</label>
+                <select 
+                    name="sport_type" 
+                    id="sport_type"
+                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-50">
+                    <option value="">Semua Jenis</option>
+                    {% for sport in sport_types %}
+                        <option value="{{ sport }}" {% if request.GET.sport_type == sport %}selected{% endif %}>
+                            {{ sport|capfirst }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Nama Pembooking -->
+            <div>
+                <label for="booker_name" class="block text-sm font-medium text-gray-700 mb-1">Nama Pembooking</label>
+                <input 
+                    type="text" 
+                    name="booker_name" 
+                    id="booker_name"
+                    value="{{ request.GET.booker_name }}"
+                    placeholder="Masukkan nama pembooking..."
+                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-50">
+            </div>
+
+            <!-- Tombol Search -->
+            <div>
+                <button 
+                    type="submit" 
+                    class="w-full bg-green-600 text-white font-medium py-2.5 px-6 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-150 ease-in-out flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <span>Cari Booking</span>
+                </button>
+            </div>
+
+            <!-- Clear Filter -->
+            <div class="md:col-span-4 mt-2">
+                <a href="{% url 'booking:booking_list' %}" class="text-xs text-gray-500 hover:text-green-700 transition-colors">
+                    Hapus semua filter
+                </a>
+            </div>
+        </form>
+    </div>
+    <!-- 🔍 END FILTER FORM -->
+
+    <!-- Booking Cards -->
+    <div class="grid md:grid-cols-2 gap-6">
+        {% for b in bookings %}
+        <div class="bg-white shadow-md hover:shadow-lg transition rounded-xl p-6 flex flex-col justify-between border border-gray-100">
+            <div>
+                <h3 class="text-xl font-semibold mb-2 text-gray-800">{{ b.venue.name }}</h3>
+                <p class="text-gray-600">{{ b.venue.address }}</p>
+
+                <p class="mt-3">
+                    <span class="font-semibold text-gray-800">Tanggal:</span> {{ b.booking_date|date:"d M Y" }}
+                </p>
+                <p>
+                    <span class="font-semibold text-gray-800">Jam:</span>
+                    {{ b.start_time|time:"H:i" }} - {{ b.end_time|time:"H:i" }}
+                </p>
+
+                <!-- Total diubah ke warna hijau -->
+                <p class="text-green-600 mt-3 font-semibold text-lg">
+                    Total: Rp {{ b.total_price|floatformat:0 }}
+                </p>
+                <p class="mt-1 text-sm text-blue-600 font-medium">Status: {{ b.status|capfirst }}</p>
+            </div>
+
+            <div class="mt-6">
+                <form method="POST" action="{% url 'booking:clear_booking' b.id %}" class="w-full">
+                    {% csrf_token %}
+                    <button 
+                        type="submit" 
+                        class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-lg transition-all duration-200">
+                        Saya telah selesai meminjam
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% else %}
+<!-- ✅ Tampilan "Belum ada booking" (mirip empty_cart.html) -->
+<div class="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-6">
+    <h1 class="text-3xl font-bold text-gray-800 mb-10 text-center">Booking Kamu</h1>
+
+    <div class="bg-white shadow-lg rounded-2xl p-10 max-w-md w-full text-center">
+        <div class="flex justify-center mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" 
+                 class="w-20 h-20 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M8 7V3m8 4V3m-9 8h10m-12 9h14a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v11a2 2 0 002 2z" />
+            </svg>
+        </div>
+
+        <h2 class="text-xl font-bold text-gray-800 mb-3">Belum Ada Booking</h2>
+        <p class="text-gray-500 mb-8">
+            Kamu belum memiliki booking yang dikonfirmasi. Yuk, cari dan pesan lapanganmu!
+        </p>
+
+        <div class="flex flex-col gap-3">
+            <a href="/booking/"
+               class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition">
+               Kembali ke Keranjang
+            </a>
+            <a href="/"
+               class="border border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold py-2.5 rounded-lg transition">
+               Ke Halaman Utama
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
