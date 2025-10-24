@@ -91,6 +91,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const heroBg = document.getElementById('hero-bg'); // For parallax
     let heroDots = [];
     let heroInterval;
+    const paginationContainer = document.getElementById('pagination-container');
+    
 
     // --- Modal Functions ---
     function openModal() {
@@ -293,16 +295,57 @@ document.addEventListener('DOMContentLoaded', function() {
             event.preventDefault();
             const formData = new FormData(filterForm);
             const params = new URLSearchParams(formData);
-            fetch(`${URLS.filter}?${params.toString()}`)
-                .then(response => response.text())
-                .then(html => {
-                    if (venueContainer) venueContainer.innerHTML = html;
+
+            params.delete('page'); // Hapus parameter page pas filter baru diterapkan
+            const fetchUrl = `${URLS.filter}?${params.toString()}`;
+
+            fetch(fetchUrl)
+                .then(response => response.json()) // Berharap JSON
+                .then(data => {
+                    if (venueContainer) venueContainer.innerHTML = data.list_html;
+                    if (paginationContainer) paginationContainer.innerHTML = data.pagination_html; // Render pagination
+                    
+                    // Update URL di browser
                     history.pushState(null, '', `${URLS.showMain}?${params.toString()}`);
                 })
                 .catch(error => {
                     console.error('Filter error:', error);
                     if (venueContainer) venueContainer.innerHTML = '<p class="text-center text-red-600">Error loading venues.</p>';
                  });
+        });
+    }
+
+    // --- LISTENER BARU UNTUK PAGINATION (AJAX) ---
+    if (contentWrapper) {
+        contentWrapper.addEventListener('click', function(event) {
+            const pageLink = event.target.closest('.page-link'); // Target semua link di pagination
+            
+            if (pageLink && pageLink.tagName === 'A') { // Pastikan itu link, bukan span
+                event.preventDefault(); // Stop reload halaman
+                const fetchUrl = pageLink.href;
+                
+                // Ambil URL lengkap dan ekstrak query string
+                const queryString = fetchUrl.split('?')[1] || '';
+                const ajaxUrl = `${URLS.filter}?${queryString}`;
+                const browserUrl = `${URLS.showMain}?${queryString}`;
+
+                fetch(ajaxUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (venueContainer) venueContainer.innerHTML = data.list_html;
+                        if (paginationContainer) paginationContainer.innerHTML = data.pagination_html;
+                        
+                        // Update URL di browser
+                        history.pushState(null, '', browserUrl);
+                        
+                        // Scroll ke atas list
+                        contentWrapper.scrollIntoView({ behavior: 'smooth' });
+                    })
+                    .catch(error => {
+                        console.error('Pagination error:', error);
+                        showToast('Could not load page.', 'error');
+                    });
+            }
         });
     }
 

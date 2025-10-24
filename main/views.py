@@ -15,6 +15,7 @@ from .models import Venue
 from .forms import VenueForm
 from django.db.models import Q # Import Q for complex lookups
 from django.template.loader import render_to_string
+from django.core.paginator import Paginator
 
 PRICE_RANGES = {
     '0-50000': 'Under Rp 50.000',
@@ -62,11 +63,22 @@ def show_main(request):
     if max_price is not None:
         venues = venues.filter(price__lte=max_price)
 
+    #paginator itu yang buat pecah venua jadi beberapa halaman (1-4 dst)
+    paginator = Paginator(venues, 20) 
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Hapus parameter 'page' dari current_filters untuk link pagination
+    current_filters_no_page = request.GET.copy()
+    if 'page' in current_filters_no_page:
+        del current_filters_no_page['page']
+
     context = {
-        'venues': venues,
+        'venues': page_obj, 
         'categories': categories,
-        'price_ranges': PRICE_RANGES, # Pass the ranges to the template
+        'price_ranges': PRICE_RANGES,
         'current_filters': request.GET, 
+        'current_filters_no_page': current_filters_no_page, # Untuk pagination
     }
 
     return render(request, "main.html", context)
@@ -107,12 +119,29 @@ def filter_venues(request):
     if max_price is not None:
         venues = venues.filter(price__lte=max_price)
 
+    paginator = Paginator(venues, 20) 
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Hapus parameter 'page' dari current_filters untuk link pagination
+    current_filters_no_page = request.GET.copy()
+    if 'page' in current_filters_no_page:
+        del current_filters_no_page['page']
+
     context = {
-        'venues': venues,
+        'venues': page_obj,
+        'current_filters_no_page': current_filters_no_page, # Untuk pagination
     }
     
-    # dia nge render PARTIAL LIST, not the full page
-    return render(request, "_venue_list.html", context)
+    # --- UBAH RETURN JADI JSON ---
+    # Render 2 partial: satu untuk list, satu untuk pagination
+    list_html = render_to_string("_venue_list.html", context, request=request)
+    pagination_html = render_to_string("_pagination.html", context, request=request)
+    
+    return JsonResponse({
+        'list_html': list_html,
+        'pagination_html': pagination_html
+    })
 
 def venue_detail(request, slug):
     venue = get_object_or_404(Venue, slug=slug) # Find venue by slug or return 404
