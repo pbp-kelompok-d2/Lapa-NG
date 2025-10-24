@@ -24,29 +24,23 @@ PRICE_RANGES = {
 }
 
 def show_main(request):
-    # kategori sport dari database
     categories = Venue.objects.values_list('category', flat=True).order_by('category').distinct()
-
     venues = Venue.objects.all()
 
     search_query = request.GET.get('q', '')
     category_filter = request.GET.get('category', '')
-    price_range_key = request.GET.get('price_range', '') # Get the selected price range key
+    price_range_key = request.GET.get('price_range', '') 
 
     if search_query:
-        # Filter by name atau address containing the query (case-insensitive)
         venues = venues.filter(
             Q(name__icontains=search_query) | 
             Q(address__icontains=search_query)
         )
-
     if category_filter:
         venues = venues.filter(category=category_filter)
 
-    # ---  Price Logic ---
     min_price = None
     max_price = None
-
     if price_range_key in PRICE_RANGES:
         if price_range_key == '0-50000':
             max_price = 50000
@@ -61,12 +55,11 @@ def show_main(request):
     if max_price is not None:
         venues = venues.filter(price__lte=max_price)
 
-    #paginator itu yang buat pecah venua jadi beberapa halaman (1-4 dst)
+    # ---  PAGINATION LOGIC ---
     paginator = Paginator(venues, 20) 
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    # Hapus parameter 'page' dari current_filters untuk link pagination
     current_filters_no_page = request.GET.copy()
     if 'page' in current_filters_no_page:
         del current_filters_no_page['page']
@@ -75,8 +68,8 @@ def show_main(request):
         'venues': page_obj, 
         'categories': categories,
         'price_ranges': PRICE_RANGES,
-        'current_filters': request.GET, 
-        'current_filters_no_page': current_filters_no_page, # Untuk pagination
+        'current_filters': request.GET,
+        'current_filters_no_page': current_filters_no_page, # for pagination
     }
 
     return render(request, "main.html", context)

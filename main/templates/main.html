@@ -105,10 +105,10 @@
                 </button>
             </div>
             
-            {# Clear Filters Link (Optional: style differently if needed) #}
-            <div class="md:col-span-4 mt-2"> {# Adjusted margin #}
+            {# Clear Filters Link #}
+            <div class="md:col-span-4 mt-2"> 
                 <a 
-                  href="{% url 'main:show_main' %}" 
+                  id="clear-filter-btn"  href="{% url 'main:show_main' %}" 
                   class="text-xs text-gray-500 hover:text-green-700 transition-colors">
                   Clear all filters
                 </a>
@@ -128,11 +128,13 @@
         <div id="venue-list-container">
             {% include '_venue_list.html' with venues=venues %}
         </div>
-        <div id="pagination-container">
-            {% include '_pagination.html' with venues=venues current_filters_no_page=current_filters_no_page %}
-        </div>
 
-    </main> </div> <script id="main-script-data"
+        <div id="pagination-container" class="mt-8">
+            {% include '_pagination.html' %}
+        </div>
+    </main> 
+</div>
+ <script id="main-script-data"
     type="application/json"
     data-filter-url="{% url 'main:filter_venues' %}"
     data-show-main-url="{% url 'main:show_main' %}"

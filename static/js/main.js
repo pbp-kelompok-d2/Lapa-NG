@@ -290,22 +290,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // ===================================
 
     // --- AJAX FILTER LOGIC ---
-    if (filterForm) {
+   if (filterForm) {
         filterForm.addEventListener('submit', function(event) {
             event.preventDefault();
             const formData = new FormData(filterForm);
             const params = new URLSearchParams(formData);
-
-            params.delete('page'); // Hapus parameter page pas filter baru diterapkan
-            const fetchUrl = `${URLS.filter}?${params.toString()}`;
-
-            fetch(fetchUrl)
-                .then(response => response.json()) // Berharap JSON
-                .then(data => {
+            
+            fetch(`${URLS.filter}?${params.toString()}`)
+                .then(response => response.json()) // <-- CHANGE to response.json()
+                .then(data => {                   // <-- CHANGE to handle 'data'
                     if (venueContainer) venueContainer.innerHTML = data.list_html;
-                    if (paginationContainer) paginationContainer.innerHTML = data.pagination_html; // Render pagination
-                    
-                    // Update URL di browser
+                    if (paginationContainer) paginationContainer.innerHTML = data.pagination_html; // <-- ADD THIS
                     history.pushState(null, '', `${URLS.showMain}?${params.toString()}`);
                 })
                 .catch(error => {
@@ -314,7 +309,6 @@ document.addEventListener('DOMContentLoaded', function() {
                  });
         });
     }
-
     // --- LISTENER BARU UNTUK PAGINATION (AJAX) ---
     if (contentWrapper) {
         contentWrapper.addEventListener('click', function(event) {
@@ -350,14 +344,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- Clear Filter Button Logic ---
-    const clearButton = document.querySelector(`a[href="${URLS.showMain}"]`);
+    const clearButton = document.getElementById('clear-filter-btn');
     if (clearButton) {
         clearButton.addEventListener('click', function(event) {
             event.preventDefault();
             fetch(URLS.filter) // Ambil daftar tanpa filter
-                .then(response => response.text())
-                .then(html => {
-                    if (venueContainer) venueContainer.innerHTML = html;
+                .then(response => response.json()) // <-- CHANGE to response.json()
+                .then(data => {                   // <-- CHANGE to handle 'data'
+                    if (venueContainer) venueContainer.innerHTML = data.list_html;
+                    if (paginationContainer) paginationContainer.innerHTML = data.pagination_html; // <-- ADD THIS
                     if (filterForm) filterForm.reset();
                     history.pushState(null, '', URLS.showMain);
                 })
