@@ -238,3 +238,54 @@ class BookingTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'checkout_success.html')
         self.assertTrue(Booking.objects.filter(venue=self.venue1).exists())
+
+    # -------------------------
+    #  CART & BOOKING EDIT TESTS
+    # -------------------------
+    def test_add_to_cart_adds_item(self):
+        add_url = reverse('booking:add_to_cart', args=[self.venue1.id])
+        response = self.client.get(add_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('cart', self.client.session)
+        self.assertEqual(len(self.client.session['cart']), 1)
+
+    def test_add_to_cart_duplicate(self):
+        add_url = reverse('booking:add_to_cart', args=[self.venue1.id])
+        self.client.get(add_url)
+        response = self.client.get(add_url)
+        self.assertContains(response, 'sudah ada', status_code=200)
+
+    def test_edit_booking_with_valid_data(self):
+        """Edit booking di cart dengan data valid"""
+        self.client.get(reverse('booking:add_to_cart', args=[self.venue1.id]))
+        form_data = {
+            'borrower_name': 'Tester',
+            'booking_date': str(date.today()),
+            'start_time': '08:00',
+            'end_time': '09:00'
+        }
+        response = self.client.post(reverse('booking:edit_booking', args=[self.venue1.id]), data=form_data)
+        self.assertJSONEqual(response.content, {'success': True})
+
+    def test_edit_booking_with_invalid_data(self):
+        """Edit booking tapi form tidak valid"""
+        self.client.get(reverse('booking:add_to_cart', args=[self.venue1.id]))
+        response = self.client.post(reverse('booking:edit_booking', args=[self.venue1.id]), data={})
+        self.assertIn('success', response.json())
+        self.assertFalse(response.json()['success'])
+
+    def test_remove_from_cart_redirects_when_not_empty(self):
+        """Hapus salah satu item dari cart"""
+        session = self.client.session
+        session['cart'] = [{'id': self.venue1.id}]
+        session.save()
+        remove_url = reverse('booking:remove_from_cart', args=[self.venue1.id])
+        response = self.client.get(remove_url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_remove_from_cart_shows_empty_cart_when_last_item_removed(self):
+        """Jika cart jadi kosong, harus tampil halaman empty_cart"""
+        self.client.get(reverse('booking:add_to_cart', args=[self.venue1.id]))
+        response = self.client.get(reverse('booking:remove_from_cart', args=[self.venue1.id]))
+        # pastikan sekarang cart kosong dan render empty_cart.html
+        self.assertTemplateUsed(response, 'empty_cart.html')
