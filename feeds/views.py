@@ -203,3 +203,35 @@ def delete_post_ajax(request, id):
         "ok": True,
         "redirect": reverse("feeds:show_feed_main"),
     }, status=200)
+    
+@login_required(login_url='/auth/login/')
+@require_http_methods(["POST"])
+def create_post_ajax(request):
+    content     = request.POST.get("content")
+    category    = request.POST.get("category")
+    thumbnail   = request.POST.get("thumbnail")
+    is_featured = request.POST.get("is_featured") == 'on'
+
+    post = Post.objects.create(
+        user=request.user,
+        content=content,
+        category=category,
+        thumbnail=thumbnail,
+        is_featured=is_featured,
+    )
+
+    return JsonResponse({
+        "ok": True,
+        "post": {
+            "id": str(post.id),
+            "content": post.content,
+            "category": post.category,
+            "thumbnail": post.thumbnail or "",
+            "post_views": post.post_views,
+            "created_at": localtime(post.created_at).isoformat() if post.created_at else None,
+            "is_featured": post.is_featured,
+            "is_hot": post.post_views > 10,
+            "user_id": post.user_id,
+            "user_username": post.user.username if post.user_id else None,
+        }
+    }, status=201)

@@ -4,11 +4,11 @@
 {% block content %}
 {% include 'navbar.html' %}
 
-<div class="pt-20 min-h-screen bg-gradient-to-b from-emerald-400 via-teal-400 to-blue-600">
+<div class="pt-20 min-h-screen bg-white">
   <div class="max-w-2xl mx-auto px-4 pb-24">
 
     <div class="mb-4">
-      <a href="{% url 'feeds:show_feed_main' %}" class="text-white/90 hover:underline">← Back to Feeds</a>
+      <a href="{% url 'feeds:show_feed_main' %}" class="text-emerald-700 hover:underline">← Back to Feeds</a>
     </div>
 
     <!-- Card Detail -->
@@ -30,26 +30,21 @@
             </div>
           </div>
         </div>
-
-        <p id="post-meta" class="text-sm text-gray-600 mt-1">
-          <!-- category | Featured | Hot | date | Views -->
-        </p>
       </div>
 
       <div id="thumb-wrap" class="px-4 sm:px-6 hidden">
-        <img id="post-thumb" src="" alt="thumbnail" class="rounded-lg w-full max-h-96 object-cover">
+        <img id="post-thumb" …>
       </div>
 
       <div class="p-4 sm:p-6">
-        <p id="post-content" class="text-gray-800 whitespace-pre-line"></p>
+        <p id="post-meta" class="text-sm text-gray-600">
+          <!-- category | Featured | Hot | date | Views -->
+        </p>
+
+        <p id="post-content" class="mt-3 text-gray-800 whitespace-pre-line"></p>
       </div>
     </article>
   </div>
-
-  <!-- Floating +  -->
-  <a href="{% url 'feeds:create_post' %}"
-     class="fixed right-6 bottom-6 w-14 h-14 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white
-            flex items-center justify-center text-3xl shadow-xl">+</a>
 </div>
 
 <!-- Modal Edit -->
@@ -149,13 +144,20 @@
   const btnCancelDelete = $('#btn-cancel-delete');
   const btnConfirmDelete = $('#btn-confirm-delete');
 
+  function fmtDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-US', {year:'numeric', month:'short', day:'numeric'}) + ' ' +
+           d.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+  }
+
   // ===== Render =====
   function renderMeta(d) {
     const badges = [
       `<b>${d.category_label}</b>`,
       d.is_featured ? "<b>Featured</b>" : null,
       d.is_hot ? "<b>Hot</b>" : null,
-      d.created_at ? `<i>${new Date(d.created_at).toLocaleString()}</i>` : null,
+      d.created_at ? `<i>${fmtDate(d.created_at)}</i>` : null,
       `Views: ${d.post_views}`
     ].filter(Boolean).join(" | ");
     return badges;
@@ -163,9 +165,8 @@
 
   function renderDetail(d) {
     usernameEl.textContent = d.username.startsWith('@') ? d.username : '@' + d.username;
-    metaEl.innerHTML = renderMeta(d);
-    contentEl.textContent = d.content || '';
 
+    // thumbnail
     if (d.thumbnail) {
       thumbEl.src = d.thumbnail;
       show(thumbWrap);
@@ -173,11 +174,12 @@
       hide(thumbWrap);
     }
 
-    if (d.is_owner) {
-      show(ownerWrap);
-    } else {
-      hide(ownerWrap);
-    }
+    // content
+    metaEl.innerHTML = renderMeta(d);
+    contentEl.textContent = d.content || '';
+
+    // menu owner
+    if (d.is_owner) show(ownerWrap); else hide(ownerWrap);
   }
 
   // ===== Load =====
@@ -187,7 +189,7 @@
       if (!res.ok) throw new Error('Failed to load');
       const data = await res.json();
       renderDetail(data);
-      // pre-fill form for owner
+      // pre-fill form untuk owner
       if (data.is_owner) {
         fContent.value = data.content || '';
         fCategory.value = data.category || 'other';
@@ -203,7 +205,7 @@
   // ===== Menu & Modal handlers =====
   document.addEventListener('click', (e) => {
     if (menuDropdown.classList.contains('hidden')) return;
-    // close dropdown when click outside
+    // menutup dropdown ketika klik di luar
     if (!ownerWrap.contains(e.target)) hide(menuDropdown);
   });
   menuBtn?.addEventListener('click', () => {
@@ -229,7 +231,7 @@
       if (!res.ok) throw new Error(await res.text());
       const out = await res.json();
       hide(editModal); editModal.classList.remove('flex');
-      showToast('Post updated', '', 'success');
+      showToast('Post updated successfully', '', 'success');
       // update UI ringan dari respon
       contentEl.textContent = out.post.content;
       fContent.value = out.post.content;
