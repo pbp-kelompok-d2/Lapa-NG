@@ -26,7 +26,7 @@
         </div>
 
         <!-- Form -->
-        <form method="POST" class="space-y-5">
+        <form method="POST" enctype="multipart/form-data" class="space-y-5">
             {% csrf_token %}
             {% for field in form %}
                 <div>
@@ -56,10 +56,19 @@
 <style>
     input[type="text"],
     input[type="number"],
-    input[type="file"],
+    input[type="file"] {
+        display: block;               /* pastikan block agar width bekerja */
+        width: 100%;                  /* isi penuh container */
+        box-sizing: border-box;       /* padding tidak nambah lebar */
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        background-color: #fff;
+    }
     select,
     textarea {
         width: 100%;
+        box-sizing: border-box;
         border: 1px solid #d1d5db; 
         border-radius: 0.5rem; 
         padding: 0.5rem 0.75rem; 
@@ -74,5 +83,6 @@
         box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.3);
     }
 </style>
+
 
 {% endblock content %}

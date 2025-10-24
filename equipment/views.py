@@ -11,45 +11,55 @@ from .models import Equipment
 
 @login_required(login_url='/login')
 def equipment_list(request):
-    equipments = Equipment.objects.all()
-
-    # Filtering berdasarkan region & sport category
-    region = request.GET.get('region')
     sport = request.GET.get('sport_category')
-    search = request.GET.get('search')
+    region = request.GET.get('region')
+    search = request.GET.get('search', '').strip()
 
-    if region and region != 'all':
-        equipments = equipments.filter(region=region)
+    qs = Equipment.objects.all()
     if sport and sport != 'all':
-        equipments = equipments.filter(sport_category=sport)
+        qs = qs.filter(sport_category=sport)
+    if region and region != 'all':
+        qs = qs.filter(region=region)
     if search:
-        equipments = equipments.filter(name__icontains=search)
+        qs = qs.filter(name__icontains=search)
 
-    # Cek apakah request berasal dari AJAX
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        data = []
-        for eq in equipments:
-            data.append({
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+    if is_ajax:
+        equipments = []
+        for eq in qs:
+            thumbnail = ''
+            try:
+                thumbnail = eq.thumbnail.url if eq.thumbnail else ''
+            except Exception:
+                thumbnail = getattr(eq, 'thumbnail', '') or ''
+
+            owner_name = ''
+            owner_number = ''
+            if hasattr(eq.owner, 'customuser'):
+                owner_name = getattr(eq.owner.customuser, 'name', '') or ''
+                owner_number = getattr(eq.owner.customuser, 'formatted_number', '') or ''
+
+            equipments.append({
                 'id': eq.id,
                 'name': eq.name,
+                'thumbnail': thumbnail,
                 'sport_category': eq.get_sport_category_display(),
-                'price_per_hour': str(eq.price_per_hour),
                 'region': eq.get_region_display(),
+                'price_per_hour': eq.price_per_hour,
                 'quantity': eq.quantity,
                 'available': eq.available,
-                'thumbnail': eq.thumbnail if eq.thumbnail else '',  
-                'is_owner': request.user.is_authenticated and request.user == eq.owner, 
+                'is_owner': request.user.is_authenticated and eq.owner == request.user,
+                'owner_name': owner_name,
+                'owner_number': owner_number,
             })
-        return JsonResponse({'equipments': data})
 
-    # Kalau bukan AJAX, render halaman biasa
+        return JsonResponse({'equipments': equipments})
     context = {
-        'equipments': equipments,
-        'regions': Equipment.JAKARTA_REGION_CHOICES,
+        'equipments': qs, 
         'sports': Equipment.SPORT_CHOICES,
+        'regions': Equipment.JAKARTA_REGION_CHOICES,
     }
     return render(request, 'equipment_list.html', context)
-
 
 @login_required(login_url='/login')
 def equipment_create(request):
