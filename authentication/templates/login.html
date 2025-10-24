@@ -5,8 +5,72 @@
 <title>Login - LapaNG</title>
 {% endblock meta %}
 
+{% block styles %}
+<style>
+/* page reset: no scroll, full viewport */
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+/* make sure base main doesn't interfere (if it exists) */
+main {
+  height: 100%;
+  position: relative;
+}
+
+/* fixed footer pinned to bottom */
+#site-footer, footer {
+  position: fixed !important;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10; /* below the login card */
+}
+
+/* center login card absolutely in viewport */
+.login-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  max-width: 420px; /* adjust as needed */
+  padding: 0 1rem;
+  z-index: 20; /* above footer */
+  box-sizing: border-box;
+}
+
+/* keep the card visually above footer (small shadow helps) */
+.login-container .form-style {
+  position: relative;
+  z-index: 20;
+  box-shadow: 0 6px 18px rgba(16,24,40,0.06);
+}
+
+/* ensure footer wave doesn't cover the top of viewport */
+.footer-wave-image {
+    background-image: url("{% static 'images/Footer(1).png' %}");
+    background-size: cover;
+    background-position: bottom center;
+    background-repeat: no-repeat;
+    height: 160px;
+}
+
+/* if you need clickable controls inside footer, make sure they are above page backgrounds */
+#site-footer * { z-index: 11; position: relative; }
+
+/* small-screen friendly */
+@media (max-height: 600px) {
+  .login-container { max-width: 360px; }
+  .footer-wave-image { height: 120px; }
+}
+</style>
+{% endblock styles %}
+
 {% block content %}
-<div class="bg-gray-50 w-full min-h-screen flex items-center justify-center p-8">
+<div class="login-container">
   <div class="max-w-md w-full">
     <div class="bg-white rounded-lg border border-gray-200 p-6 sm:p-8 form-style">
       <div class="text-center mb-4">
