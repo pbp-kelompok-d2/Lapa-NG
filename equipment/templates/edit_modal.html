@@ -1,0 +1,21 @@
+<!-- Edit Equipment Modal -->
+<div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-2xl shadow-md w-full max-w-2xl p-8 relative">
+    <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+      &times;
+    </button>
+    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Edit Equipment</h2>
+    <div id="modalContent">
+    </div>
+  </div>
+</div>
+
+<script>
+  function openModal(html) {
+    $('#modalContent').html(html);
+    $('#editModal').removeClass('hidden');
+  }
+  function closeModal() {
+    $('#editModal').addClass('hidden');
+  }
+</script>

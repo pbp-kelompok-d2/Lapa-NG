@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Your Booking List</h2>
+
+    {% if cart %}
+        <table class="table table-striped mt-4">
+            <thead>
+                <tr>
+                    <th>Venue</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for venue in venues %}
+                    <tr>
+                        <td>{{ venue.name }}</td>
+                        <td>{{ venue.category }}</td>
+                        <td>Rp{{ venue.price }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <a href="{% url 'booking:checkout' %}" class="btn btn-primary">Proceed to Checkout</a>
+
+    {% else %}
+        <div class="alert alert-warning mt-4">
+            Your booking cart is empty.
+        </div>
+        <a href="{% url 'main:home' %}" class="btn btn-secondary">Back to Home</a>
+    {% endif %}
+</div>
+{% endblock %}

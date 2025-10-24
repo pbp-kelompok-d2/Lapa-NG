@@ -29,7 +29,7 @@
 
     <div class="absolute inset-0 z-10 flex flex-col items-center justify-center text-center text-white px-4 pointer-events-none">
         <h1 id="hero-welcome" class="text-4xl md:text-6xl font-bold font-heading mb-4 opacity-0 transition-opacity duration-1000 ease-in-out delay-500">
-            Welcome{% if user.is_authenticated %}, {{ user.username }}{% endif %}!
+            Welcome{% if user.is_authenticated %}, {{ user.customuser.name }}{% endif %}!
         </h1>
         <p id="hero-slogan" class="text-lg md:text-2xl mb-8 opacity-0 transition-opacity duration-1000 ease-in-out delay-1000">
             Find and Book Your Favorite Sports Venues Easily
@@ -108,7 +108,7 @@
             {# Clear Filters Link (Optional: style differently if needed) #}
             <div class="md:col-span-4 mt-2"> {# Adjusted margin #}
                 <a 
-                  id="clear-filter-btn"  href="{% url 'main:show_main' %}" 
+                  href="{% url 'main:show_main' %}" 
                   class="text-xs text-gray-500 hover:text-green-700 transition-colors">
                   Clear all filters
                 </a>
@@ -134,7 +134,7 @@
     data-filter-url="{% url 'main:filter_venues' %}"
     data-show-main-url="{% url 'main:show_main' %}"
     data-venue-detail-url-template="{% url 'main:get_venue_details' slug='SLUG_PLACEHOLDER' %}"
-    data-booking-add-url-template="{% url 'main:stub_add_to_booking' venue_id=0 %}"
+    data-booking-add-url-template="{% url 'booking:add_to_cart' venue_id=0 %}"
     data-booking-redirect-url="/booking/"
     data-get-create-form-url="{% url 'main:get_create_form' %}"
     data-get-edit-form-url-template="{% url 'main:get_edit_form' slug='SLUG_PLACEHOLDER' %}"
