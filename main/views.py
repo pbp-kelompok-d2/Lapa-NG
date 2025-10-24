@@ -15,6 +15,7 @@ from .models import Venue
 from .forms import VenueForm
 from django.db.models import Q # Import Q for complex lookups
 from django.template.loader import render_to_string
+from django.core.paginator import Paginator
 
 PRICE_RANGES = {
     '0-50000': 'Under Rp 50.000',
@@ -23,31 +24,23 @@ PRICE_RANGES = {
 }
 
 def show_main(request):
-    # Get all distinct categories for the filter dropdown
     categories = Venue.objects.values_list('category', flat=True).order_by('category').distinct()
-
     venues = Venue.objects.all()
 
-    # Get filter values from the request
     search_query = request.GET.get('q', '')
     category_filter = request.GET.get('category', '')
-    price_range_key = request.GET.get('price_range', '') # Get the selected price range key
+    price_range_key = request.GET.get('price_range', '') 
 
-    # Apply filters kalau  exist
     if search_query:
-        # Filter by name or address containing the query (case-insensitive)
         venues = venues.filter(
             Q(name__icontains=search_query) | 
             Q(address__icontains=search_query)
         )
-
     if category_filter:
         venues = venues.filter(category=category_filter)
 
-    # ---  Price Logic ---
     min_price = None
     max_price = None
-
     if price_range_key in PRICE_RANGES:
         if price_range_key == '0-50000':
             max_price = 50000
@@ -62,11 +55,21 @@ def show_main(request):
     if max_price is not None:
         venues = venues.filter(price__lte=max_price)
 
+    # ---  PAGINATION LOGIC ---
+    paginator = Paginator(venues, 20) 
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    current_filters_no_page = request.GET.copy()
+    if 'page' in current_filters_no_page:
+        del current_filters_no_page['page']
+
     context = {
-        'venues': venues,
+        'venues': page_obj, 
         'categories': categories,
-        'price_ranges': PRICE_RANGES, # Pass the ranges to the template
-        'current_filters': request.GET, 
+        'price_ranges': PRICE_RANGES,
+        'current_filters': request.GET,
+        'current_filters_no_page': current_filters_no_page, # for pagination
     }
 
     return render(request, "main.html", context)
@@ -76,12 +79,10 @@ def filter_venues(request):
     # same logic dengan show_main
     venues = Venue.objects.all()
 
-    # Get filter values from the request
     search_query = request.GET.get('q', '')
     category_filter = request.GET.get('category', '')
     price_range_key = request.GET.get('price_range', '') # Get the selected price range key
 
-    # Apply filters kalau exist
     if search_query:
         venues = venues.filter(
             Q(name__icontains=search_query) | 
@@ -107,12 +108,29 @@ def filter_venues(request):
     if max_price is not None:
         venues = venues.filter(price__lte=max_price)
 
+    paginator = Paginator(venues, 20) 
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Hapus parameter 'page' dari current_filters untuk link pagination
+    current_filters_no_page = request.GET.copy()
+    if 'page' in current_filters_no_page:
+        del current_filters_no_page['page']
+
     context = {
-        'venues': venues,
+        'venues': page_obj,
+        'current_filters_no_page': current_filters_no_page, # Untuk pagination
     }
     
-    # dia nge render PARTIAL LIST, not the full page
-    return render(request, "_venue_list.html", context)
+    # --- UBAH RETURN JADI JSON ---
+    # Render 2 partial: satu untuk list, satu untuk pagination
+    list_html = render_to_string("_venue_list.html", context, request=request)
+    pagination_html = render_to_string("_pagination.html", context, request=request)
+    
+    return JsonResponse({
+        'list_html': list_html,
+        'pagination_html': pagination_html
+    })
 
 def venue_detail(request, slug):
     venue = get_object_or_404(Venue, slug=slug) # Find venue by slug or return 404
@@ -120,56 +138,6 @@ def venue_detail(request, slug):
         'venue': venue,
     }
     return render(request, "venue_detail.html", context)
-
-# @login_required(login_url='authentication:login') # Redirect to login if not authenticated
-# def create_venue(request):
-#     form = VenueForm() # Initialize an empty form
-
-#     if request.method == 'POST':
-#         form = VenueForm(request.POST)
-#         if form.is_valid():
-#             venue = form.save(commit=False)  # Don't save to DB yet
-#             venue.owner = request.user       
-#             venue.save()                     
-#             return redirect('main:venue_detail', slug=venue.slug) # Redirect to the new venue's detail page
-
-#     context = {'form': form}
-#     return render(request, 'create_venue.html', context)
-
-# @login_required(login_url='authentication:login')
-# def edit_venue(request, slug):
-#     venue = get_object_or_404(Venue, slug=slug) # Get the venue to edit
-
-#     # Security Check: Only the owner can edit
-#     if venue.owner != request.user:
-#         return HttpResponseForbidden("You are not allowed to edit this venue.")
-
-#     # Pre-populate the form with the venue's existing data
-#     form = VenueForm(request.POST or None, instance=venue)
-
-#     if request.method == 'POST':
-#         if form.is_valid():
-#             form.save() # Save the changes to the existing venue
-#             return redirect('main:venue_detail', slug=venue.slug) # Redirect to detail page
-
-#     context = {'form': form, 'venue': venue}
-#     return render(request, 'edit_venue.html', context)
-
-# @login_required(login_url='authentication:login')
-# def delete_venue(request, slug):
-#     venue = get_object_or_404(Venue, slug=slug)
-
-#     # Security Check: Only the owner can delete
-#     if venue.owner != request.user:
-#         return HttpResponseForbidden("You are not allowed to delete this venue.")
-
-#     if request.method == 'POST':
-#         venue.delete() 
-#         return redirect('main:show_main') # Redirect to the homepage
-
-#     # If GET request, just redirect (or show a confirmation page)
-#     return redirect('main:venue_detail', slug=venue.slug)
-
 
 #=============AJAX STUFF ===============
 def get_venue_details(request, slug):
@@ -197,7 +165,6 @@ def create_venue_ajax(request):
         venue.owner = request.user
         venue.save()
         
-        # Render the new card to send back to the JS
         new_card_html = render_to_string('_venue_card.html', {'venue': venue})
         
         return JsonResponse({
@@ -383,7 +350,6 @@ def import_venues_from_csv(request):
 
                     except Exception:
                         errors += 1
-                        # lanjut baris berikutnya, kita tidak rollback seluruhnya
                         continue
 
         except Exception as e:
@@ -401,8 +367,6 @@ def add_to_booking_draft_stub(request, venue_id):
 
     venue = get_object_or_404(Venue, id=venue_id)
     
-    # In a booking app, bakal ada BookingDraft object here, e.g.:
-    # BookingDraft.objects.create(user=request.user, venue=venue)
     
     print(f"STUB: User {request.user.username} added venue {venue.name} (ID: {venue_id}) to booking draft.")
 

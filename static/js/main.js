@@ -91,6 +91,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const heroBg = document.getElementById('hero-bg'); // For parallax
     let heroDots = [];
     let heroInterval;
+    const paginationContainer = document.getElementById('pagination-container');
+    
 
     // --- Modal Functions ---
     function openModal() {
@@ -288,15 +290,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // ===================================
 
     // --- AJAX FILTER LOGIC ---
-    if (filterForm) {
+   if (filterForm) {
         filterForm.addEventListener('submit', function(event) {
             event.preventDefault();
             const formData = new FormData(filterForm);
             const params = new URLSearchParams(formData);
+            
             fetch(`${URLS.filter}?${params.toString()}`)
-                .then(response => response.text())
-                .then(html => {
-                    if (venueContainer) venueContainer.innerHTML = html;
+                .then(response => response.json()) // <-- CHANGE to response.json()
+                .then(data => {                   // <-- CHANGE to handle 'data'
+                    if (venueContainer) venueContainer.innerHTML = data.list_html;
+                    if (paginationContainer) paginationContainer.innerHTML = data.pagination_html; // <-- ADD THIS
                     history.pushState(null, '', `${URLS.showMain}?${params.toString()}`);
                 })
                 .catch(error => {
@@ -305,16 +309,50 @@ document.addEventListener('DOMContentLoaded', function() {
                  });
         });
     }
+    // --- LISTENER BARU UNTUK PAGINATION (AJAX) ---
+    if (contentWrapper) {
+        contentWrapper.addEventListener('click', function(event) {
+            const pageLink = event.target.closest('.page-link'); // Target semua link di pagination
+            
+            if (pageLink && pageLink.tagName === 'A') { // Pastikan itu link, bukan span
+                event.preventDefault(); // Stop reload halaman
+                const fetchUrl = pageLink.href;
+                
+                // Ambil URL lengkap dan ekstrak query string
+                const queryString = fetchUrl.split('?')[1] || '';
+                const ajaxUrl = `${URLS.filter}?${queryString}`;
+                const browserUrl = `${URLS.showMain}?${queryString}`;
+
+                fetch(ajaxUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (venueContainer) venueContainer.innerHTML = data.list_html;
+                        if (paginationContainer) paginationContainer.innerHTML = data.pagination_html;
+                        
+                        // Update URL di browser
+                        history.pushState(null, '', browserUrl);
+                        
+                        // Scroll ke atas list
+                        contentWrapper.scrollIntoView({ behavior: 'smooth' });
+                    })
+                    .catch(error => {
+                        console.error('Pagination error:', error);
+                        showToast('Could not load page.', 'error');
+                    });
+            }
+        });
+    }
 
     // --- Clear Filter Button Logic ---
-    const clearButton = document.querySelector(`a[href="${URLS.showMain}"]`);
+    const clearButton = document.getElementById('clear-filter-btn');
     if (clearButton) {
         clearButton.addEventListener('click', function(event) {
             event.preventDefault();
             fetch(URLS.filter) // Ambil daftar tanpa filter
-                .then(response => response.text())
-                .then(html => {
-                    if (venueContainer) venueContainer.innerHTML = html;
+                .then(response => response.json()) // <-- CHANGE to response.json()
+                .then(data => {                   // <-- CHANGE to handle 'data'
+                    if (venueContainer) venueContainer.innerHTML = data.list_html;
+                    if (paginationContainer) paginationContainer.innerHTML = data.pagination_html; // <-- ADD THIS
                     if (filterForm) filterForm.reset();
                     history.pushState(null, '', URLS.showMain);
                 })
