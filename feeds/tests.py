@@ -49,7 +49,7 @@ class FeedsTestCase(TestCase):
         self.assertEqual(p.category, "soccer")
         self.assertEqual(p.post_views, 0)
         self.assertFalse(p.is_featured)
-        self.assertFalse(p.is_post_hot)  
+        self.assertFalse(p.is_post_hot)
 
         p.post_views = 10
         p.save(update_fields=["post_views"])
