@@ -4,8 +4,8 @@ from equipment.views import equipment_list, equipment_create, edit_equipment, de
 app_name = 'equipment'
 
 urlpatterns = [
-    path('equipment/', equipment_list, name='equipment_list'),
+    path('', equipment_list, name='equipment_list'),
     path('add-equipment/', equipment_create, name='add_equipment'),
-    path('equipment/edit/<uuid:id>/', edit_equipment, name='edit_equipment'),
-    path('delete-equipment/<uuid:id>/', delete_equipment, name='delete_equipment'),
+    path('edit/<uuid:id>/', edit_equipment, name='edit_equipment'),
+    path('delete/<uuid:id>/', delete_equipment, name='delete_equipment'),
 ]

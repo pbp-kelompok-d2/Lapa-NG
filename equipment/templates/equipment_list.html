@@ -308,16 +308,21 @@
 
     // Edit button click
     $(document).on('click', '.editBtn', function() {
-        const eqId = $(this).data('id');
+    const eqId = $(this).data('id');
 
-        $.ajax({
-            url: `/equipment/edit/${eqId}/`,
-            type: 'GET',
-            success: function(response) {
-                openModal(response);
-            }
+    $.ajax({
+        url: `/equipment/edit/${eqId}/`,
+        type: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        success: function(response) {
+            openModal(response);
+        },
+        error: function(xhr) {
+            console.error('Gagal load form edit:', xhr.status, xhr.statusText);
+        }
         });
     });
+
 
     // Submit form via AJAX
     $(document).on('submit', '#editForm', function(e) {
