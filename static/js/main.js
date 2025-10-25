@@ -540,9 +540,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(res => res.json()) 
                 .then(data => {
                     if (data.status === 'ok') {
-                        showToast(data.message || 'Added to booking.', 'success');
-                         if (URLS.bookingRedirect) window.location.href = URLS.bookingRedirect;
-                         else closeModal(); 
+                        sessionStorage.setItem('showBookingToast', data.message || 'Venue added to your booking!'); // Store message
+                        // showToast(data.message || 'Added to booking.', 'success');
+                         if (URLS.bookingRedirect) {
+                             window.location.href = URLS.bookingRedirect;
+                         } else {
+                            closeModal(); 
+                         }
                     } else {
                         throw new Error(data.message || 'Failed to add to booking');
                     }
