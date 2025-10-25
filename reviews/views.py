@@ -13,14 +13,15 @@ from authentication.models import CustomUser
 def show_reviews(request):
     form = ReviewForm()
     context = {
-        'form': form
+        'form': form,
+        'sports': Reviews.SPORT_CHOICES,
     }
     return render(request, "reviews.html", context)
 
 @require_GET
 def get_reviews_json(request):
     review_filter = request.GET.get('filter', 'all')
-    
+    sport_type_filter = request.GET.get('sport_type', 'all')
     reviews_queryset = Reviews.objects.all()
 
     if request.user.is_authenticated and review_filter == 'my_reviews':
@@ -29,6 +30,9 @@ def get_reviews_json(request):
                 reviews_queryset = reviews_queryset.filter(user=request.user)
         except CustomUser.DoesNotExist:
             reviews_queryset = Reviews.objects.none()
+
+    if sport_type_filter != 'all':
+        reviews_queryset = reviews_queryset.filter(sport_type=sport_type_filter)
 
     reviews = reviews_queryset.order_by('-created_at')
     
@@ -40,6 +44,7 @@ def get_reviews_json(request):
             "pk": review.pk,
             "user_username": review.user.username,
             "venue_name": review.venue_name,
+            "sport_type": review.get_sport_type_display(),
             "rating": review.rating,
             "image_url": review.image_url if review.image_url else "",
             "created_at": review.created_at.strftime("%d %B %Y"),
@@ -93,6 +98,7 @@ def get_review_detail_json(request, review_id):
             "pk": review.pk,
             "user_username": review.user.username,
             "venue_name": review.venue_name,
+            "sport_type": review.sport_type,
             "rating": review.rating,
             "comment": review.comment,
             "image_url": review.image_url if review.image_url else "",
@@ -106,25 +112,25 @@ def get_review_detail_json(request, review_id):
 @require_http_methods(["POST"])
 def edit_review_ajax(request, review_id):
     try:
-        review = get_object_or_404(Reviews, pk=review_id)
+        review = get_object_or_404(Reviews, pk=review_id, user=request.user)
         data = json.loads(request.body)
-        
+
         form = ReviewForm(data, instance=review)
-        
+
         if form.is_valid():
             form.save()
             return JsonResponse({"status": "success", "message": "Ulasan berhasil diperbarui."}, status=200)
         else:
             return JsonResponse({"status": "error", "errors": form.errors}, status=400)
     except Exception as e:
-        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+        return JsonResponse({"status": "error", "message": str(e)}, status=404)
 
 @csrf_exempt
 @require_http_methods(["POST"])
 def delete_review_ajax(request, review_id):
     try:
-        review = get_object_or_404(Reviews, pk=review_id)
+        review = get_object_or_404(Reviews, pk=review_id, user=request.user)
         review.delete()
         return JsonResponse({"status": "success", "message": "Ulasan berhasil dihapus."}, status=200)
     except Exception as e:
-        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+        return JsonResponse({"status": "error", "message": str(e)}, status=404)
