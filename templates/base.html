@@ -5,79 +5,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   {% block meta %}{% endblock meta %}
-  <meta name="theme-color" content="#111827">
 
-  <!-- First-paint guard -->
-  <style>
-    /* Dark first paint + hide hero until ready */
-    .no-fouc, .no-fouc body { background: #111827; }
-
-    @media (prefers-reduced-motion: reduce) {
-      #hero-section, #content-wrapper { transition: none !important; }
-    }
-
-       /* Footer wave as background layer */
-       /* Footer layout controls */
-     :root {
-       --footer-wave-h: 220px;   /* wave image height */
-       --footer-gap: 60px;       /* how close text can get to the wave */
-     }
-     @media (min-width: 768px) {
-       :root {
-         --footer-wave-h: 260px;
-         --footer-gap: 76px;
-       }
-     }
-     @media (min-width: 1024px) {
-       :root {
-         --footer-wave-h: 300px;
-         --footer-gap: 92px;
-       }
-     }
-
-     /* Wave as background layer */
-     .footer-wave-image {
-       background-image: url("{% static 'images/Footer(1).png' %}");
-       background-size: cover;
-       background-position: bottom center;
-       background-repeat: no-repeat;
-       position: absolute;
-       left: 0; right: 0; bottom: 0;
-       height: var(--footer-wave-h);
-       z-index: 0;
-       pointer-events: none;
-     }
-
-     /* Footer content: keep it just above the crest */
-     .footer-content {
-       padding-bottom: calc(var(--footer-wave-h) - var(--footer-gap));
-     }
-  </style>
-  <script>
-    // Apply ASAP so first paint is dark, not white
-    document.documentElement.classList.add('no-fouc');
-  </script>
+  {# Opt-in first-paint guard; empty by default (no black flash) #}
+  {% block first_paint_guard %}{% endblock first_paint_guard %}
 
   <link rel="icon" href="{% static 'images/logo.png' %}" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            heading: ['Poppins', 'sans-serif'],
-            body: ['Inter', 'sans-serif'],
-          },
-        },
-      },
+      theme: { extend: { fontFamily: { heading: ['Poppins','sans-serif'], body: ['Inter','sans-serif'] } } }
     }
   </script>
   <link rel="stylesheet" href="{% static 'css/global.css' %}" />
-
   {% block styles %}{% endblock styles %}
 </head>
-
 <body class="flex flex-col min-h-screen bg-gray-50">
   <main class="flex-grow">
     {% block content %}{% endblock content %}
@@ -124,15 +66,16 @@
   {% block scripts %}{% endblock scripts %}
 
   <!-- Reveal after full load -->
-  <script>
-    window.addEventListener('load', () => {
-      requestAnimationFrame(() => {
-        document.documentElement.classList.remove('no-fouc');
-        const hero = document.getElementById('hero-section');
-        if (hero) hero.style.opacity = '1';
-      });
+<script>
+  // Safe on every page: only removes .no-fouc if it exists
+  window.addEventListener('load', () => {
+    requestAnimationFrame(() => {
+      document.documentElement.classList.remove('no-fouc');
+      const hero = document.getElementById('hero-section');
+      if (hero) hero.style.opacity = '1';
     });
-  </script>
+  });
+</script>
 
   {% include 'toast.html' %}
 </body>
