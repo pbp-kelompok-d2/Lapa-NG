@@ -25,7 +25,7 @@ PRICE_RANGES = {
 
 def show_main(request):
     categories = Venue.objects.values_list('category', flat=True).order_by('category').distinct()
-    venues = Venue.objects.all()
+    venues = Venue.objects.order_by('-is_featured', 'name')
 
     search_query = request.GET.get('q', '')
     category_filter = request.GET.get('category', '')
@@ -77,7 +77,7 @@ def show_main(request):
 # View u/ handle AJAX filter 
 def filter_venues(request):
     # same logic dengan show_main
-    venues = Venue.objects.all()
+    venues = Venue.objects.order_by('-is_featured', 'name')
 
     search_query = request.GET.get('q', '')
     category_filter = request.GET.get('category', '')

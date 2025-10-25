@@ -21,8 +21,6 @@
         }
     </script>
     <link rel="stylesheet" href="{% static 'css/global.css' %}"/>
-    
-    {% block styles %}
     <style>
     .footer-wave-image {
         background-image: url("{% static 'images/Footer(1).png' %}");
@@ -34,6 +32,8 @@
         position: relative; 
     }
     </style>
+    {% block styles %}
+    
     {% endblock styles %}
 </head>
 
