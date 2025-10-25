@@ -3,21 +3,11 @@
 
 {% block meta %}
 <title>Reviews - LapaNG</title>
-<meta name="description" content="Berikan review untuk lapangan olahraga di LapaNG!">
+<meta name="description" content="Review the sports venues on LapaNG!">
 {% endblock meta %}
 
 {% block styles %}
 <link rel="stylesheet" href="{% static 'css/reviews.css' %}">
-<style>
-    .footer-wave-image {
-        background-image: url("{% static 'images/Footer(1).png' %}");
-        background-size: cover;
-        background-position: bottom center;
-        background-repeat: no-repeat;
-        height: 160px; 
-        position: relative; 
-    }
-</style>
 {% endblock styles %}
 
 {% block content %}
@@ -72,8 +62,8 @@
                     <img src="{% static 'images/logo.png' %}" alt="LapaNG Logo" class="w-32 h-32 object-contain opacity-70">
                 </div>
             </div>
-            <h2 id="empty-state-title" class="text-2xl font-bold text-gray-700">Belum Ada Ulasan</h2>
-            <p id="empty-state-text" class="text-gray-500 mt-2">Jadilah yang pertama memberikan ulasan untuk lapangan di LapaNG!</p>
+            <h2 id="empty-state-title" class="text-2xl font-bold text-gray-700">No reviews yet</h2>
+            <p id="empty-state-text" class="text-gray-500 mt-2">Review the sports venues on LapaNG!!</p>
         </div>
     </main>
 </div>
