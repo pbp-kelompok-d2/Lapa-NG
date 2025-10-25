@@ -264,18 +264,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function showEmptyState(filter) {
-        emptyState.classList.remove('hidden');
-        const title = emptyState.querySelector('h2');
-        const text = emptyState.querySelector('p');
-        if (filter === 'my_reviews') {
-            title.textContent = "Anda Belum Punya Review";
-            text.textContent = "Tambahkan review pertama Anda untuk lapangan yang pernah Anda kunjungi!";
-        } else {
-            title.textContent = "Belum Ada Ulasan";
-            text.textContent = "Jadilah yang pertama memberikan ulasan untuk lapangan di LapaNG!";
-        }
+    emptyState.classList.remove('hidden');
+    const title = emptyState.querySelector('h2');
+    const text = emptyState.querySelector('p');
+    if (filter === 'my_reviews') {
+        title.textContent = "You Have No Reviews Yet";
+        text.textContent = "Add your first review for a venue you've visited!";
+    } else {
+        title.textContent = "No Reviews Yet";
+        text.textContent = "Review the sports venues on LapaNG!";
     }
-
+}
     function showModal(modal) {
         modal.classList.remove('hidden');
         setTimeout(() => modal.classList.remove('opacity-0'), 10);
