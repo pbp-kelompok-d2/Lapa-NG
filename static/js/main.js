@@ -39,6 +39,7 @@ function showToast(message, type = 'info') {
     }, 3000); // Toast visible for 3 seconds
 }
 
+
 // --- List of Hero Images (Define outside DOMContentLoaded) ---
 const heroImages = [
     '/static/images/封面-3.jpg',       // Stadium (FIRST)
@@ -54,6 +55,7 @@ heroImages.forEach(src => {
     const img = new Image();
     img.src = src;
 });
+
 
 document.addEventListener('DOMContentLoaded', function() {
 

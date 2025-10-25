@@ -31,15 +31,13 @@ html {
 }
 
 #hero-reveal-btn {
-  /* Ensure transition includes transform and box-shadow */
-  transition: background-color 0.3s ease, transform 0.2s ease-out, box-shadow 0.3s ease;
-  will-change: transform; /* Optional performance hint */
+  transition: background-color 0.3s ease, transform 0.2s ease-out, box-shadow 0.3s ease, opacity 1s ease-in-out;
+  /* Delay mapping: bg, transform, shadow, opacity */
+  transition-delay: 0s, 0s, 0s, 1s;
 }
 
 #hero-reveal-btn:hover {
-  /* Lift the button up slightly */
   transform: translateY(-4px);
-  /* Optional: Add a stronger shadow on hover */
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
 }
 
