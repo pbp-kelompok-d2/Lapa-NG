@@ -9,6 +9,36 @@
   {# Opt-in first-paint guard; empty by default (no black flash) #}
   {% block first_paint_guard %}{% endblock first_paint_guard %}
 
+  <style>
+    :root {
+      --footer-wave-h: 260px;                      /* height of the wave image */
+      --footer-gap: clamp(56px, 6vh, 92px);        /* distance from content to crest */
+    }
+    @media (min-width: 768px) {
+      :root { --footer-wave-h: 300px; }
+    }
+
+    .footer-wave-image {
+      background-image: url("{% static 'images/Footer(1).png' %}");
+      background-size: cover;
+      background-position: bottom center;
+      background-repeat: no-repeat;
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: var(--footer-wave-h);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .footer-content {
+      padding-bottom: calc(var(--footer-wave-h) - var(--footer-gap));
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #hero-section, #content-wrapper { transition: none !important; }
+    }
+  </style>
+
   <link rel="icon" href="{% static 'images/logo.png' %}" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -20,6 +50,7 @@
   <link rel="stylesheet" href="{% static 'css/global.css' %}" />
   {% block styles %}{% endblock styles %}
 </head>
+
 <body class="flex flex-col min-h-screen bg-gray-50">
   <main class="flex-grow">
     {% block content %}{% endblock content %}
@@ -27,7 +58,6 @@
 
   <!-- Footer -->
   <footer class="relative w-full overflow-hidden bg-transparent">
-    <!-- Wave background layer -->
     <div aria-hidden="true" class="footer-wave-image"></div>
 
     <!-- Footer content -->
@@ -36,12 +66,11 @@
       <h2 class="mt-2 text-4xl font-extrabold bg-gradient-to-tr from-[#4b8fff] via-[#a1e4c2] to-[#10b981] bg-clip-text text-transparent">
         LapaNG
       </h2>
-      <p class="mt-4 text-lg text-black">
+      <p class="mt-4 text-lg text-black/70">
         Play your best game and score with LapaNG
       </p>
     </div>
 
-    <!-- Copyright on top of the wave -->
     <p class="relative z-10 text-center text-sm text-white/70 pb-4">
       © 2025 All Rights Reserved
     </p>
@@ -65,17 +94,15 @@
 
   {% block scripts %}{% endblock scripts %}
 
-  <!-- Reveal after full load -->
-<script>
-  // Safe on every page: only removes .no-fouc if it exists
-  window.addEventListener('load', () => {
-    requestAnimationFrame(() => {
-      document.documentElement.classList.remove('no-fouc');
-      const hero = document.getElementById('hero-section');
-      if (hero) hero.style.opacity = '1';
+  <script>
+    window.addEventListener('load', () => {
+      requestAnimationFrame(() => {
+        document.documentElement.classList.remove('no-fouc');
+        const hero = document.getElementById('hero-section');
+        if (hero) hero.style.opacity = '1';
+      });
     });
-  });
-</script>
+  </script>
 
   {% include 'toast.html' %}
 </body>

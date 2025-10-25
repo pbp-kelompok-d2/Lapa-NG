@@ -40,13 +40,13 @@ function showToast(message, type = 'info') {
 }
 
 
-// --- List of Hero Images (Define outside DOMContentLoaded) ---
+// --- List of Hero Images  ---
 const heroImages = [
-    '/static/images/封面-3.jpg',       // Stadium (FIRST)
+    '/static/images/封面-3.jpg',       // Stadium (main)
     '/static/images/basketball.jpeg', // Basketball
     '/static/images/convert.webp',    // Soccer Action
     '/static/images/skate.png',       // Skateboarding
-    '/static/images/GettyImages-1272468011.jpg' // Tennis Serve
+    '/static/images/GettyImages-1272468011.jpg' // Tennis 
 ];
 let currentImageIndex = 0;
 
@@ -93,7 +93,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const heroBg = document.getElementById('hero-bg'); // For parallax
     let heroDots = [];
     let heroInterval;
+
+    // Pagination Container
     const paginationContainer = document.getElementById('pagination-container');
+
+    // Cursor Tooltip Elements
     const cursorTooltip = document.getElementById('cursor-tooltip');
     const cursorTooltipWrapper = document.getElementById('cursor-tooltip-wrapper'); 
     const cursorTooltipContent = document.getElementById('cursor-tooltip'); 
@@ -113,20 +117,19 @@ document.addEventListener('DOMContentLoaded', function() {
    if (modalPanel && cursorTooltipWrapper && cursorTooltipContent) { // Check for both wrapper and content
         let tooltipVisible = false;
 
-        // Show tooltip on hover over the disabled span
+        // Show tooltip pas hover pas di button yang disabled (belum login)
         modalPanel.addEventListener('mouseover', function(event) {
             const targetSpan = event.target.closest('#disabled-add-to-booking-indicator');
             if (targetSpan) {
-                cursorTooltipContent.textContent = "Please log in to add to booking"; // Set text on inner div
-                cursorTooltipWrapper.style.display = 'block'; // Show wrapper
-                // Use requestAnimationFrame for smoother initial appearance
+                cursorTooltipContent.textContent = "Please log in to add to booking"; 
+                cursorTooltipWrapper.style.display = 'block'; 
+                
                 requestAnimationFrame(() => {
-                    // Use CSS classes for fade control
                     cursorTooltipWrapper.classList.remove('tooltip-hidden');
                     cursorTooltipWrapper.classList.add('tooltip-visible');
                 });
                 tooltipVisible = true;
-                positionTooltip(event); // Position initial slightly offset from cursor
+                positionTooltip(event); 
             }
         });
 
@@ -176,15 +179,13 @@ document.addEventListener('DOMContentLoaded', function() {
          // Helper function to hide the tooltip WRAPPER
         function hideTooltip() {
              tooltipVisible = false;
-             // Use CSS classes for fade control
              cursorTooltipWrapper.classList.remove('tooltip-visible');
              cursorTooltipWrapper.classList.add('tooltip-hidden');
-             // Use setTimeout matching CSS transition duration before setting display to none
              setTimeout(() => {
-                 if (!tooltipVisible) { // Double-check it wasn't re-shown
+                 if (!tooltipVisible) { 
                     cursorTooltipWrapper.style.display = 'none';
                  }
-             }, 150); // Match duration in CSS transition-opacity
+             }, 150); 
         }
     }
     // --- END CURSOR TOOLTIP LOGIC ---
@@ -383,8 +384,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const params = new URLSearchParams(formData);
             
             fetch(`${URLS.filter}?${params.toString()}`)
-                .then(response => response.json()) // <-- CHANGE to response.json()
-                .then(data => {                   // <-- CHANGE to handle 'data'
+                .then(response => response.json()) 
+                .then(data => {                  
                     if (venueContainer) venueContainer.innerHTML = data.list_html;
                     if (paginationContainer) paginationContainer.innerHTML = data.pagination_html; // <-- ADD THIS
                     history.pushState(null, '', `${URLS.showMain}?${params.toString()}`);
@@ -395,6 +396,7 @@ document.addEventListener('DOMContentLoaded', function() {
                  });
         });
     }
+
     // --- LISTENER BARU UNTUK PAGINATION (AJAX) ---
     if (contentWrapper) {
         contentWrapper.addEventListener('click', function(event) {
@@ -519,15 +521,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // --- Add to Booking ---
             const bookingBtn = event.target.closest('#add-to-booking-btn');
             if (bookingBtn) {
-                // --- Logika Add to Booking ---
-                // (Kode Anda untuk Add to Booking ada di sini)
-                // Pastikan menggunakan URLS.bookingAdd dan URLS.bookingRedirect jika perlu
                 const venueId = bookingBtn.dataset.venueId || bookingBtn.getAttribute('data-venue-id');
                 if (!venueId) {
                     showToast('Venue ID not found for booking.', 'error');
                     return;
                 }
-                // Ganti '0' di URL template dengan ID venue yang benar
                 const url = URLS.bookingAdd.replace('0', venueId);
 
                 const csrftoken = getCSRFToken();
@@ -539,15 +537,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         'Accept': 'application/json'
                     }
                 })
-                .then(res => res.json()) // Asumsikan selalu JSON
+                .then(res => res.json()) 
                 .then(data => {
                     if (data.status === 'ok') {
                         showToast(data.message || 'Added to booking.', 'success');
-                        // Opsional: Redirect jika backend mengirim URL
-                        // if (data.redirect) window.location.href = data.redirect;
-                        // Atau redirect ke halaman booking
                          if (URLS.bookingRedirect) window.location.href = URLS.bookingRedirect;
-                         else closeModal(); // Tutup modal jika tidak redirect
+                         else closeModal(); 
                     } else {
                         throw new Error(data.message || 'Failed to add to booking');
                     }
@@ -570,7 +565,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     .then(data => {
                         if (data.html) {
                             modalPanel.innerHTML = data.html;
-                            openModal(); // Pastikan modal tetap terbuka/dibuka
+                            openModal(); 
                         } else { throw new Error('Edit form unavailable.'); }
                     })
                     .catch(err => { console.error('Load edit form error:', err); showToast(err.message, 'error'); });
@@ -588,7 +583,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     .then(data => {
                         if (data.html) {
                             modalPanel.innerHTML = data.html;
-                            openModal(); // Pastikan modal tetap terbuka/dibuka
+                            openModal(); 
                         } else { throw new Error('Delete confirmation unavailable.'); }
                     })
                     .catch(err => { console.error('Load delete form error:', err); showToast(err.message, 'error'); });
