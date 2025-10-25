@@ -2,95 +2,138 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    {% block meta %} {% endblock meta %}
-    <link rel="icon" href="{% static 'images/logo.png' %}" type="image/png">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        heading: ['Poppins', 'sans-serif'],
-                        body: ['Inter', 'sans-serif'],
-                    },
-                },
-            },
-        }
-    </script>
-    <link rel="stylesheet" href="{% static 'css/global.css' %}"/>
-    <style>
-    .footer-wave-image {
-        background-image: url("{% static 'images/Footer(1).png' %}");
-        background-size: cover;
-        background-position: bottom center;
-        background-repeat: no-repeat;
-        height: 160px; 
-        
-        position: relative; 
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  {% block meta %}{% endblock meta %}
+  <meta name="theme-color" content="#111827">
+
+  <!-- First-paint guard -->
+  <style>
+    /* Dark first paint + hide hero until ready */
+    .no-fouc, .no-fouc body { background: #111827; }
+
+    @media (prefers-reduced-motion: reduce) {
+      #hero-section, #content-wrapper { transition: none !important; }
     }
-    </style>
-    {% block styles %}
-    
-    {% endblock styles %}
+
+       /* Footer wave as background layer */
+       /* Footer layout controls */
+     :root {
+       --footer-wave-h: 220px;   /* wave image height */
+       --footer-gap: 60px;       /* how close text can get to the wave */
+     }
+     @media (min-width: 768px) {
+       :root {
+         --footer-wave-h: 260px;
+         --footer-gap: 76px;
+       }
+     }
+     @media (min-width: 1024px) {
+       :root {
+         --footer-wave-h: 300px;
+         --footer-gap: 92px;
+       }
+     }
+
+     /* Wave as background layer */
+     .footer-wave-image {
+       background-image: url("{% static 'images/Footer(1).png' %}");
+       background-size: cover;
+       background-position: bottom center;
+       background-repeat: no-repeat;
+       position: absolute;
+       left: 0; right: 0; bottom: 0;
+       height: var(--footer-wave-h);
+       z-index: 0;
+       pointer-events: none;
+     }
+
+     /* Footer content: keep it just above the crest */
+     .footer-content {
+       padding-bottom: calc(var(--footer-wave-h) - var(--footer-gap));
+     }
+  </style>
+  <script>
+    // Apply ASAP so first paint is dark, not white
+    document.documentElement.classList.add('no-fouc');
+  </script>
+
+  <link rel="icon" href="{% static 'images/logo.png' %}" type="image/png">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            heading: ['Poppins', 'sans-serif'],
+            body: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <link rel="stylesheet" href="{% static 'css/global.css' %}" />
+
+  {% block styles %}{% endblock styles %}
 </head>
 
 <body class="flex flex-col min-h-screen bg-gray-50">
+  <main class="flex-grow">
+    {% block content %}{% endblock content %}
+  </main>
 
-    <main class="flex-grow">
-        {% block content %} 
-        {% endblock content %}
-    </main>
+  <!-- Footer -->
+  <footer class="relative w-full overflow-hidden bg-transparent">
+    <!-- Wave background layer -->
+    <div aria-hidden="true" class="footer-wave-image"></div>
 
-    <footer class="w-full">
-        
-        <div class="w-full bg-white pt-12 pb-6"> <div class="max-w-7xl mx-auto px-6 lg:px-8 text-center">
-            
-                <div class="flex items-center justify-center space-x-2">
-                    <img src="{% static 'images/logo.png' %}" alt="Logo" class="w-10 h-10 object-contain" />
-                    <h2 class="text-4xl font-extrabold bg-gradient-to-tr from-[#4b8fff] via-[#a1e4c2] to-[#10b981] bg-clip-text text-transparent">
-                        LapaNG
-                    </h2>
-                </div>
-                
-                <p class="mt-4 text-lg text-black">
-                    Play your best game and score with LapaNG
-                </p>
-
-                </div>
-        </div>
-
-        <div class="footer-wave-image w-full">
-            
-            <p class="absolute bottom-4 w-full text-center text-sm text-white opacity-70">
-                © 2025 All Rights Reserved
-            </p>
-        </div>
-
-    </footer>
-
-    <div id="toast-container" class="fixed bottom-4 right-4 z-[100] space-y-3"></div>
-    <div id="main-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-start justify-center min-h-screen p-4 text-center">
-            <div id="modal-overlay" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true">
-            </div>
-            <div id="modal-panel" class="relative inline-block w-full max-w-2xl my-4 text-left align-middle transition-all transform bg-white shadow-xl rounded-lg">
-            </div>
-        </div>
+    <!-- Footer content -->
+    <div class="footer-content relative z-10 max-w-7xl mx-auto px-6 lg:px-8 pt-12 text-center">
+      <img src="{% static 'images/logo.png' %}" alt="Logo" class="w-10 h-10 mx-auto object-contain" />
+      <h2 class="mt-2 text-4xl font-extrabold bg-gradient-to-tr from-[#4b8fff] via-[#a1e4c2] to-[#10b981] bg-clip-text text-transparent">
+        LapaNG
+      </h2>
+      <p class="mt-4 text-lg text-black">
+        Play your best game and score with LapaNG
+      </p>
     </div>
 
-    {# Custom Tooltip for home #}
-    <div id="cursor-tooltip-wrapper" class="fixed hidden z-[100] pointer-events-none rounded-md shadow-lg transition-opacity duration-150">
-        <div id="cursor-tooltip" class="px-3 py-1.5 bg-gray-700 text-white text-xs rounded-md whitespace-nowrap">
-            Login required
-        </div>
-    </div>
-    
-    {% block scripts %}
-    {% endblock scripts %}
+    <!-- Copyright on top of the wave -->
+    <p class="relative z-10 text-center text-sm text-white/70 pb-4">
+      © 2025 All Rights Reserved
+    </p>
+  </footer>
 
-    {% include 'toast.html' %}
+  <!-- Toasts, modal, tooltip -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-[100] space-y-3"></div>
+
+  <div id="main-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-start justify-center min-h-screen p-4 text-center">
+      <div id="modal-overlay" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+      <div id="modal-panel" class="relative inline-block w-full max-w-2xl my-4 text-left align-middle transition-all transform bg-white shadow-xl rounded-lg"></div>
+    </div>
+  </div>
+
+  <div id="cursor-tooltip-wrapper" class="fixed hidden z-[100] pointer-events-none rounded-md shadow-lg transition-opacity duration-150">
+    <div id="cursor-tooltip" class="px-3 py-1.5 bg-gray-700 text-white text-xs rounded-md whitespace-nowrap">
+      Login required
+    </div>
+  </div>
+
+  {% block scripts %}{% endblock scripts %}
+
+  <!-- Reveal after full load -->
+  <script>
+    window.addEventListener('load', () => {
+      requestAnimationFrame(() => {
+        document.documentElement.classList.remove('no-fouc');
+        const hero = document.getElementById('hero-section');
+        if (hero) hero.style.opacity = '1';
+      });
+    });
+  </script>
+
+  {% include 'toast.html' %}
 </body>
 </html>
