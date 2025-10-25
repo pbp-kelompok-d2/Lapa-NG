@@ -206,6 +206,20 @@ document.getElementById('checkout-button').addEventListener('click', e => {
         showToast('Lengkapi semua data booking sebelum membayar!', 'error');
     }
 });
+// --- SHOW TOAST IF BOOKING ADDED ---
+document.addEventListener('DOMContentLoaded', () => {
+    const message = sessionStorage.getItem('showBookingToast');
+    if (message) {
+        // Ensure showToast function is available
+        if (typeof showToast === 'function') {
+            showToast(message, 'success'); // Show the toast
+            sessionStorage.removeItem('showBookingToast'); // Clear the message
+        } else {
+            console.warn('showToast function not found, cannot display booking confirmation.');
+            sessionStorage.removeItem('showBookingToast'); // Still clear it
+        }
+    }
+});
 </script>
 
 {% endblock %}
