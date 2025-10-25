@@ -8,7 +8,7 @@ from booking.forms import BookingForm
 from django.contrib import messages
 from django.template.loader import render_to_string
 
-@login_required(login_url='authentication:login')
+@login_required(login_url='/auth/login')
 def view_booking_cart(request):
     cart = request.session.get('cart', [])
     venue_ids = [item['id'] for item in cart]
@@ -17,7 +17,7 @@ def view_booking_cart(request):
     return render(request, 'booking_cart.html', context)
 
 
-@login_required(login_url='authentication:login')
+@login_required(login_url='/auth/login')
 def add_to_cart(request, venue_id):
     venue = get_object_or_404(Venue, id=venue_id)
 
@@ -40,7 +40,7 @@ def add_to_cart(request, venue_id):
     return JsonResponse({'status': 'ok', 'message': message})
 
 
-@login_required(login_url='authentication:login')
+@login_required(login_url='/auth/login')
 def view_cart(request):
     cart = request.session.get('cart', [])
     if not cart:
@@ -66,7 +66,7 @@ def booking_page(request):
         return redirect('booking:checkout_page')
     return render(request, 'empty_cart.html')
 
-@login_required(login_url='authentication:login')
+@login_required(login_url='/auth/login')
 def checkout_page(request):
     cart = request.session.get('cart', [])
     if not cart:
@@ -104,7 +104,7 @@ def checkout_page(request):
     context = {'venues': venues, 'total_price': total_price}
     return render(request, 'checkout_page.html', context)
 
-@login_required(login_url='authentication:login')
+@login_required(login_url='/auth/login')
 def edit_booking(request, venue_id):
     venue = get_object_or_404(Venue, id=venue_id)
     cart = request.session.get('cart', [])
@@ -140,7 +140,7 @@ def edit_booking(request, venue_id):
     html_form = render(request, 'edit_booking_form.html', {'form': form, 'venue': venue}).content.decode()
     return JsonResponse({'html_form': html_form})
 
-@login_required(login_url='authentication:login')
+@login_required(login_url='/auth/login')
 def remove_from_cart(request, venue_id):
     cart = request.session.get('cart', [])
     cart = [item for item in cart if item['id'] != venue_id]
@@ -158,7 +158,7 @@ def remove_from_cart(request, venue_id):
         return redirect('booking:booking_page')
     return redirect('booking:checkout_page')
 
-@login_required(login_url='authentication:login')
+@login_required(login_url='/auth/login')
 def checkout_confirm(request):
     cart = request.session.get('cart', [])
     if not cart:
@@ -197,7 +197,7 @@ def checkout_confirm(request):
 
     return render(request, 'checkout_success.html')
 
-@login_required(login_url='authentication:login')
+@login_required(login_url='/auth/login')
 def booking_list(request):
     bookings = Booking.objects.filter(user=request.user).order_by('-booking_date')
     sport_types = [c[0] for c in Venue.CATEGORIES]  # ambil semua jenis sport
@@ -225,7 +225,7 @@ def booking_list(request):
         'sport_types': sport_types,
     })
 
-@login_required(login_url='authentication:login')
+@login_required(login_url='/auth/login')
 def clear_booking(request, booking_id):
     if request.method == "POST":
         booking = get_object_or_404(Booking, id=booking_id, user=request.user)

@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from .models import Equipment
 
-@login_required(login_url='/login')
+@login_required(login_url='/auth/login')
 def equipment_list(request):
     sport = request.GET.get('sport_category')
     region = request.GET.get('region')
@@ -60,7 +60,7 @@ def equipment_list(request):
     }
     return render(request, 'equipment_list.html', context)
 
-@login_required(login_url='/login')
+@login_required(login_url='/auth/login')
 def equipment_create(request):
     # Cek apakah user adalah ownerl
     if not request.user.customuser.role == 'owner':
