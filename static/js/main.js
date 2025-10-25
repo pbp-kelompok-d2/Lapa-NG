@@ -432,11 +432,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (clearButton) {
         clearButton.addEventListener('click', function(event) {
             event.preventDefault();
-            fetch(URLS.filter) // Ambil daftar tanpa filter
-                .then(response => response.json()) // <-- CHANGE to response.json()
-                .then(data => {                   // <-- CHANGE to handle 'data'
+            fetch(URLS.filter)
+                .then(response => response.json()) 
+                .then(data => {                   
                     if (venueContainer) venueContainer.innerHTML = data.list_html;
-                    if (paginationContainer) paginationContainer.innerHTML = data.pagination_html; // <-- ADD THIS
+                    if (paginationContainer) paginationContainer.innerHTML = data.pagination_html; 
                     if (filterForm) filterForm.reset();
                     history.pushState(null, '', URLS.showMain);
                 })

@@ -42,3 +42,127 @@ html {
   /* Optional: Add a stronger shadow on hover */
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
 }
+
+
+ .venue-card {
+     position: relative; 
+     overflow: hidden;
+   }
+
+   .venue-card:hover {
+     transform: translateY(-5px);
+     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1); /* shadow-lg */
+   }
+
+   .venue-card::before {
+     content: '';
+     position: absolute;
+     top: 0; left: 0; right: 0; bottom: 0; 
+     z-index: 2; 
+     border-radius: inherit; 
+     padding: 2px; 
+     background: linear-gradient(to top right, #4b8fff, #a1e4c2, #10b810); 
+     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+             mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+     -webkit-mask-composite: destination-out;
+             mask-composite: exclude;
+     opacity: 0; 
+     transition: opacity 0.3s ease-in-out;
+     pointer-events: none; 
+   }
+
+  
+   .venue-card:hover::before {
+     opacity: 1;
+   }
+
+   .venue-card > div { 
+       position: relative; 
+       z-index: 1; 
+   }
+
+    .venue-card > span { 
+        z-index: 3; 
+    }
+
+    .venue-card--featured::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      /* Golden gradient overlay - INCREASED OPACITY */
+      background: linear-gradient(to top right, rgba(251, 191, 36, 0.25), rgba(253, 224, 71, 0.15)); /* Increased opacity (0.25, 0.15) */
+      /* Alternative: Solid color tint - INCREASED OPACITY */
+      /* background-color: rgba(254, 240, 138, 0.25); */ /* e.g., opacity 0.25 */
+  
+      z-index: 0; /* Place tint BELOW content (z-index: 1) but above default bg */
+      border-radius: inherit; /* Match card rounding */
+      pointer-events: none; /* Don't block interactions */
+      transition: background 0.3s ease; /* Optional: smooth transition if needed */
+  }
+  
+  /* Optional: Slightly enhance tint on hover over featured card - INCREASED OPACITY */
+  .venue-card--featured:hover::after {
+     background: linear-gradient(to top right, rgba(251, 191, 36, 0.3), rgba(253, 224, 71, 0.2)); /* Increased opacity (0.3, 0.2) */
+     /* Alternative: Solid color tint - INCREASED OPACITY */
+     /* background-color: rgba(254, 240, 138, 0.3); */ /* e.g., opacity 0.3 */
+  }
+
+  /* Default (Blue-Green) Hover Border - ONLY for NON-FEATURED cards */
+     .venue-card:not(.venue-card--featured)::before {
+         content: '';
+         position: absolute;
+         top: 0; left: 0; right: 0; bottom: 0;
+         z-index: 2; /* Border above content */
+         border-radius: inherit;
+         padding: 2px; /* Border thickness */
+         background: linear-gradient(to top right, #4b8fff, #a1e4c2, #10b810); /* Blue-Green Gradient */
+         -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+         mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+         -webkit-mask-composite: destination-out;
+         mask-composite: exclude;
+         opacity: 0; /* Hidden by default */
+         transition: opacity 0.3s ease-in-out;
+         pointer-events: none;
+     }
+     /* blue-green border only on hover for NON-FEATURED cards */
+     .venue-card:not(.venue-card--featured):hover::before {
+         opacity: 1;
+     }
+
+     /* Golden Border - for featured cards */
+     .venue-card--featured::before {
+         content: '';
+         position: absolute;
+         top: 0; left: 0; right: 0; bottom: 0;
+         z-index: 2; 
+         border-radius: inherit;
+         padding: 3px; 
+         /* Golden Gradient */
+         background: linear-gradient(to top right, #F59E0B, #FCD34D); 
+         -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+         mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+         -webkit-mask-composite: destination-out;
+         mask-composite: exclude;
+         opacity: 1; 
+         pointer-events: none;
+         transition: background 0.3s ease; 
+     }
+
+    .venue-card--featured:hover::before {
+         background: linear-gradient(to top right, #FBBF24, #FEF08A); 
+    }
+
+.modal-content--featured::before {
+     content: '';
+     position: absolute;
+     inset: 0;
+     background: linear-gradient(to top right, rgba(251, 191, 36, 0.15), rgba(253, 224, 71, 0.1));
+     border-radius: inherit;
+     z-index: 5;
+     pointer-events: none;
+ }
+
+ .modal-content--featured > div.bg-gray-50 {
+    background-color: rgba(254, 250, 224, 0.7);
+    backdrop-filter: blur(2px); 
+ }

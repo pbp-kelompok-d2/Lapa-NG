@@ -15,63 +15,12 @@
     background-repeat: no-repeat;
   }
 
-  /* Optional text shadow for readability */
+
   #filter-container label,
   #filter-container #clear-filter-btn {
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   }
 
- .venue-card {
-    position: relative; /* Base for pseudo-element */
-    /* Transitions for transform/shadow are handled by Tailwind classes */
-  }
-
-  /* Hover effect: Lift and shadow (Tailwind classes handle this visually) */
-  .venue-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1); /* shadow-lg */
-  }
-
-  /* Pseudo-element for the gradient border */
-  .venue-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0; /* Cover entire card */
-    z-index: 0; /* Base layer for the border */
-    border-radius: inherit; /* Match card's rounding (rounded-lg) */
-    padding: 2px; /* Border thickness */
-    background: linear-gradient(to top right, #4b8fff, #a1e4c2, #10b810);  /* Gradient */
-    /* Masking */
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: destination-out;
-            mask-composite: exclude;
-    opacity: 0; /* Hidden by default */
-    transition: opacity 0.3s ease-in-out;
-    pointer-events: none; /* Ensure it doesn't block interactions */
-  }
-
-  /* Show the gradient border on hover */
-  .venue-card:hover::before {
-    opacity: 1;
-  }
-
-  /* --- MODIFIED --- */
-  /* Explicitly position direct children above the pseudo-element */
-  /* Target BOTH the image container and the content container */
-  .venue-card > div { /* Selects direct div children */
-      position: relative; /* Create stacking context */
-      z-index: 1; /* Place above ::before (z-index: 0) */
-      /* Ensure background of content area is opaque if needed */
-      /* background-color: white; /* Add if card bg is transparent */ 
-  }
-
-  /* Ensure absolute positioned elements like 'Featured' are also above */
-   .venue-card > span { /* Selects direct span children (like the Featured badge) */
-       position: relative; /* Ensure it participates in stacking relative to its parent */
-       z-index: 2; /* Make sure it's even above the other content if overlapping */
-   }
-   /* --- END MODIFIED --- */
 </style>
 {% endblock styles %}
 
@@ -104,7 +53,7 @@
         <p id="hero-slogan" class="text-lg md:text-2xl mb-8 opacity-0 transition-opacity duration-1000 ease-in-out delay-1000">
             Find and Book Your Favorite Sports Venues Easily
         </p>
-        <button id="hero-reveal-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-lg text-lg opacity-0 transition-all duration-1000 ease-in-out delay-1500 pointer-events-auto">
+        <button id="hero-reveal-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-lg text-lg opacity-0 transition-all duration-1000 ease-in-out delay-1000 pointer-events-auto">
             Explore Venues
         </button>
     </div>
