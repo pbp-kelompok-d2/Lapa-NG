@@ -1,26 +1,29 @@
+{% comment %} File: main/templates/_venue_card.html {% endcomment %}
 {% load static %}
-{% load humanize %} 
+{% load humanize %}
 
 {% static "images/No_Image_Available.jpg" as placeholder_img %}
-<div 
-  class="venue-card relative bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden group cursor-pointer flex flex-col"
+{# Added 'group' class #}
+<div
+  class="venue-card relative group bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden cursor-pointer flex flex-col transition-all duration-200 ease-in-out"
   data-slug="{{ venue.slug }}">
-    
+
+    {# Image container - slight opacity change on group hover #}
     <div class="h-48 bg-gray-100 group-hover:opacity-90 transition-opacity">
-        <img src="{{ venue.thumbnail_url }}" 
-             alt="{{ venue.name }}" 
+        <img src="{{ venue.thumbnail_url }}"
+             alt="{{ venue.name }}"
              class="w-full h-full object-cover"
              onerror="this.src='{{ placeholder_img }}'">
-             
     </div>
+    {# Rest of the card content (details, button) - stays inside #}
     <div class="p-4 flex-grow flex flex-col justify-between">
         <div>
             <h2 class="text-lg font-heading font-semibold text-gray-900 mb-1 truncate">{{ venue.name }}</h2>
             <p class="text-xs text-gray-500 mb-2 truncate">{{ venue.address|default:"No address provided" }}</p>
-            
+
             <div class="flex items-center space-x-3">
                 <p class="text-sm font-semibold text-green-600">
-                    Rp {{ venue.price|intcomma|default:"N/A" }}/jam 
+                    Rp {{ venue.price|intcomma|default:"N/A" }}/jam
                 </p>
                 {% if venue.capacity %}
                 <div class="flex items-center text-xs text-gray-500">
@@ -30,9 +33,9 @@
                 {% endif %}
             </div>
         </div>
-        
+
         <button class="mt-4 w-full bg-orange-500 text-white text-sm font-medium py-2 px-4 rounded-md hover:bg-orange-600 transition duration-150 ease-in-out">
-            View Details 
+            View Details
         </button>
     </div>
 

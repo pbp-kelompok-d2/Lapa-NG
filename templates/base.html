@@ -80,6 +80,13 @@
             </div>
         </div>
     </div>
+
+    {# Custom Tooltip for home #}
+    <div id="cursor-tooltip-wrapper" class="fixed hidden z-[100] pointer-events-none rounded-md shadow-lg transition-opacity duration-150">
+        <div id="cursor-tooltip" class="px-3 py-1.5 bg-gray-700 text-white text-xs rounded-md whitespace-nowrap">
+            Login required
+        </div>
+    </div>
     
     {% block scripts %}
     {% endblock scripts %}

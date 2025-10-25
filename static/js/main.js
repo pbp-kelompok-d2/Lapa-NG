@@ -92,6 +92,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let heroDots = [];
     let heroInterval;
     const paginationContainer = document.getElementById('pagination-container');
+    const cursorTooltip = document.getElementById('cursor-tooltip');
+    const cursorTooltipWrapper = document.getElementById('cursor-tooltip-wrapper'); 
+    const cursorTooltipContent = document.getElementById('cursor-tooltip'); 
     
 
     // --- Modal Functions ---
@@ -102,6 +105,87 @@ document.addEventListener('DOMContentLoaded', function() {
         if (modal) modal.classList.add('hidden');
         if (modalPanel) modalPanel.innerHTML = ''; // Kosongkan modal saat ditutup
     }
+
+
+    // --- CURSOR TOOLTIP LOGIC ---
+   if (modalPanel && cursorTooltipWrapper && cursorTooltipContent) { // Check for both wrapper and content
+        let tooltipVisible = false;
+
+        // Show tooltip on hover over the disabled span
+        modalPanel.addEventListener('mouseover', function(event) {
+            const targetSpan = event.target.closest('#disabled-add-to-booking-indicator');
+            if (targetSpan) {
+                cursorTooltipContent.textContent = "Please log in to add to booking"; // Set text on inner div
+                cursorTooltipWrapper.style.display = 'block'; // Show wrapper
+                // Use requestAnimationFrame for smoother initial appearance
+                requestAnimationFrame(() => {
+                    // Use CSS classes for fade control
+                    cursorTooltipWrapper.classList.remove('tooltip-hidden');
+                    cursorTooltipWrapper.classList.add('tooltip-visible');
+                });
+                tooltipVisible = true;
+                positionTooltip(event); // Position initial slightly offset from cursor
+            }
+        });
+
+        // Move tooltip with cursor
+        modalPanel.addEventListener('mousemove', function(event) {
+            if (tooltipVisible) {
+                const targetSpan = event.target.closest('#disabled-add-to-booking-indicator');
+                if (targetSpan) {
+                    positionTooltip(event);
+                } else {
+                    hideTooltip();
+                }
+            }
+        });
+
+        // Hide tooltip on mouse out
+        modalPanel.addEventListener('mouseout', function(event) {
+            const targetSpan = event.target.closest('#disabled-add-to-booking-indicator');
+            if (targetSpan && !targetSpan.contains(event.relatedTarget)) {
+                 hideTooltip();
+            } else if (!targetSpan && tooltipVisible) {
+                 hideTooltip();
+            }
+        });
+
+        // Helper function to position the tooltip WRAPPER
+        function positionTooltip(e) {
+            const offsetX = 10;
+            const offsetY = 15;
+            let x = e.clientX + offsetX;
+            let y = e.clientY + offsetY;
+
+            // Prevent tooltip from going off-screen (using wrapper's dimensions)
+            if (x + cursorTooltipWrapper.offsetWidth > window.innerWidth) {
+                x = e.clientX - cursorTooltipWrapper.offsetWidth - offsetX;
+            }
+            if (y + cursorTooltipWrapper.offsetHeight > window.innerHeight) {
+                y = e.clientY - cursorTooltipWrapper.offsetHeight - offsetY;
+            }
+            if (x < 0) x = offsetX;
+            if (y < 0) y = offsetY;
+
+            cursorTooltipWrapper.style.left = `${x}px`;
+            cursorTooltipWrapper.style.top = `${y}px`;
+        }
+
+         // Helper function to hide the tooltip WRAPPER
+        function hideTooltip() {
+             tooltipVisible = false;
+             // Use CSS classes for fade control
+             cursorTooltipWrapper.classList.remove('tooltip-visible');
+             cursorTooltipWrapper.classList.add('tooltip-hidden');
+             // Use setTimeout matching CSS transition duration before setting display to none
+             setTimeout(() => {
+                 if (!tooltipVisible) { // Double-check it wasn't re-shown
+                    cursorTooltipWrapper.style.display = 'none';
+                 }
+             }, 150); // Match duration in CSS transition-opacity
+        }
+    }
+    // --- END CURSOR TOOLTIP LOGIC ---
 
     // ===================================
     // ===== HERO SECTION LOGIC ========
