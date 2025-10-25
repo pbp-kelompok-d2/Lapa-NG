@@ -3,8 +3,17 @@ from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 class Reviews(models.Model):
+    SPORT_CHOICES = [
+        ('soccer', 'Soccer'),
+        ('tennis', 'Tennis'),
+        ('badminton', 'Badminton'),
+        ('futsal', 'Futsal'),
+        ('basket', 'Basket'),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     venue_name = models.CharField(max_length=255)
+    sport_type = models.CharField(max_length=20, choices=SPORT_CHOICES, default='soccer')
     rating = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)]
     )
