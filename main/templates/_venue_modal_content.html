@@ -52,9 +52,9 @@
                  {# Use time_display which might be N/A or formatted range #}
                  <p class="text-base text-gray-800">{{ venue.time_display }}</p>
                  {# Fallback if time_display is empty but times exist #}
-                 {# {% if not venue.time_display and venue.opening_time and venue.closing_time %}
+                 {% if not venue.time_display and venue.opening_time and venue.closing_time %}
                      <p class="text-base text-gray-800">{{ venue.opening_time|time:"H:i" }} - {{ venue.closing_time|time:"H:i" }}</p>
-                 {% endif %} #}
+                 {% endif %}
              </div>
 
             {% if user.is_authenticated and venue.owner == user %}
