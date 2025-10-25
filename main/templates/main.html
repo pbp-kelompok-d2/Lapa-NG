@@ -5,6 +5,20 @@
 <title>Lapa-NG</title>
 {% endblock meta %}
 
+{% block first_paint_guard %}
+  <style>
+    /* Dark first paint for HOME only */
+    .no-fouc, .no-fouc body { background: #111827; }  /* match hero bg */
+    @media (prefers-reduced-motion: reduce) {
+      #hero-section, #content-wrapper { transition: none !important; }
+    }
+  </style>
+  <script>
+    // Apply ASAP on HOME only
+    document.documentElement.classList.add('no-fouc');
+  </script>
+{% endblock first_paint_guard %}
+
 {% block styles %}
 <style>
     #filter-container {
