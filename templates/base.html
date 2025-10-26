@@ -81,8 +81,17 @@
 
   <div id="main-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <div class="flex items-start justify-center min-h-screen p-4 text-center">
-      <div id="modal-overlay" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-      <div id="modal-panel" class="relative inline-block w-full max-w-2xl my-4 text-left align-middle transition-all transform bg-white shadow-xl rounded-lg"></div>
+      {# Overlay with transition and initial state #}
+      <div id="modal-overlay"
+           class="fixed inset-0 bg-gray-500 bg-opacity-0 transition-opacity duration-300 ease-out"
+           aria-hidden="true"></div>
+
+      {# Panel container with transition and initial state #}
+      <div id="modal-panel"
+           class="relative inline-block w-full max-w-2xl my-4 text-left align-middle transition-all duration-300 ease-out transform opacity-0 scale-95">
+          {# Content loaded via JS (_venue_modal_content, _venue_form, etc.) goes here #}
+          {# The loaded content itself should have bg-white, shadow, rounded etc. #}
+      </div>
     </div>
   </div>
 

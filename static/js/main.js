@@ -104,14 +104,51 @@ document.addEventListener('DOMContentLoaded', function() {
     
 
     // --- Modal Functions ---
+// --- Modal Functions ---
     function openModal() {
-        if (modal) modal.classList.remove('hidden');
-    }
-    function closeModal() {
-        if (modal) modal.classList.add('hidden');
-        if (modalPanel) modalPanel.innerHTML = ''; // Kosongkan modal saat ditutup
+        // Ensure elements exist
+        if (!modal || !modalOverlay || !modalPanel) {
+            console.error("Modal elements not found!");
+            return;
+        }
+        modal.classList.remove('hidden'); // Make the main container visible first
+
+        // Use setTimeout to ensure the 'hidden' class removal is processed
+        // before starting the transition.
+        setTimeout(() => {
+            // Animate overlay in
+            modalOverlay.classList.remove('bg-opacity-0');
+            modalOverlay.classList.add('bg-opacity-75'); // Target opacity
+
+            // Animate panel in
+            modalPanel.classList.remove('opacity-0', 'scale-95');
+            modalPanel.classList.add('opacity-100', 'scale-100'); // Target state
+        }, 10); // A small delay is usually sufficient
     }
 
+    function closeModal() {
+        // Ensure elements exist
+        if (!modal || !modalOverlay || !modalPanel) {
+            console.error("Modal elements not found!");
+            return;
+        }
+
+        // Start animating overlay out
+        modalOverlay.classList.remove('bg-opacity-75');
+        modalOverlay.classList.add('bg-opacity-0');
+
+        // Start animating panel out
+        modalPanel.classList.remove('opacity-100', 'scale-100');
+        modalPanel.classList.add('opacity-0', 'scale-95');
+
+        // Wait for the animation (300ms) to finish before hiding the container
+        // and clearing the content.
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            // Clear the content *after* it's hidden to avoid visual glitches
+            if (modalPanel) modalPanel.innerHTML = '';
+        }, 300); // Should match the duration-300 class
+    }
 
     // --- CURSOR TOOLTIP LOGIC ---
    if (modalPanel && cursorTooltipWrapper && cursorTooltipContent) { // Check for both wrapper and content
