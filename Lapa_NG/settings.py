@@ -154,16 +154,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 STATIC_URL = '/static/'
 
-# Use a distinct folder for collected files
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-
 # Only used in development
 if DEBUG:
     STATICFILES_DIRS = [
         BASE_DIR / 'static',
     ]
 else:
-    STATICFILES_DIRS = []
+    STATIC_ROOT = BASE_DIR / 'static'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
