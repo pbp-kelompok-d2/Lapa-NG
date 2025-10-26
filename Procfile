@@ -1,0 +1,1 @@
+web: bash -c "python manage.py collectstatic --noinput && gunicorn Lapa_NG.wsgi:application"
