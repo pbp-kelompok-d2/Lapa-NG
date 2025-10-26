@@ -159,7 +159,7 @@ STATICFILES_DIRS = [BASE_DIR / 'static']   # app-level static (css/js/images)
 # Directory where `collectstatic` will gather *all* static files for production.
 STATIC_ROOT = BASE_DIR / 'staticfiles'     # different from STATICFILES_DIRS
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.StaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
