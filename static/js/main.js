@@ -39,13 +39,14 @@ function showToast(message, type = 'info') {
     }, 3000); // Toast visible for 3 seconds
 }
 
-// --- List of Hero Images (Define outside DOMContentLoaded) ---
+
+// --- List of Hero Images  ---
 const heroImages = [
-    '/static/images/封面-3.jpg',       // Stadium (FIRST)
+    '/static/images/封面-3.jpg',       // Stadium (main)
     '/static/images/basketball.jpeg', // Basketball
     '/static/images/convert.webp',    // Soccer Action
     '/static/images/skate.png',       // Skateboarding
-    '/static/images/GettyImages-1272468011.jpg' // Tennis Serve
+    '/static/images/GettyImages-1272468011.jpg' // Tennis 
 ];
 let currentImageIndex = 0;
 
@@ -54,6 +55,7 @@ heroImages.forEach(src => {
     const img = new Image();
     img.src = src;
 });
+
 
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -92,14 +94,138 @@ document.addEventListener('DOMContentLoaded', function() {
     let heroDots = [];
     let heroInterval;
 
+    // Pagination Container
+    const paginationContainer = document.getElementById('pagination-container');
+
+    // Cursor Tooltip Elements
+    const cursorTooltip = document.getElementById('cursor-tooltip');
+    const cursorTooltipWrapper = document.getElementById('cursor-tooltip-wrapper'); 
+    const cursorTooltipContent = document.getElementById('cursor-tooltip'); 
+    
+
     // --- Modal Functions ---
+// --- Modal Functions ---
     function openModal() {
-        if (modal) modal.classList.remove('hidden');
+        // Ensure elements exist
+        if (!modal || !modalOverlay || !modalPanel) {
+            console.error("Modal elements not found!");
+            return;
+        }
+        modal.classList.remove('hidden'); // Make the main container visible first
+
+        // Use setTimeout to ensure the 'hidden' class removal is processed
+        // before starting the transition.
+        setTimeout(() => {
+            // Animate overlay in
+            modalOverlay.classList.remove('bg-opacity-0');
+            modalOverlay.classList.add('bg-opacity-75'); // Target opacity
+
+            // Animate panel in
+            modalPanel.classList.remove('opacity-0', 'scale-95');
+            modalPanel.classList.add('opacity-100', 'scale-100'); // Target state
+        }, 10); // A small delay is usually sufficient
     }
+
     function closeModal() {
-        if (modal) modal.classList.add('hidden');
-        if (modalPanel) modalPanel.innerHTML = ''; // Kosongkan modal saat ditutup
+        // Ensure elements exist
+        if (!modal || !modalOverlay || !modalPanel) {
+            console.error("Modal elements not found!");
+            return;
+        }
+
+        // Start animating overlay out
+        modalOverlay.classList.remove('bg-opacity-75');
+        modalOverlay.classList.add('bg-opacity-0');
+
+        // Start animating panel out
+        modalPanel.classList.remove('opacity-100', 'scale-100');
+        modalPanel.classList.add('opacity-0', 'scale-95');
+
+        // Wait for the animation (300ms) to finish before hiding the container
+        // and clearing the content.
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            // Clear the content *after* it's hidden to avoid visual glitches
+            if (modalPanel) modalPanel.innerHTML = '';
+        }, 300); // Should match the duration-300 class
     }
+
+    // --- CURSOR TOOLTIP LOGIC ---
+   if (modalPanel && cursorTooltipWrapper && cursorTooltipContent) { // Check for both wrapper and content
+        let tooltipVisible = false;
+
+        // Show tooltip pas hover pas di button yang disabled (belum login)
+        modalPanel.addEventListener('mouseover', function(event) {
+            const targetSpan = event.target.closest('#disabled-add-to-booking-indicator');
+            if (targetSpan) {
+                cursorTooltipContent.textContent = "Please log in to add to booking"; 
+                cursorTooltipWrapper.style.display = 'block'; 
+                
+                requestAnimationFrame(() => {
+                    cursorTooltipWrapper.classList.remove('tooltip-hidden');
+                    cursorTooltipWrapper.classList.add('tooltip-visible');
+                });
+                tooltipVisible = true;
+                positionTooltip(event); 
+            }
+        });
+
+        // Move tooltip with cursor
+        modalPanel.addEventListener('mousemove', function(event) {
+            if (tooltipVisible) {
+                const targetSpan = event.target.closest('#disabled-add-to-booking-indicator');
+                if (targetSpan) {
+                    positionTooltip(event);
+                } else {
+                    hideTooltip();
+                }
+            }
+        });
+
+        // Hide tooltip on mouse out
+        modalPanel.addEventListener('mouseout', function(event) {
+            const targetSpan = event.target.closest('#disabled-add-to-booking-indicator');
+            if (targetSpan && !targetSpan.contains(event.relatedTarget)) {
+                 hideTooltip();
+            } else if (!targetSpan && tooltipVisible) {
+                 hideTooltip();
+            }
+        });
+
+        // Helper function to position the tooltip WRAPPER
+        function positionTooltip(e) {
+            const offsetX = 10;
+            const offsetY = 15;
+            let x = e.clientX + offsetX;
+            let y = e.clientY + offsetY;
+
+            // Prevent tooltip from going off-screen (using wrapper's dimensions)
+            if (x + cursorTooltipWrapper.offsetWidth > window.innerWidth) {
+                x = e.clientX - cursorTooltipWrapper.offsetWidth - offsetX;
+            }
+            if (y + cursorTooltipWrapper.offsetHeight > window.innerHeight) {
+                y = e.clientY - cursorTooltipWrapper.offsetHeight - offsetY;
+            }
+            if (x < 0) x = offsetX;
+            if (y < 0) y = offsetY;
+
+            cursorTooltipWrapper.style.left = `${x}px`;
+            cursorTooltipWrapper.style.top = `${y}px`;
+        }
+
+         // Helper function to hide the tooltip WRAPPER
+        function hideTooltip() {
+             tooltipVisible = false;
+             cursorTooltipWrapper.classList.remove('tooltip-visible');
+             cursorTooltipWrapper.classList.add('tooltip-hidden');
+             setTimeout(() => {
+                 if (!tooltipVisible) { 
+                    cursorTooltipWrapper.style.display = 'none';
+                 }
+             }, 150); 
+        }
+    }
+    // --- END CURSOR TOOLTIP LOGIC ---
 
     // ===================================
     // ===== HERO SECTION LOGIC ========
@@ -288,15 +414,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // ===================================
 
     // --- AJAX FILTER LOGIC ---
-    if (filterForm) {
+   if (filterForm) {
         filterForm.addEventListener('submit', function(event) {
             event.preventDefault();
             const formData = new FormData(filterForm);
             const params = new URLSearchParams(formData);
+            
             fetch(`${URLS.filter}?${params.toString()}`)
-                .then(response => response.text())
-                .then(html => {
-                    if (venueContainer) venueContainer.innerHTML = html;
+                .then(response => response.json()) 
+                .then(data => {                  
+                    if (venueContainer) venueContainer.innerHTML = data.list_html;
+                    if (paginationContainer) paginationContainer.innerHTML = data.pagination_html; // <-- ADD THIS
                     history.pushState(null, '', `${URLS.showMain}?${params.toString()}`);
                 })
                 .catch(error => {
@@ -306,15 +434,50 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // --- LISTENER BARU UNTUK PAGINATION (AJAX) ---
+    if (contentWrapper) {
+        contentWrapper.addEventListener('click', function(event) {
+            const pageLink = event.target.closest('.page-link'); // Target semua link di pagination
+            
+            if (pageLink && pageLink.tagName === 'A') { // Pastikan itu link, bukan span
+                event.preventDefault(); // Stop reload halaman
+                const fetchUrl = pageLink.href;
+                
+                // Ambil URL lengkap dan ekstrak query string
+                const queryString = fetchUrl.split('?')[1] || '';
+                const ajaxUrl = `${URLS.filter}?${queryString}`;
+                const browserUrl = `${URLS.showMain}?${queryString}`;
+
+                fetch(ajaxUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (venueContainer) venueContainer.innerHTML = data.list_html;
+                        if (paginationContainer) paginationContainer.innerHTML = data.pagination_html;
+                        
+                        // Update URL di browser
+                        history.pushState(null, '', browserUrl);
+                        
+                        // Scroll ke atas list
+                        contentWrapper.scrollIntoView({ behavior: 'smooth' });
+                    })
+                    .catch(error => {
+                        console.error('Pagination error:', error);
+                        showToast('Could not load page.', 'error');
+                    });
+            }
+        });
+    }
+
     // --- Clear Filter Button Logic ---
-    const clearButton = document.querySelector(`a[href="${URLS.showMain}"]`);
+    const clearButton = document.getElementById('clear-filter-btn');
     if (clearButton) {
         clearButton.addEventListener('click', function(event) {
             event.preventDefault();
-            fetch(URLS.filter) // Ambil daftar tanpa filter
-                .then(response => response.text())
-                .then(html => {
-                    if (venueContainer) venueContainer.innerHTML = html;
+            fetch(URLS.filter)
+                .then(response => response.json()) 
+                .then(data => {                   
+                    if (venueContainer) venueContainer.innerHTML = data.list_html;
+                    if (paginationContainer) paginationContainer.innerHTML = data.pagination_html; 
                     if (filterForm) filterForm.reset();
                     history.pushState(null, '', URLS.showMain);
                 })
@@ -395,15 +558,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // --- Add to Booking ---
             const bookingBtn = event.target.closest('#add-to-booking-btn');
             if (bookingBtn) {
-                // --- Logika Add to Booking ---
-                // (Kode Anda untuk Add to Booking ada di sini)
-                // Pastikan menggunakan URLS.bookingAdd dan URLS.bookingRedirect jika perlu
                 const venueId = bookingBtn.dataset.venueId || bookingBtn.getAttribute('data-venue-id');
                 if (!venueId) {
                     showToast('Venue ID not found for booking.', 'error');
                     return;
                 }
-                // Ganti '0' di URL template dengan ID venue yang benar
                 const url = URLS.bookingAdd.replace('0', venueId);
 
                 const csrftoken = getCSRFToken();
@@ -415,15 +574,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         'Accept': 'application/json'
                     }
                 })
-                .then(res => res.json()) // Asumsikan selalu JSON
+                .then(res => res.json()) 
                 .then(data => {
                     if (data.status === 'ok') {
-                        showToast(data.message || 'Added to booking.', 'success');
-                        // Opsional: Redirect jika backend mengirim URL
-                        // if (data.redirect) window.location.href = data.redirect;
-                        // Atau redirect ke halaman booking
-                         if (URLS.bookingRedirect) window.location.href = URLS.bookingRedirect;
-                         else closeModal(); // Tutup modal jika tidak redirect
+                        sessionStorage.setItem('showBookingToast', data.message || 'Venue added to your booking!'); // Store message
+                        // showToast(data.message || 'Added to booking.', 'success');
+                         if (URLS.bookingRedirect) {
+                             window.location.href = URLS.bookingRedirect;
+                         } else {
+                            closeModal(); 
+                         }
                     } else {
                         throw new Error(data.message || 'Failed to add to booking');
                     }
@@ -446,7 +606,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     .then(data => {
                         if (data.html) {
                             modalPanel.innerHTML = data.html;
-                            openModal(); // Pastikan modal tetap terbuka/dibuka
+                            openModal(); 
                         } else { throw new Error('Edit form unavailable.'); }
                     })
                     .catch(err => { console.error('Load edit form error:', err); showToast(err.message, 'error'); });
@@ -464,7 +624,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     .then(data => {
                         if (data.html) {
                             modalPanel.innerHTML = data.html;
-                            openModal(); // Pastikan modal tetap terbuka/dibuka
+                            openModal(); 
                         } else { throw new Error('Delete confirmation unavailable.'); }
                     })
                     .catch(err => { console.error('Load delete form error:', err); showToast(err.message, 'error'); });

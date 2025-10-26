@@ -141,9 +141,12 @@ def serialize_obj_minimal(obj):
 
     return d
 
-@login_required
+@login_required(login_url='/auth/login')
 def show_dashboard(request):
     user = request.user
+    if (user.is_superuser):
+        return redirect('authentication:admin_dashboard')
+
     profile = get_object_or_404(CustomUser, user=user)
 
     Booking = get_model_safe('booking.Booking')
@@ -242,6 +245,16 @@ def show_dashboard(request):
     }
     return render(request, 'user_dashboard.html', context)
 
+@login_required(login_url='/auth/login')
+def admin_dashboard(request):
+    context = {
+        "admin_index_url": "/admin/",
+        "admin_user_url": "/admin/auth/user/",
+        "admin_venue_url": "/admin/main/venue/",
+        "admin_booking_url": "/admin/booking/booking/",
+    }
+    return render(request, "admin_dashboard.html", context)
+
 def register(request):
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST)
@@ -280,7 +293,7 @@ def logout_user(request):
     response.delete_cookie('last_login')
     return redirect('authentication:login')
 
-@login_required(login_url='/login')
+@login_required(login_url='/auth/login')
 def edit_profile(request):
     # Only accept AJAX POST
     if request.method != 'POST' or request.headers.get('x-requested-with') != 'XMLHttpRequest':
@@ -318,7 +331,7 @@ def edit_profile(request):
     }
     return JsonResponse(payload)
 
-@login_required(login_url='/login')
+@login_required(login_url='/auth/login')
 def delete_profile(request):
     if request.method != "POST" or request.headers.get('x-requested-with') != 'XMLHttpRequest':
         return JsonResponse({'success': False, 'error': 'Invalid request.'}, status=400)

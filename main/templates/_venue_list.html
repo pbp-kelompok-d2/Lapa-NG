@@ -1,12 +1,27 @@
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+{% load static %}
+
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
     {% for venue in venues %}
                {% include '_venue_card.html' with venue=venue %}
     
-    {% empty %}
-        <div class="md-col-span-3">
-            <p class="text-center text-gray-600 py-12">
-                No venues found matching your criteria.
+   {% empty %}
+        <div class="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4 xl:col-span-5 py-16 flex flex-col items-center justify-center text-center">
+            <div class="bg-white/30 backdrop-blur-sm rounded-full w-40 h-40 flex items-center justify-center mx-auto shadow-lg mb-6">
+                <img src="{% static 'images/logo.png' %}" alt="LapaNG Logo" class="w-28 h-28 object-contain opacity-70">
+            </div>
+
+            {# Message #}
+            <h3 class="text-xl font-semibold text-gray-700 mb-2">No Venues Found</h3>
+            <p class="text-gray-500 mb-8">
+                No venues were found matching your current criteria. Try adjusting your filters.
             </p>
+
+            {# Conditional Button for Owner/Admin #}
+            {% if user.is_authenticated and venue.owner == user or user.is_staff %}
+                <button id="add-venue-btn" class="bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-lg font-medium transition shadow-md">
+                    + Add Your Venue
+                </button>
+            {% endif %}
         </div>
     {% endfor %}
 </div>

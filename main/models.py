@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.text import slugify
 from django.conf import settings
+from django.templatetags.static import static
 
 class Venue(models.Model):
     CATEGORIES = [
@@ -62,6 +63,21 @@ class Venue(models.Model):
 
     is_featured = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+    #ngecek thumbnail apakah local file atau url
+    @property
+    def thumbnail_url(self):
+        if self.thumbnail:
+            # Check if it's already a full URL
+            if self.thumbnail.startswith('http://') or self.thumbnail.startswith('https://'):
+                return self.thumbnail
+            else:
+                # It's a local filename (e.g., "soccer.jpg"), build a static path
+                return static(f'images/{self.thumbnail}')
+        
+        # No thumbnail provided, return a default placeholder
+        return static('images/No_Image_Available.jpg')
 
     class Meta:
         ordering = ["name"]

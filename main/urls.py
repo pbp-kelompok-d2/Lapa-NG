@@ -9,10 +9,7 @@ app_name = 'main'
 
 urlpatterns = [
     path('', show_main, name='show_main'),
-    # path('venue/add/', create_venue, name='create_venue'), 
     path('venue/<slug:slug>/', venue_detail, name='venue_detail'), 
-    # path('venue/<slug:slug>/edit/', edit_venue, name='edit_venue'),  
-    # path('venue/<slug:slug>/delete/', delete_venue, name='delete_venue'),
 
     # ajax stuff
     path('ajax/filter-venues/', filter_venues, name='filter_venues'),

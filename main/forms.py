@@ -5,7 +5,6 @@ class VenueForm(forms.ModelForm):
     class Meta:
         model = Venue
         
-        # ------ THE fields LIST ------
         fields = [
             'name', 
             'category', 
@@ -18,12 +17,7 @@ class VenueForm(forms.ModelForm):
             'thumbnail',
             'is_featured'
         ]
-        # ----------------------------
 
-        # ------  Attributes  ------
-        # ------  Attributes  ------
-        
-        # Definisikan class styling-nya sekali saja
         
 
         input_classes = 'w-full px-4 py-3 border border-gray-400 rounded-md focus:outline-none focus:border-green-500 transition-colors bg-white'
@@ -34,7 +28,6 @@ class VenueForm(forms.ModelForm):
                 'class': input_classes
             }),
             
-            # Kita HARUS menambahkan 'category' di sini agar ikut di-style
             'category': forms.Select(attrs={
                 'class': input_classes
             }),
