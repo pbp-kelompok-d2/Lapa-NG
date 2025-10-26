@@ -252,6 +252,7 @@ def admin_dashboard(request):
         "admin_user_url": "/admin/auth/user/",
         "admin_venue_url": "/admin/main/venue/",
         "admin_booking_url": "/admin/booking/booking/",
+        "admin_equipment_url": "/admin/equipment/equipment"
     }
     return render(request, "admin_dashboard.html", context)
 
