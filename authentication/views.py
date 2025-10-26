@@ -144,6 +144,9 @@ def serialize_obj_minimal(obj):
 @login_required(login_url='/auth/login')
 def show_dashboard(request):
     user = request.user
+    if (user.is_superuser):
+        return redirect('authentication:admin_dashboard')
+
     profile = get_object_or_404(CustomUser, user=user)
 
     Booking = get_model_safe('booking.Booking')
@@ -241,6 +244,16 @@ def show_dashboard(request):
         'is_owner': getattr(profile, 'role', '') == 'owner',
     }
     return render(request, 'user_dashboard.html', context)
+
+@login_required(login_url='/auth/login')
+def admin_dashboard(request):
+    context = {
+        "admin_index_url": "/admin/",
+        "admin_user_url": "/admin/auth/user/",
+        "admin_venue_url": "/admin/main/venue/",
+        "admin_booking_url": "/admin/booking/booking/",
+    }
+    return render(request, "admin_dashboard.html", context)
 
 def register(request):
     if request.method == "POST":
