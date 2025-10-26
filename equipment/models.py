@@ -46,5 +46,5 @@ class Equipment(models.Model):
         ordering = ['price_per_hour']
 
     def __str__(self):
-        return f"{self.name} ({self.sport_category}) - {self.owner.name}"
+        return f"{self.name} ({self.sport_category}) - {self.owner.customuser.name}"
 
