@@ -120,6 +120,7 @@ def filter_venues(request):
     context = {
         'venues': page_obj,
         'current_filters_no_page': current_filters_no_page, # Untuk pagination
+        'user': request.user, 
     }
     
     # --- UBAH RETURN JADI JSON ---
