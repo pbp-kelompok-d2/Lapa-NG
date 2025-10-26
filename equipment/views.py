@@ -101,7 +101,7 @@ def edit_equipment(request, id):
         return render(request, 'edit_form.html', {'form': form, 'equipment': equipment})
 
     # fallback normal page
-    return render(request, 'edit_equipment.html', {'form': form, 'equipment': equipment})
+    return render(request, 'edit_form.html', {'form': form, 'equipment': equipment})
 
 def delete_equipment(request, id):
     equipment = get_object_or_404(Equipment, pk=id)
