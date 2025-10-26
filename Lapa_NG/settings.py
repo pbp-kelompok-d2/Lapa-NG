@@ -155,7 +155,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # Use a distinct folder for collected files
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = BASE_DIR / 'static'
 
 # Only used in development
 if DEBUG:
