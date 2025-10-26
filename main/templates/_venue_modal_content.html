@@ -49,15 +49,17 @@
 
              <div class="mb-4">
                  <p class="text-sm text-gray-600 font-medium mb-1">Hours</p>
+
                  {# Use time_display which might be N/A or formatted range #}
                  <p class="text-base text-gray-800">{{ venue.time_display }}</p>
+
                  {# Fallback if time_display is empty but times exist #}
-                 {# {% if not venue.time_display and venue.opening_time and venue.closing_time %}
+                 {% if not venue.time_display and venue.opening_time and venue.closing_time %}
                      <p class="text-base text-gray-800">{{ venue.opening_time|time:"H:i" }} - {{ venue.closing_time|time:"H:i" }}</p>
-                 {% endif %} #}
+                 {% endif %}
              </div>
 
-            {% if user.is_authenticated and venue.owner == user %}
+            {% if user.is_authenticated and venue.owner == user or user.is_staff %}
              <div class="mt-6 flex gap-3">
                  <button id="edit-venue-btn" data-slug="{{ venue.slug }}" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium transition">Edit</button>
                  <button id="delete-venue-btn" data-slug="{{ venue.slug }}" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-md text-sm font-medium transition">Delete</button>

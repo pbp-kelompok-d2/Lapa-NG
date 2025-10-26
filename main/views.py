@@ -120,6 +120,7 @@ def filter_venues(request):
     context = {
         'venues': page_obj,
         'current_filters_no_page': current_filters_no_page, # Untuk pagination
+        'user': request.user, 
     }
     
     # --- UBAH RETURN JADI JSON ---
@@ -200,7 +201,8 @@ def get_create_form_html(request):
 def get_edit_form_html(request, slug):
     venue = get_object_or_404(Venue, slug=slug)
 
-    if venue.owner != request.user:
+    #allow admin
+    if venue.owner != request.user and not request.user.is_staff:
         return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
 
     form = VenueForm(instance=venue) # Pre-fill the form
@@ -222,7 +224,8 @@ def edit_venue_ajax(request, slug):
 
     venue = get_object_or_404(Venue, slug=slug)
 
-    if venue.owner != request.user:
+    # allow admin
+    if venue.owner != request.user and not request.user.is_staff:
         return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
 
     form = VenueForm(request.POST, instance=venue) 
@@ -258,8 +261,8 @@ def delete_venue_ajax(request, slug):
 
     venue = get_object_or_404(Venue, slug=slug)
 
-    # Security Check: Only the owner can delete
-    if venue.owner != request.user:
+    # allow admin
+    if venue.owner != request.user and not request.user.is_staff:
         return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
 
     try:
@@ -277,8 +280,8 @@ def delete_venue_ajax(request, slug):
 def get_delete_form_html(request, slug):
     venue = get_object_or_404(Venue, slug=slug)
 
-    # Security Check
-    if venue.owner != request.user:
+    # allow admin
+    if venue.owner != request.user and not request.user.is_staff:
         return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
 
     context = {
