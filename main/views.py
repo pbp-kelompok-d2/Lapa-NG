@@ -24,13 +24,14 @@ PRICE_RANGES = {
 }
 
 def show_main(request):
-    categories = Venue.objects.values_list('category', flat=True).order_by('category').distinct()
-    venues = Venue.objects.order_by('-is_featured', 'name')
+    categories = Venue.objects.values_list('category', flat=True).order_by('category').distinct() #ngecek category di masing2 venue
+    venues = Venue.objects.order_by('-is_featured', 'name') #is featured muncul dluan
 
     search_query = request.GET.get('q', '')
     category_filter = request.GET.get('category', '')
     price_range_key = request.GET.get('price_range', '') 
 
+    #Q agar berlaku searching "park" juga return "jl. Parkir"
     if search_query:
         venues = venues.filter(
             Q(name__icontains=search_query) | 
@@ -57,7 +58,7 @@ def show_main(request):
 
     # ---  PAGINATION LOGIC ---
     paginator = Paginator(venues, 20) 
-    page_number = request.GET.get('page')
+    page_number = request.GET.get('page') #input user
     page_obj = paginator.get_page(page_number)
 
     current_filters_no_page = request.GET.copy()
@@ -186,6 +187,7 @@ def create_venue_ajax(request):
 
 @login_required(login_url='authentication:login')
 def get_create_form_html(request):
+    # give ajax/client html for the create venue modal
     form = VenueForm()
     context = {
         'form': form,
