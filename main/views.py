@@ -379,3 +379,108 @@ def add_to_booking_draft_stub(request, venue_id):
         "status": "ok",
         "message": f"Venue '{venue.name}' added to your booking draft!"
     })
+
+
+# API ENDPOINTS FOR FLUTTER
+
+def api_venues_list(request):
+    """
+    GET /api/venues/
+    Mengembalikan daftar semua venue dalam format JSON.
+    """
+    venues = Venue.objects.all().order_by('name')
+    
+    # Kita bangun list dictionary manual agar bisa memasukkan properti 'thumbnail_url'
+    data = []
+    for venue in venues:
+        data.append({
+            'model': 'main.venue',
+            'pk': venue.pk,
+            'fields': {
+                'name': venue.name,
+                'category': venue.category,
+                'address': venue.address,
+                'price': venue.price,
+                'capacity': venue.capacity,
+                'rating': 0, # Placeholder jika belum ada fitur rating
+                'image_url': request.build_absolute_uri(venue.thumbnail_url), # Penting buat Flutter load gambar
+                'is_featured': venue.is_featured,
+            }
+        })
+    return JsonResponse(data, safe=False)
+
+def api_venue_detail(request, id):
+    """
+    GET /api/venues/<int:id>/
+    Mengembalikan detail satu venue spesifik.
+    """
+    venue = get_object_or_404(Venue, pk=id)
+    data = {
+        'model': 'main.venue',
+        'pk': venue.pk,
+        'fields': {
+            'name': venue.name,
+            'category': venue.category,
+            'description': venue.description,
+            'address': venue.address,
+            'price': venue.price,
+            'capacity': venue.capacity,
+            'opening_time': venue.opening_time.strftime("%H:%M") if venue.opening_time else None,
+            'closing_time': venue.closing_time.strftime("%H:%M") if venue.closing_time else None,
+            'image_url': request.build_absolute_uri(venue.thumbnail_url),
+            'is_featured': venue.is_featured,
+        }
+    }
+    return JsonResponse(data)
+
+def api_venues_search(request):
+    """
+    GET /api/venues/search/?q=<query>
+    Pencarian venue berdasarkan nama atau alamat.
+    """
+    query = request.GET.get('q', '')
+    venues = Venue.objects.filter(
+        Q(name__icontains=query) | 
+        Q(address__icontains=query)
+    ).order_by('name')
+
+    data = []
+    for venue in venues:
+        data.append({
+            'model': 'main.venue',
+            'pk': venue.pk,
+            'fields': {
+                'name': venue.name,
+                'category': venue.category,
+                'address': venue.address,
+                'price': venue.price,
+                'image_url': request.build_absolute_uri(venue.thumbnail_url),
+            }
+        })
+    return JsonResponse(data, safe=False)
+
+def api_venues_filter(request):
+    """
+    GET /api/venues/filter/?sport=<category>
+    Filter venue berdasarkan kategori olahraga.
+    """
+    sport = request.GET.get('sport', '')
+    if sport:
+        venues = Venue.objects.filter(category__iexact=sport).order_by('name')
+    else:
+        venues = Venue.objects.all().order_by('name')
+
+    data = []
+    for venue in venues:
+        data.append({
+            'model': 'main.venue',
+            'pk': venue.pk,
+            'fields': {
+                'name': venue.name,
+                'category': venue.category,
+                'address': venue.address,
+                'price': venue.price,
+                'image_url': request.build_absolute_uri(venue.thumbnail_url),
+            }
+        })
+    return JsonResponse(data, safe=False)
