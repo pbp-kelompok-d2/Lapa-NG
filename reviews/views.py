@@ -46,6 +46,7 @@ def get_reviews_json(request):
             "venue_name": review.venue_name,
             "sport_type": review.get_sport_type_display(),
             "rating": review.rating,
+            "comment": review.comment,
             "image_url": review.image_url if review.image_url else "",
             "created_at": review.created_at.strftime("%d %B %Y"),
             "can_modify": can_modify
