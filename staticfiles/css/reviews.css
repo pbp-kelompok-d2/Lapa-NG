@@ -1,0 +1,47 @@
+.reviews-page-wrapper {
+    background-color: #F9FAFB;
+}
+
+.filter-btn {
+    color: #4B5563; /* Abu-abu gelap */
+    transition: all 0.3s ease;
+    background-color: #FFFFFF;
+    border: 1px solid #E5E7EB; 
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); 
+}
+
+.filter-btn.active-filter {
+    background-color: #F97316; /* Oranye */
+    color: white;
+    box-shadow: 0 4px 15px -5px rgba(249, 115, 22, 0.6);
+}
+
+.filter-btn:hover:not(.active-filter) {
+    background-color: #E5E7EB;
+}
+
+/* Modal (tidak berubah) */
+.modal {
+    transition: opacity 0.3s ease;
+}
+.modal-content {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Kartu Review (tidak berubah) */
+.review-card {
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+}
+.review-card:hover {
+    border-color: #F97316; /* Hover oranye */
+    box-shadow: 0 10px 15px -3px rgba(249, 115, 22, 0.1), 0 4px 6px -4px rgba(249, 115, 22, 0.1);
+}
+
+/* Bintang Rating (tidak berubah) */
+.star {
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+.star:hover {
+    transform: scale(1.2);
+}

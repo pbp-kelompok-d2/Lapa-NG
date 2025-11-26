@@ -54,8 +54,8 @@ Fitur User–Owner menjadi pintu utama untuk mengakses seluruh layanan di lapa-N
 ---
 
 ### 🏟️ Venue (Lapangan)  
-Dikerjakan oleh  **Andrew Sanjay Hasian Panjaitan**
-Fitur Venue memungkinkan untuk menemukan berbagai lapangan di sekitar dengan mudah — mulai dari futsal, basket, hingga badminton. Setiap lapangan dilengkapi dengan informasi lokasi, fasilitas, harga, serta foto-foto yang membantu memilih tempat terbaik untuk bermain.  
+Dikerjakan oleh  **Andrew Sanjay Hasian Panjaitan**       
+Fitur Venue memungkinkan untuk menemukan berbagai lapangan di sekitar dengan mudah. Mulai dari futsal, basket, hingga badminton. Setiap lapangan dilengkapi dengan informasi lokasi, fasilitas, harga, serta foto-foto yang membantu memilih tempat terbaik untuk bermain.  
 
 ---
 
@@ -79,7 +79,7 @@ Fitur untuk memberikan ulasan dan rating untuk lapangan yang telah digunakan. Fi
 
 ### 🏋️ Equipment  
 Dikerjakan oleh **Nazwa Zahra Sausan**  
-Fitur Equipment memudahkan para owner untuk menawarkan berbagai perlengkapan olahraga yang bisa disewa oleh pengguna — seperti bola, raket, dan perlengkapan latihan lainnya. Semua daftar perlengkapan dilengkapi dengan harga sewa dan deskripsi agar pengguna bisa memilih sesuai kebutuhan.  
+Fitur Equipment memudahkan para owner untuk menawarkan berbagai perlengkapan olahraga yang bisa disewa oleh pengguna seperti bola, raket, dan perlengkapan latihan lainnya. Semua daftar perlengkapan dilengkapi dengan harga sewa dan deskripsi agar pengguna bisa memilih sesuai kebutuhan.  
 
 </details>
 

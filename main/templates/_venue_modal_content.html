@@ -1,10 +1,8 @@
 {% load static %}
  {% load humanize %}
 
- {# Add conditional class here #}
  <div class="bg-white rounded-lg shadow-xl overflow-hidden w-full max-w-3xl mx-auto relative {% if venue.is_featured %}modal-content--featured{% endif %}">
 
-     {# --- Keep the rest of the modal content exactly as it was --- #}
      <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center relative z-10"> {# Add z-10 #}
          <h3 class="text-xl font-heading font-semibold text-gray-900">{{ venue.name }}</h3>
          <button id="modal-close-btn" class="text-gray-400 hover:text-gray-600 transition">
@@ -18,7 +16,7 @@
                  <p class="text-sm text-green-600 font-medium mb-1">Sport Type</p>
                  <p class="text-base text-gray-800 font-semibold">{{ venue.category|capfirst }}</p>
              </div>
-             {# ... (rest of the details: description, address, price, capacity, hours) ... #}
+             
               {% if venue.description %}
              <div class="mb-4">
                  <p class="text-sm text-gray-600 font-medium mb-1">Description</p>
@@ -49,15 +47,17 @@
 
              <div class="mb-4">
                  <p class="text-sm text-gray-600 font-medium mb-1">Hours</p>
+
                  {# Use time_display which might be N/A or formatted range #}
                  <p class="text-base text-gray-800">{{ venue.time_display }}</p>
+
                  {# Fallback if time_display is empty but times exist #}
                  {% if not venue.time_display and venue.opening_time and venue.closing_time %}
                      <p class="text-base text-gray-800">{{ venue.opening_time|time:"H:i" }} - {{ venue.closing_time|time:"H:i" }}</p>
                  {% endif %}
              </div>
 
-            {% if user.is_authenticated and venue.owner == user %}
+            {% if user.is_authenticated and venue.owner == user or user.is_staff %}
              <div class="mt-6 flex gap-3">
                  <button id="edit-venue-btn" data-slug="{{ venue.slug }}" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium transition">Edit</button>
                  <button id="delete-venue-btn" data-slug="{{ venue.slug }}" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-md text-sm font-medium transition">Delete</button>

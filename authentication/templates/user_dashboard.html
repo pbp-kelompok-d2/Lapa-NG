@@ -56,6 +56,27 @@
   margin-left: 0.25rem;
   margin-right: 0.25rem;
 }
+
+.profile-fullname {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+
+  /* constrain width so name wraps rather than stretching across layout */
+  display: block;
+  max-width: 14rem;       
+  margin: 0 auto;  
+  text-align: center;  
+  line-height: 1.2;   
+  word-wrap: break-word;  /* legacy fallback */
+}
+
+/* responsive tweak: slightly increase width on narrow screens */
+@media (max-width: 768px) {
+  .profile-fullname {
+    max-width: 18rem;
+  }
+}
 </style>
 
 <div class="min-h-1/2 bg-gray-50 pt-24 px-6 pb-6">

@@ -44,19 +44,28 @@
       <div class="hidden md:flex items-center space-x-6">
         {% if user.is_authenticated %}
           <div class="flex items-center space-x-3">
-            {% if user.customuser.profile_picture %}
-              <img src="{{ user.customuser.profile_picture }}"
-                  alt="{{ user.username }}'s profile picture"
-                  class="w-10 h-10 rounded-full object-cover border border-gray-300" />
-            {% else %}
+            {% if user.is_superuser %}
               <img src="{% static 'images/user.png' %}"
-                  alt="Default user profile"
-                  class="w-10 h-10 rounded-full object-cover border border-gray-300" />
-            {% endif %}
+                   alt="{{ user.username }}'s profile picture"
+                   class="w-10 h-10 rounded-full object-cover border border-gray-300" />
+              <a href="{% url 'authentication:show_dashboard' %}" class="text-gray-700 font-medium hover:text-[#10b981] transform transition-transform duration-200 ease-in-out hover:scale-105">
+                {{ user.username|truncatechars:20 }}
+              </a>
+            {% else %}
+              {% if user.customuser.profile_picture %}
+                <img src="{{ user.customuser.profile_picture }}"
+                     alt="{{ user.username }}'s profile picture"
+                     class="w-10 h-10 rounded-full object-cover border border-gray-300" />
+              {% else %}
+                <img src="{% static 'images/user.png' %}"
+                     alt="Default user profile"
+                     class="w-10 h-10 rounded-full object-cover border border-gray-300" />
+              {% endif %}
 
-            <a href="{% url 'authentication:show_dashboard' %}" class="text-gray-700 font-medium hover:text-[#10b981] transform transition-transform duration-200 ease-in-out hover:scale-105">
-              {{ user.customuser.name }}
-            </a>
+              <a href="{% url 'authentication:show_dashboard' %}" class="text-gray-700 font-medium hover:text-[#10b981] transform transition-transform duration-200 ease-in-out hover:scale-105">
+                {{ user.customuser.name|default:user.username|truncatechars:20 }}
+              </a>
+            {% endif %}
 
             <form method="post" action="{% url 'authentication:logout' %}">
               {% csrf_token %}
@@ -89,7 +98,6 @@
     </div>
   </div>
 
-  {# Removed duplicate links from mobile menu #}
   <div class="mobile-menu hidden md:hidden bg-white border-t border-gray-200">
     <div class="px-6 py-4 space-y-4">
       <div class="space-y-1">
@@ -108,13 +116,11 @@
                   {% if request.resolver_match.view_name == 'reviews:show_reviews' %}text-[#10b981]{% else %}text-gray-700{% endif %}">
            Reviews
         </a>
-        {# Corrected view name check for Equipment #}
         <a href="{% url 'equipment:equipment_list' %}"
            class="block font-medium py-2 transition hover:text-gray-900
                   {% if request.resolver_match.view_name == 'equipment:equipment_list' %}text-[#10b981]{% else %}text-gray-700{% endif %}">
            Equipment
         </a>
-        {# Corrected view name check for Feeds #}
         <a href="{% url 'feeds:show_feed_main' %}"
            class="block font-medium py-2 transition hover:text-gray-900
                   {% if request.resolver_match.view_name == 'feeds:show_feed_main' %}text-[#10b981]{% else %}text-gray-700{% endif %}">
@@ -135,9 +141,21 @@
                   class="w-10 h-10 rounded-full object-cover border border-gray-300" />
             {% endif %}
 
-            <a href="{% url 'authentication:show_dashboard' %}" class="text-gray-700 font-medium hover:text-[#10b981] transform transition-transform duration-200 ease-in-out hover:scale-105">
-              {{ user.customuser.name }}
-            </a>
+            {% if user.is_superuser %}
+              <a href="{% url 'authentication:show_dashboard' %}" class="text-gray-700 font-medium ...">
+                {{ user.username }}
+              </a>
+            {% else %}
+              {% if user.customuser.name %}
+                <a href="{% url 'authentication:show_dashboard' %}" class="text-gray-700 font-medium ...">
+                  {{ user.customuser.name }}
+                </a>
+              {% else %}
+                <a href="{% url 'authentication:show_dashboard' %}" class="text-gray-700 font-medium ...">
+                  {{ user.username }}
+                </a>
+              {% endif %}
+            {% endif %}
 
             <form method="post" action="{% url 'authentication:logout' %}">
               {% csrf_token %}
