@@ -101,10 +101,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const cursorTooltip = document.getElementById('cursor-tooltip');
     const cursorTooltipWrapper = document.getElementById('cursor-tooltip-wrapper'); 
     const cursorTooltipContent = document.getElementById('cursor-tooltip'); 
-    
+
 
     // --- Modal Functions ---
-// --- Modal Functions ---
     function openModal() {
         // Ensure elements exist
         if (!modal || !modalOverlay || !modalPanel) {
@@ -259,7 +258,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (index < 0 || index >= heroImages.length) return;
             if (!heroSliderTrack) return; // Cek jika elemen ada
 
-            heroSliderTrack.style.transform = `translateX(-${index * 100}%)`;
+            heroSliderTrack.style.transform = `translateX(-${index * 100}%)`; // Geser track
             currentImageIndex = index;
 
             // Update active dot
@@ -516,8 +515,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => {
                     if (response.status === 403) {
                         showToast('Please login to add a venue.', 'error');
-                        // Opsional: Redirect ke login
-                        // window.location.href = '/auth/login/';
                         return Promise.reject('Forbidden');
                     }
                     if (!response.ok) throw new Error('Could not load create form.');
@@ -630,8 +627,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     .catch(err => { console.error('Load delete form error:', err); showToast(err.message, 'error'); });
                 return;
             }
-        }); // --- Akhir dari modalPanel 'click' listener ---
-    } // --- Akhir dari if (modalPanel) ---
+        }); //  Akhir dari modalPanel 'click' listener 
+    } //  Akhir dari if (modalPanel) 
 
 
     // --- MODAL FORM SUBMISSION HANDLER (Create, Edit, Delete Confirmation) ---

@@ -57,9 +57,11 @@ INSTALLED_APPS = [
     'booking',
     'feeds',
     'equipment',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -192,3 +194,6 @@ LOGGING = {
         },
     },
 }
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+CSRF_TRUSTED_ORIGINS = ["http://localhost", "http://127.0.0.1"]
