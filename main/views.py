@@ -405,6 +405,7 @@ def api_venues_list(request):
                 'rating': 0, # Placeholder jika belum ada fitur rating
                 'image_url': request.build_absolute_uri(venue.thumbnail_url), # Penting buat Flutter load gambar
                 'is_featured': venue.is_featured,
+                'description': venue.description,
             }
         })
     return JsonResponse(data, safe=False)
