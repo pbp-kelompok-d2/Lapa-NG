@@ -35,7 +35,7 @@ if PRODUCTION:
 else:
     DEBUG=True
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "abdurrahman-ammar-lapang.pbp.cs.ui.ac.id"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "abdurrahman-ammar-lapang.pbp.cs.ui.ac.id", "10.0.2.2"]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://abdurrahman-ammar-lapang.pbp.cs.ui.ac.id"
