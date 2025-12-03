@@ -1,6 +1,7 @@
 import json
 import requests
 from django.utils.html import strip_tags
+from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404
 from django.core import serializers
 from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
@@ -64,6 +65,7 @@ def equipment_list(request):
     }
     return render(request, 'equipment_list.html', context)
 
+@csrf_exempt
 @login_required(login_url='/auth/login')
 def equipment_create(request):
     # Cek apakah user adalah ownerl
@@ -81,7 +83,7 @@ def equipment_create(request):
 
     return render(request, 'add_equipment.html', {'form': form})
 
-
+@csrf_exempt
 def edit_equipment(request, id):
     equipment = get_object_or_404(Equipment, pk=id)
 
@@ -159,7 +161,7 @@ def show_json_by_id(request, id):
      except Equipment.DoesNotExist:
         return JsonResponse({'detail': 'Not found'}, status=404)
      
-def proxy_image(request):
+def get_equipment(request):
     image_url = request.GET.get('url')
     if not image_url:
         return HttpResponse('No URL provided', status=400)
@@ -177,6 +179,7 @@ def proxy_image(request):
     except requests.RequestException as e:
         return HttpResponse(f'Error fetching image: {str(e)}', status=500)    
 
+@csrf_exempt
 def create_equipment_flutter(request):
     if request.method == "POST":
         data = json.loads(request.body)
@@ -203,3 +206,38 @@ def create_equipment_flutter(request):
         return JsonResponse({"status": "success"}, status=200)
     else:
         return JsonResponse({"status": "error"}, status=401)
+
+@csrf_exempt
+def edit_equipment_flutter(request, equipment_id):
+    # Pastikan method PUT
+    if request.method != "PUT":
+        return JsonResponse({"status": "error", "message": "PUT required"}, status=400)
+    
+    # Ambil equipment
+    try:
+        equipment = Equipment.objects.get(id=equipment_id)
+    except Equipment.DoesNotExist:
+        return JsonResponse({"status": "error", "message": "Equipment not found"}, status=404)
+    
+    # Cek owner
+    if equipment.owner != request.user:
+        return JsonResponse({"status": "error", "message": "Forbidden"}, status=403)
+    
+    # Parse JSON body
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"status": "error", "message": "Invalid JSON"}, status=400)
+    
+    # Update field jika ada di request
+    equipment.name = strip_tags(data.get("name", equipment.name))
+    equipment.price_per_hour = strip_tags(data.get("price_per_hour", equipment.price_per_hour))
+    equipment.sport_category = data.get("sport_category", equipment.sport_category)
+    equipment.region = data.get("region", equipment.region)
+    equipment.quantity = strip_tags(data.get("quantity", equipment.quantity))
+    equipment.available = data.get("available", equipment.available)
+    equipment.thumbnail = data.get("thumbnail", equipment.thumbnail)
+    
+    equipment.save()
+    
+    return JsonResponse({"status": "success", "message": "Equipment updated"}, status=200)

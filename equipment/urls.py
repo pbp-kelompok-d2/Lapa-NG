@@ -1,7 +1,7 @@
 from django.urls import path
 from equipment.views import equipment_list, equipment_create, \
     edit_equipment, delete_equipment, show_xml, show_json, \
-        show_xml_by_id, show_json_by_id, proxy_image, create_equipment_flutter
+        show_xml_by_id, show_json_by_id, get_equipment, create_equipment_flutter
 
 app_name = 'equipment'
 
@@ -14,6 +14,6 @@ urlpatterns = [
     path('json/', show_json, name='show_json'),
     path('xml/<str:id>/', show_xml_by_id, name='show_xml_by_id'),
     path('json/<str:id>/', show_json_by_id, name='show_json_by_id'),
-    path('proxy-image/', proxy_image, name='proxy_image'),
+    path('get-equipment/', get_equipment, name='get_equipment'),
     path('create-flutter/', create_equipment_flutter, name='create_equipment_flutter'),
 ]
