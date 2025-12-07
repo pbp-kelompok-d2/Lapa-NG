@@ -9,6 +9,7 @@ from reviews.forms import ReviewForm
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
 from authentication.models import CustomUser
+from main.models import Venue
 
 def show_reviews(request):
     form = ReviewForm()
@@ -135,3 +136,30 @@ def delete_review_ajax(request, review_id):
         return JsonResponse({"status": "success", "message": "Ulasan berhasil dihapus."}, status=200)
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=404)
+    
+@csrf_exempt
+def create_review_flutter(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"status": "error", "message": "Anda belum login."}, status=401)
+    
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            new_review = Reviews.objects.create(
+                user=request.user,
+                venue_name=data["venue_name"], 
+                sport_type=data["sport_type"],
+                rating=int(data["rating"]),
+                comment=data["comment"],
+                image_url=data.get("image_url", ""), 
+            )
+            new_review.save()
+            return JsonResponse({"status": "success"}, status=200)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+    return JsonResponse({"status": "error"}, status=401)
+
+def get_venue_names(request):
+    venues = Venue.objects.all().order_by('name').values_list('name', flat=True)
+    
+    return JsonResponse(list(venues), safe=False)
