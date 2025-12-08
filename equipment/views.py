@@ -241,3 +241,26 @@ def edit_equipment_flutter(request, equipment_id):
     equipment.save()
     
     return JsonResponse({"status": "success", "message": "Equipment updated"}, status=200)
+
+@csrf_exempt                     
+@login_required               
+def delete_equipment_flutter(request, id):
+    if request.method != "DELETE":
+        return JsonResponse(
+            {"error": "Method not allowed"},
+            status=405
+        )
+
+    equipment = get_object_or_404(Equipment, id=id)
+
+    if equipment.user != request.user:
+        return JsonResponse(
+            {"error": "Unauthorized"},
+            status=403
+        )
+    equipment.delete()
+
+    return JsonResponse(
+        {"message": "Equipment deleted successfully"},
+        status=200
+    )
