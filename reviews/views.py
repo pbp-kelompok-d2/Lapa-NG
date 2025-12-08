@@ -163,3 +163,30 @@ def get_venue_names(request):
     venues = Venue.objects.all().order_by('name').values_list('name', flat=True)
     
     return JsonResponse(list(venues), safe=False)
+
+@csrf_exempt
+def edit_review_flutter(request, review_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({"status": "error", "message": "Belum login"}, status=401)
+
+    try:
+        review = Reviews.objects.get(pk=review_id, user=request.user)
+    except Reviews.DoesNotExist:
+        return JsonResponse({"status": "error", "message": "Review tidak ditemukan atau bukan milik Anda"}, status=404)
+
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            
+            review.venue_name = data.get("venue_name", review.venue_name)
+            review.sport_type = data.get("sport_type", review.sport_type)
+            review.rating = int(data.get("rating", review.rating))
+            review.comment = data.get("comment", review.comment)
+            review.image_url = data.get("image_url", review.image_url)
+            
+            review.save()
+            return JsonResponse({"status": "success", "message": "Review berhasil diedit!"}, status=200)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+            
+    return JsonResponse({"status": "error", "message": "Invalid method"}, status=405)

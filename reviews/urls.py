@@ -8,6 +8,7 @@ from reviews.views import (
     delete_review_ajax,
     create_review_flutter,
     get_venue_names,
+    edit_review_flutter,
 )
 
 app_name = 'reviews'
@@ -21,4 +22,5 @@ urlpatterns = [
     path('delete-review/<int:review_id>/', delete_review_ajax, name='delete_review_ajax'),
     path('create-flutter/', create_review_flutter, name='create_review_flutter'),
     path('venue-list/', get_venue_names, name='get_venue_names'),
+    path('edit-flutter/<int:review_id>/', edit_review_flutter, name='edit_review_flutter'),
 ]
