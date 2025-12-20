@@ -1,5 +1,6 @@
 from django.urls import path
 from booking.views import booking_page, add_to_cart, checkout_page, edit_booking, remove_from_cart, checkout_confirm, view_cart, booking_list, clear_booking
+from booking.views import api_create_booking, api_list_bookings, api_delete_booking, api_update_booking
 
 app_name = 'booking'
 
@@ -13,4 +14,8 @@ urlpatterns = [
     path('cart/', view_cart, name='view_cart'),
     path('booking-list/', booking_list, name='booking_list'),
     path('clear/<int:booking_id>/', clear_booking, name='clear_booking'),
+    path("api/create/", api_create_booking, name="api_create_booking"),
+    path("api/list/<int:user_id>/", api_list_bookings, name="api_list_bookings"),
+    path("api/delete/<int:booking_id>/", api_delete_booking, name="api_delete_booking"),
+    path("api/update/<int:booking_id>/", api_update_booking, name="api_update_booking"),
 ]

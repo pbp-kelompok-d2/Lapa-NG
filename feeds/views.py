@@ -7,6 +7,7 @@ from .models import Post
 from .forms import PostForm
 from django.utils.timezone import localtime
 from django.views.decorators.http import require_http_methods
+import requests
 
 @login_required(login_url='/auth/login/')
 def show_feed_main(request):
@@ -235,3 +236,21 @@ def create_post_ajax(request):
             "user_username": post.user.username if post.user_id else None,
         }
     }, status=201)
+
+def proxy_image(request):
+    image_url = request.GET.get('url')
+    if not image_url:
+        return HttpResponse('No URL provided', status=400)
+    
+    try:
+        # Fetch image from external source
+        response = requests.get(image_url, timeout=10)
+        response.raise_for_status()
+        
+        # Return the image with proper content type
+        return HttpResponse(
+            response.content,
+            content_type=response.headers.get('Content-Type', 'image/jpeg')
+        )
+    except requests.RequestException as e:
+        return HttpResponse(f'Error fetching image: {str(e)}', status=500)
