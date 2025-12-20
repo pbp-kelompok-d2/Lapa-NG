@@ -232,3 +232,153 @@ def clear_booking(request, booking_id):
         booking.delete()
         return redirect('booking:booking_list')
     return redirect('booking:booking_list')
+
+import json
+from datetime import datetime
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+@csrf_exempt
+def api_create_booking(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=400)
+
+    # Parse JSON or form-data
+    content_type = request.META.get("CONTENT_TYPE", "") or request.headers.get("Content-Type", "")
+    if "application/json" in content_type:
+        try:
+            data = json.loads(request.body.decode('utf-8') or "{}")
+        except Exception as e:
+            return JsonResponse({"error": f"Invalid JSON: {str(e)}"}, status=400)
+    else:
+        data = {k: v for k, v in request.POST.items()}
+
+    # Determine user
+    user = None
+    if request.user and request.user.is_authenticated:
+        user = request.user
+    else:
+        user_id = data.get("user_id") or data.get("user")
+        if not user_id:
+            return JsonResponse({"error": "Authentication required (no user)"}, status=401)
+
+        try:
+            user = User.objects.get(id=int(user_id))
+        except:
+            return JsonResponse({"error": "Invalid user_id"}, status=400)
+
+    # Determine venue
+    venue_id = data.get("venue_id") or data.get("venue")
+    if not venue_id:
+        return JsonResponse({"error": "venue_id required"}, status=400)
+
+    try:
+        venue = Venue.objects.get(id=int(venue_id))
+    except Venue.DoesNotExist:
+        return JsonResponse({"error": "Invalid venue_id"}, status=400)
+
+    # Get fields
+    borrower_name = data.get("borrower_name") or data.get("borrower") or ""
+
+    booking_date = data.get("booking_date")
+    start_time = data.get("start_time") or data.get("start")
+    end_time = data.get("end_time") or data.get("end")
+
+    if not booking_date or not start_time or not end_time:
+        return JsonResponse({"error": "booking_date, start_time, end_time required"}, status=400)
+
+    try:
+        booking_date_obj = datetime.strptime(booking_date, "%Y-%m-%d").date()
+    except:
+        return JsonResponse({"error": "booking_date must be YYYY-MM-DD"}, status=400)
+
+    try:
+        start_time_obj = datetime.strptime(start_time, "%H:%M").time()
+    except:
+        return JsonResponse({"error": "start_time must be HH:MM"}, status=400)
+
+    try:
+        end_time_obj = datetime.strptime(end_time, "%H:%M").time()
+    except:
+        return JsonResponse({"error": "end_time must be HH:MM"}, status=400)
+
+    # Create booking
+    try:
+        booking = Booking.objects.create(
+            user=user,
+            venue=venue,
+            borrower_name=borrower_name,
+            booking_date=booking_date_obj,
+            start_time=start_time_obj,
+            end_time=end_time_obj,
+            status="pending",
+        )
+    except Exception as e:
+        return JsonResponse({"error": f"Could not create booking: {str(e)}"}, status=500)
+
+    return JsonResponse({
+        "success": True,
+        "booking_id": booking.id,
+        "total_price": booking.total_price,
+    }, status=201)
+
+def api_list_bookings(request, user_id):
+    """
+    API untuk Flutter: mengembalikan semua booking milik user.
+    Return JSON, bukan HTML template.
+    """
+    bookings = Booking.objects.filter(user_id=user_id).order_by('-created_at')
+
+    data = []
+    for b in bookings:
+        data.append({
+            "id": b.id,
+            "venue_id": b.venue.id,
+            "venue_name": b.venue.name,
+            "borrower_name": b.borrower_name,
+            "booking_date": str(b.booking_date),
+            "start_time": str(b.start_time),
+            "end_time": str(b.end_time),
+            "total_price": b.total_price,
+            "status": b.status,
+        })
+
+    return JsonResponse(data, safe=False)
+
+def api_delete_booking(request, booking_id):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "POST required"})
+
+    try:
+        booking = Booking.objects.get(id=booking_id)
+        booking.delete()
+        return JsonResponse({"success": True})
+    except Booking.DoesNotExist:
+        return JsonResponse({"success": False, "error": "Not found"})
+    
+@csrf_exempt
+def api_update_booking(request, booking_id):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "POST required"})
+
+    try:
+        booking = Booking.objects.get(id=booking_id)
+    except Booking.DoesNotExist:
+        return JsonResponse({"success": False, "error": "Not found"})
+
+    data = json.loads(request.body.decode('utf-8'))
+
+    # Update hanya field yang diberikan
+    booking.borrower_name = data.get("borrower_name", booking.borrower_name)
+    booking.booking_date = data.get("booking_date", booking.booking_date)
+    booking.start_time = data.get("start_time", booking.start_time)
+    booking.end_time = data.get("end_time", booking.end_time)
+    booking.total_price = data.get("total_price", booking.total_price)
+    booking.status = data.get("status", booking.status)
+
+    booking.save()
+
+    return JsonResponse({"success": True, "message": "Booking updated"})
