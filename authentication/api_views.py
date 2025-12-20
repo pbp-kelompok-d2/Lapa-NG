@@ -2,8 +2,10 @@ import json
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.views.decorators.csrf import csrf_exempt 
+import traceback
+from django.db import transaction
 
-from .forms import CustomUserCreationForm  
+from .forms import CustomUserCreationForm, ProfileForm  
 from .models import normalize_indonesia_number, CustomUser
 
 @csrf_exempt
@@ -127,3 +129,126 @@ def api_logout(request):
             "status": False,
             "message": "Logout failed."
         }, status=401)
+
+@csrf_exempt
+def api_me(request):
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Not authenticated"},
+            status=401
+        )
+
+    user = request.user
+
+    try:
+        cu = user.customuser
+    except Exception:
+        return JsonResponse({
+            "username": user.username,
+            "email": user.email,
+            "name": "",
+            "role": "",
+            "number": "",
+            "profile_picture": None,
+        })
+
+    return JsonResponse({
+        "username": user.username,
+        "email": user.email,
+        "name": cu.name,
+        "role": cu.role,
+        "number": cu.number,
+        "profile_picture": cu.profile_picture,
+    })
+
+@csrf_exempt
+def api_edit_profile(request):
+    if request.method != "POST":
+        return JsonResponse(
+            {"success": False, "error": "POST required"},
+            status=405,
+        )
+
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"success": False, "error": "Not authenticated"},
+            status=401,
+        )
+
+    try:
+        custom = request.user.customuser
+    except CustomUser.DoesNotExist:
+        custom = CustomUser(user=request.user)
+
+    # Preserve role (cannot be changed from client)
+    current_role = custom.role
+
+    form = ProfileForm(request.POST, instance=custom)
+
+    if not form.is_valid():
+        return JsonResponse(
+            {
+                "success": False,
+                "errors": {
+                    field: [str(e) for e in errs]
+                    for field, errs in form.errors.items()
+                },
+            },
+            status=400,
+        )
+
+    with transaction.atomic():
+        instance = form.save(commit=False)
+        instance.number = normalize_indonesia_number(
+            form.cleaned_data.get("number", "")
+        )
+        instance.role = current_role
+        instance.save()
+
+    return JsonResponse({
+        "success": True,
+        "username": request.user.username,
+        "name": instance.name,
+        "role": instance.role,
+        "number": instance.number,
+        "profile_picture": instance.profile_picture or "",
+        "message": "Profile updated successfully",
+    })
+
+@csrf_exempt
+def api_delete_profile(request):
+    if request.method != "POST":
+        return JsonResponse(
+            {"success": False, "error": "POST required"},
+            status=405,
+        )
+
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"success": False, "error": "Not authenticated"},
+            status=401,
+        )
+
+    try:
+        user = request.user
+
+        with transaction.atomic():
+            try:
+                user.customuser.delete()
+            except CustomUser.DoesNotExist:
+                pass
+
+            auth_logout(request)
+            user.delete()
+
+        return JsonResponse({
+            "success": True,
+            "message": "Profile deleted",
+        })
+
+    except Exception as e:
+        traceback.print_exc()
+        return JsonResponse(
+            {"success": False, "error": str(e)},
+            status=500,
+        )
