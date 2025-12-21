@@ -362,23 +362,81 @@ def api_delete_booking(request, booking_id):
 @csrf_exempt
 def api_update_booking(request, booking_id):
     if request.method != "POST":
-        return JsonResponse({"success": False, "error": "POST required"})
+        return JsonResponse({"success": False, "error": "POST required"}, status=405)
+
+    booking = get_object_or_404(Booking, id=booking_id)
+
+    # ===== ambil data (JSON / FORM) =====
+    if request.content_type == "application/json":
+        try:
+            data = json.loads(request.body.decode("utf-8"))
+        except:
+            return JsonResponse({"success": False, "error": "Invalid JSON"}, status=400)
+    else:
+        data = request.POST
+
+    try:
+        borrower_name = data.get("borrower_name", booking.borrower_name)
+        booking_date = datetime.strptime(
+            data["booking_date"], "%Y-%m-%d"
+        ).date()
+        start_time = datetime.strptime(
+            data["start_time"], "%H:%M"
+        ).time()
+        end_time = datetime.strptime(
+            data["end_time"], "%H:%M"
+        ).time()
+
+        booking.borrower_name = borrower_name
+        booking.booking_date = booking_date
+        booking.start_time = start_time
+        booking.end_time = end_time
+
+        booking.save()
+
+    except Exception as e:
+        return JsonResponse(
+            {"success": False, "error": str(e)},
+            status=400
+        )
+
+    return JsonResponse({
+        "success": True,
+        "data": {
+            "booking_date": booking.booking_date.strftime("%Y-%m-%d"),
+            "start_time": booking.start_time.strftime("%H:%M"),
+            "end_time": booking.end_time.strftime("%H:%M"),
+            "total_price": booking.total_price,
+        }
+    })
+    
+@csrf_exempt
+def api_update_booking_status(request, booking_id):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=400)
+
+    if request.content_type == "application/json":
+        try:
+            data = json.loads(request.body.decode("utf-8"))
+        except:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+    else:
+        data = request.POST
+
+    new_status = data.get("status")
+
+    if new_status not in ["pending", "confirmed"]:
+        return JsonResponse({"error": "Invalid status"}, status=400)
 
     try:
         booking = Booking.objects.get(id=booking_id)
     except Booking.DoesNotExist:
-        return JsonResponse({"success": False, "error": "Not found"})
+        return JsonResponse({"error": "Booking not found"}, status=404)
 
-    data = json.loads(request.body.decode('utf-8'))
-
-    # Update hanya field yang diberikan
-    booking.borrower_name = data.get("borrower_name", booking.borrower_name)
-    booking.booking_date = data.get("booking_date", booking.booking_date)
-    booking.start_time = data.get("start_time", booking.start_time)
-    booking.end_time = data.get("end_time", booking.end_time)
-    booking.total_price = data.get("total_price", booking.total_price)
-    booking.status = data.get("status", booking.status)
-
+    booking.status = new_status
     booking.save()
 
-    return JsonResponse({"success": True, "message": "Booking updated"})
+    return JsonResponse({
+        "success": True,
+        "status": booking.status,
+    })
