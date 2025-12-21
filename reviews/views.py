@@ -10,6 +10,9 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
 from authentication.models import CustomUser
 from main.models import Venue
+from booking.models import Booking
+from django.http import JsonResponse
+from authentication.models import CustomUser
 
 def show_reviews(request):
     form = ReviewForm()
@@ -190,3 +193,24 @@ def edit_review_flutter(request, review_id):
             return JsonResponse({"status": "error", "message": str(e)}, status=500)
             
     return JsonResponse({"status": "error", "message": "Invalid method"}, status=405)
+
+def get_user_role(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({'role': 'guest'}, status=200)
+    
+    try:
+        role = request.user.customuser.role
+        return JsonResponse({'role': role}, status=200)
+    except CustomUser.DoesNotExist:
+        return JsonResponse({'role': 'unknown'}, status=200)
+    
+@login_required(login_url='/auth/login/')
+def get_user_booked_venues(request):
+    try:
+        booked_venues = Booking.objects.filter(
+            user=request.user
+        ).values_list('venue__name', flat=True).distinct()
+        
+        return JsonResponse(list(booked_venues), safe=False)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

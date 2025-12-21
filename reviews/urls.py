@@ -9,6 +9,8 @@ from reviews.views import (
     create_review_flutter,
     get_venue_names,
     edit_review_flutter,
+    get_user_role,
+    get_user_booked_venues,
 )
 
 app_name = 'reviews'
@@ -23,4 +25,6 @@ urlpatterns = [
     path('create-flutter/', create_review_flutter, name='create_review_flutter'),
     path('venue-list/', get_venue_names, name='get_venue_names'),
     path('edit-flutter/<int:review_id>/', edit_review_flutter, name='edit_review_flutter'),
+    path('get-user-role/', get_user_role, name='get_user_role'),
+    path('get-booked-venues/', get_user_booked_venues, name='get_user_booked_venues'),
 ]
