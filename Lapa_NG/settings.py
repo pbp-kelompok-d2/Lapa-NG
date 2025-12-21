@@ -196,7 +196,9 @@ LOGGING = {
 }
 CORS_ALLOWED_ORIGINS = [
     "https://abdurrahman-ammar-lapang.pbp.cs.ui.ac.id",
-    "localhost:8000",
+    "http://localhost:8000",
+    "http://localhost:5000",
+    "http://127.0.0.1:5000",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
