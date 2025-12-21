@@ -194,7 +194,11 @@ LOGGING = {
         },
     },
 }
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    "https://abdurrahman-ammar-lapang.pbp.cs.ui.ac.id",
+    "localhost:8000",
+]
+
 CORS_ALLOW_CREDENTIALS = True
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
