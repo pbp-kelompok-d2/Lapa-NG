@@ -1,17 +1,15 @@
+from decimal import Decimal, InvalidOperation
 import json
 import requests
 from django.utils.html import strip_tags
 from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.core import serializers
 from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from .models import Equipment
 from .forms import EquipmentForm
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
-from .models import Equipment
 
 @login_required(login_url='/auth/login')
 def equipment_list(request):
@@ -68,7 +66,6 @@ def equipment_list(request):
 @csrf_exempt
 @login_required(login_url='/auth/login')
 def equipment_create(request):
-    # Cek apakah user adalah ownerl
     if not request.user.customuser.role == 'owner':
         return redirect('equipment:equipment_list')  # kalau bukan owner, redirect ke list
 
@@ -131,9 +128,16 @@ def show_json(request):
         'quantity': p.quantity,
         'available': p.available,
         'thumbnail': p.thumbnail,
-        'user_username': p.owner.username if p.owner else None,
+        'user': {
+            'username': p.owner.username,
+            'number': getattr(p.owner.customuser, 'formatted_number', ''),
+            'name': p.owner.customuser.name,
+            'role': p.owner.customuser.role,
+            'profile_picture': p.owner.customuser.profile_picture,
+        } if hasattr(p.owner, 'customuser') else None
     } for p in qs]
     return JsonResponse(data, safe=False)
+
 
 def show_xml_by_id(request, id):
     try:
@@ -155,7 +159,13 @@ def show_json_by_id(request, id):
         'quantity': equipment.quantity,
         'available': equipment.available,
         'thumbnail': equipment.thumbnail,
-        'user_username': equipment.owner.username if equipment.owner else None,
+        'user': {
+            'username': equipment.owner.username,
+            'number': getattr(equipment.owner.customuser, 'formatted_number', ''),
+            'name': equipment.owner.customuser.name,
+            'role': equipment.owner.customuser.role,
+            'profile_picture': equipment.owner.customuser.profile_picture,
+        } if hasattr(equipment.owner, 'customuser') else None
         }
         return JsonResponse(data)
      except Equipment.DoesNotExist:
@@ -190,7 +200,7 @@ def create_equipment_flutter(request):
         quantity = strip_tags(data.get("quantity", ""))
         available = data.get("available", False)
         thumbnail = data.get("thumbnail", "")
-        owner = request.owner
+        owner = request.user
 
         new_equipment = Equipment(
             name = name,
@@ -208,59 +218,72 @@ def create_equipment_flutter(request):
         return JsonResponse({"status": "error"}, status=401)
 
 @csrf_exempt
-def edit_equipment_flutter(request, equipment_id):
-    # Pastikan method PUT
-    if request.method != "PUT":
-        return JsonResponse({"status": "error", "message": "PUT required"}, status=400)
-    
-    # Ambil equipment
+@login_required
+def edit_equipment_flutter(request, id):
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "POST required"}, status=400)
+
     try:
-        equipment = Equipment.objects.get(id=equipment_id)
+        equipment = Equipment.objects.get(id=id)
     except Equipment.DoesNotExist:
         return JsonResponse({"status": "error", "message": "Equipment not found"}, status=404)
-    
-    # Cek owner
+
     if equipment.owner != request.user:
         return JsonResponse({"status": "error", "message": "Forbidden"}, status=403)
-    
-    # Parse JSON body
+
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
         return JsonResponse({"status": "error", "message": "Invalid JSON"}, status=400)
-    
-    # Update field jika ada di request
-    equipment.name = strip_tags(data.get("name", equipment.name))
-    equipment.price_per_hour = strip_tags(data.get("price_per_hour", equipment.price_per_hour))
-    equipment.sport_category = data.get("sport_category", equipment.sport_category)
-    equipment.region = data.get("region", equipment.region)
-    equipment.quantity = strip_tags(data.get("quantity", equipment.quantity))
-    equipment.available = data.get("available", equipment.available)
-    equipment.thumbnail = data.get("thumbnail", equipment.thumbnail)
-    
-    equipment.save()
-    
-    return JsonResponse({"status": "success", "message": "Equipment updated"}, status=200)
 
-@csrf_exempt                     
-@login_required               
+    # STRING
+    if "name" in data and data["name"] is not None:
+        equipment.name = strip_tags(str(data["name"]).strip())
+
+    if "sport_category" in data:
+        equipment.sport_category = data["sport_category"]
+
+    if "region" in data:
+        equipment.region = data["region"]
+
+    if "thumbnail" in data:
+        equipment.thumbnail = data["thumbnail"] or ""
+
+    if "price_per_hour" in data:
+        try:
+            equipment.price_per_hour = Decimal(
+                str(data["price_per_hour"]).strip()
+            )
+        except (InvalidOperation, TypeError):
+            return JsonResponse(
+                {"status": "error", "message": "Invalid price format"},
+                status=400
+            )
+        
+    if "quantity" in data:
+        equipment.quantity = int(data["quantity"])
+
+    if "available" in data:
+        equipment.available = data["available"]
+
+    equipment.save()
+    print("EDIT DATA:", data)
+    print("PRICE TYPE:", type(data.get("price_per_hour")))
+    return JsonResponse(
+        {"status": "success", "message": "Equipment updated"},
+        status=200
+    )
+
+@csrf_exempt
+@login_required
 def delete_equipment_flutter(request, id):
-    if request.method != "DELETE":
-        return JsonResponse(
-            {"error": "Method not allowed"},
-            status=405
-        )
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
 
     equipment = get_object_or_404(Equipment, id=id)
 
-    if equipment.user != request.user:
-        return JsonResponse(
-            {"error": "Unauthorized"},
-            status=403
-        )
-    equipment.delete()
+    if equipment.owner != request.user:
+        return JsonResponse({"error": "Unauthorized"}, status=403)
 
-    return JsonResponse(
-        {"message": "Equipment deleted successfully"},
-        status=200
-    )
+    equipment.delete()
+    return JsonResponse({"status": "success"})
