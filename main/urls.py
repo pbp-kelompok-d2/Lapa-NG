@@ -2,7 +2,8 @@ from django.urls import path
 from main.views import (
     show_main, venue_detail, filter_venues,
     get_venue_details, get_create_form_html, create_venue_ajax,
-    import_venues_from_csv, add_to_booking_draft_stub, get_edit_form_html, edit_venue_ajax, delete_venue_ajax, get_delete_form_html
+    import_venues_from_csv, add_to_booking_draft_stub, get_edit_form_html, edit_venue_ajax, delete_venue_ajax, get_delete_form_html,
+    api_venues_list, api_venue_detail, api_venues_search, api_venues_filter, proxy_image
 ) 
 
 app_name = 'main'
@@ -25,4 +26,11 @@ urlpatterns = [
     path("import-venues-from-csv/", import_venues_from_csv, name="import_venues_csv"),
     path('ajax/stub-add-to-booking/<int:venue_id>/', add_to_booking_draft_stub, name='stub_add_to_booking'),
 
+
+    # API endpoints flutter
+    path('api/venues/', api_venues_list, name='api_venues_list'),
+    path('api/venues/<int:id>/', api_venue_detail, name='api_venue_detail'),
+    path('api/venues/search/', api_venues_search, name='api_venues_search'),
+    path('api/venues/filter/', api_venues_filter, name='api_venues_filter'),
+    path('proxy-image/', proxy_image, name='proxy_image'),
 ]

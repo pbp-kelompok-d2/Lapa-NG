@@ -1,4 +1,5 @@
 from django.shortcuts import render
+import requests
 from authentication.models import CustomUser
 import csv
 from datetime import datetime
@@ -7,7 +8,7 @@ from pathlib import Path
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db import transaction
-from django.http import JsonResponse, HttpResponseNotAllowed, HttpResponseForbidden
+from django.http import HttpResponse, JsonResponse, HttpResponseNotAllowed, HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
@@ -24,13 +25,14 @@ PRICE_RANGES = {
 }
 
 def show_main(request):
-    categories = Venue.objects.values_list('category', flat=True).order_by('category').distinct()
-    venues = Venue.objects.order_by('-is_featured', 'name')
+    categories = Venue.objects.values_list('category', flat=True).order_by('category').distinct() #ngecek category di masing2 venue
+    venues = Venue.objects.order_by('-is_featured', 'name') #is featured muncul dluan
 
     search_query = request.GET.get('q', '')
     category_filter = request.GET.get('category', '')
     price_range_key = request.GET.get('price_range', '') 
 
+    #Q agar berlaku searching "park" juga return "jl. Parkir"
     if search_query:
         venues = venues.filter(
             Q(name__icontains=search_query) | 
@@ -57,7 +59,7 @@ def show_main(request):
 
     # ---  PAGINATION LOGIC ---
     paginator = Paginator(venues, 20) 
-    page_number = request.GET.get('page')
+    page_number = request.GET.get('page') #input user
     page_obj = paginator.get_page(page_number)
 
     current_filters_no_page = request.GET.copy()
@@ -186,6 +188,7 @@ def create_venue_ajax(request):
 
 @login_required(login_url='authentication:login')
 def get_create_form_html(request):
+    # give ajax/client html for the create venue modal
     form = VenueForm()
     context = {
         'form': form,
@@ -377,3 +380,127 @@ def add_to_booking_draft_stub(request, venue_id):
         "status": "ok",
         "message": f"Venue '{venue.name}' added to your booking draft!"
     })
+
+
+# API ENDPOINTS FOR FLUTTER
+
+def api_venues_list(request):
+    """
+    GET /api/venues/
+    Mengembalikan daftar semua venue dalam format JSON.
+    """
+    venues = Venue.objects.all().order_by('name')
+    
+    # Kita bangun list dictionary manual agar bisa memasukkan properti 'thumbnail_url'
+    data = []
+    for venue in venues:
+        data.append({
+            'model': 'main.venue',
+            'pk': venue.pk,
+            'fields': {
+                'name': venue.name,
+                'category': venue.category,
+                'address': venue.address,
+                'price': venue.price,
+                'capacity': venue.capacity,
+                'rating': 0, # Placeholder jika belum ada fitur rating
+                'image_url': request.build_absolute_uri(venue.thumbnail_url), # Penting buat Flutter load gambar
+                'is_featured': venue.is_featured,
+                'description': venue.description,
+            }
+        })
+    return JsonResponse(data, safe=False)
+
+def api_venue_detail(request, id):
+    """
+    GET /api/venues/<int:id>/
+    Mengembalikan detail satu venue spesifik.
+    """
+    venue = get_object_or_404(Venue, pk=id)
+    data = {
+        'model': 'main.venue',
+        'pk': venue.pk,
+        'fields': {
+            'name': venue.name,
+            'category': venue.category,
+            'description': venue.description,
+            'address': venue.address,
+            'price': venue.price,
+            'capacity': venue.capacity,
+            'opening_time': venue.opening_time.strftime("%H:%M") if venue.opening_time else None,
+            'closing_time': venue.closing_time.strftime("%H:%M") if venue.closing_time else None,
+            'image_url': request.build_absolute_uri(venue.thumbnail_url),
+            'is_featured': venue.is_featured,
+        }
+    }
+    return JsonResponse(data)
+
+def api_venues_search(request):
+    """
+    GET /api/venues/search/?q=<query>
+    Pencarian venue berdasarkan nama atau alamat.
+    """
+    query = request.GET.get('q', '')
+    venues = Venue.objects.filter(
+        Q(name__icontains=query) | 
+        Q(address__icontains=query)
+    ).order_by('name')
+
+    data = []
+    for venue in venues:
+        data.append({
+            'model': 'main.venue',
+            'pk': venue.pk,
+            'fields': {
+                'name': venue.name,
+                'category': venue.category,
+                'address': venue.address,
+                'price': venue.price,
+                'image_url': request.build_absolute_uri(venue.thumbnail_url),
+            }
+        })
+    return JsonResponse(data, safe=False)
+
+def api_venues_filter(request):
+    """
+    GET /api/venues/filter/?sport=<category>
+    Filter venue berdasarkan kategori olahraga.
+    """
+    sport = request.GET.get('sport', '')
+    if sport:
+        venues = Venue.objects.filter(category__iexact=sport).order_by('name')
+    else:
+        venues = Venue.objects.all().order_by('name')
+
+    data = []
+    for venue in venues:
+        data.append({
+            'model': 'main.venue',
+            'pk': venue.pk,
+            'fields': {
+                'name': venue.name,
+                'category': venue.category,
+                'address': venue.address,
+                'price': venue.price,
+                'image_url': request.build_absolute_uri(venue.thumbnail_url),
+            }
+        })
+    return JsonResponse(data, safe=False)
+
+def proxy_image(request):
+    image_url = request.GET.get('url')
+    if not image_url:
+        return HttpResponse('No URL provided', status=400)
+    
+    try:
+        # Fetch image from external source
+        response = requests.get(image_url, timeout=10)
+        response.raise_for_status()
+        
+        # Return the image with proper content type
+        return HttpResponse(
+            response.content,
+            content_type=response.headers.get('Content-Type', 'image/jpeg')
+        )
+    except requests.RequestException as e:
+        return HttpResponse(f'Error fetching image: {str(e)}', status=500)
